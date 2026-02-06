@@ -19,19 +19,23 @@ public class PlayerMovement : MonoBehaviour
         // Get WASD input
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
-        
+
         // Create movement direction
         Vector3 move = transform.right * horizontal + transform.forward * vertical;
-        
+
+        // Clamp so diagonal movement doesn't exceed 1
+        if (move.magnitude > 1f)
+            move.Normalize();
+
         // Check if running
         bool isRunning = Input.GetKey(KeyCode.LeftShift);
         float speed = isRunning ? runSpeed : walkSpeed;
-        
+
         // Move
         controller.Move(move * speed * Time.deltaTime);
-        
-        // Update animator
-        float moveAmount = move.magnitude * speed;
-        animator.SetFloat("Speed", moveAmount);
+
+        // Update animator - pass actual speed for proper transitions
+        float currentSpeed = move.magnitude * speed;
+        animator.SetFloat("Speed", currentSpeed);
     }
 }

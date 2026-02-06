@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 330585545}
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
+  - component: {fileID: 330585548}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -256,6 +257,23 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &330585548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 212ee266f331440b6ac4600a38f2a179, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
+  target: {fileID: 1535302851}
+  distance: 7
+  height: 5
+  rotationSpeed: 5
+  smoothSpeed: 10
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -559,7 +577,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalPosition.z
@@ -610,9 +628,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1535302849}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1535302851}
   m_SourcePrefab: {fileID: 100100000, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
 --- !u!1 &1535302846 stripped
 GameObject:
@@ -628,7 +643,7 @@ Animator:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1535302846}
   m_Enabled: 1
-  m_Avatar: {fileID: 0}
+  m_Avatar: {fileID: 9000000, guid: 8f663832ff74c4e0daf16ad79abf137c, type: 3}
   m_Controller: {fileID: 9100000, guid: 1de2fdbfb54ba4b54b17742d27e3634c, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
@@ -653,8 +668,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a72cf7af1f454a7fa1da4c3c6ee89c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
-  walkSpeed: 2
-  runSpeed: 5
+  walkSpeed: 10
+  runSpeed: 20
 --- !u!143 &1535302850
 CharacterController:
   m_ObjectHideFlags: 0
@@ -680,23 +695,11 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1535302851
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+--- !u!4 &1535302851 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
+  m_PrefabInstance: {fileID: 1535302845}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1535302846}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 212ee266f331440b6ac4600a38f2a179, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
-  target: {fileID: 0}
-  distance: 7
-  height: 5
-  rotationSpeed: 5
-  smoothSpeed: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

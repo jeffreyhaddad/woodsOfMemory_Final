@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &194273746
+--- !u!1 &757077298
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,23 +127,23 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 194273749}
-  - component: {fileID: 194273748}
-  - component: {fileID: 194273747}
+  - component: {fileID: 757077301}
+  - component: {fileID: 757077300}
+  - component: {fileID: 757077299}
   m_Layer: 0
-  m_Name: Ground
+  m_Name: Terrain
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
---- !u!154 &194273747
+--- !u!154 &757077299
 TerrainCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 194273746}
+  m_GameObject: {fileID: 757077298}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -155,18 +155,18 @@ TerrainCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_TerrainData: {fileID: 15600000, guid: 64def3c8e27fb334f98b58dc5a9b0ade, type: 2}
+  m_TerrainData: {fileID: 15600000, guid: 7485e5bcaffa2324cb2a9afc71a44ff2, type: 2}
   m_EnableTreeColliders: 1
---- !u!218 &194273748
+--- !u!218 &757077300
 Terrain:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 194273746}
+  m_GameObject: {fileID: 757077298}
   m_Enabled: 1
   serializedVersion: 6
-  m_TerrainData: {fileID: 15600000, guid: 64def3c8e27fb334f98b58dc5a9b0ade, type: 2}
+  m_TerrainData: {fileID: 15600000, guid: 7485e5bcaffa2324cb2a9afc71a44ff2, type: 2}
   m_TreeDistance: 5000
   m_TreeBillboardDistance: 50
   m_TreeCrossFadeLength: 5
@@ -197,13 +197,13 @@ Terrain:
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
   m_TreeMotionVectorModeOverride: 3
---- !u!4 &194273749
+--- !u!4 &757077301
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 194273746}
+  m_GameObject: {fileID: 757077298}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -299,7 +299,7 @@ Transform:
   m_GameObject: {fileID: 1298811271}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 88, y: 10, z: 0}
+  m_LocalPosition: {x: 50, y: 100, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -482,4 +482,4 @@ SceneRoots:
   m_Roots:
   - {fileID: 1298811274}
   - {fileID: 2013931927}
-  - {fileID: 194273749}
+  - {fileID: 757077301}

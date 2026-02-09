@@ -15,8 +15,8 @@ MonoBehaviour:
   creatureName: 
   maxHealth: 50
   moveSpeed: 3
-  runSpeed: 6
-  detectionRange: 15
+  runSpeed: 7
+  detectionRange: 12
   fleeRange: 25
   attackRange: 2
   damage: 0

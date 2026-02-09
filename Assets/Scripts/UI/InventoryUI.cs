@@ -25,6 +25,13 @@ public class InventoryUI : MonoBehaviour
         if (inventory == null)
             inventory = FindAnyObjectByType<Inventory>();
 
+        if (inventory == null)
+        {
+            Debug.LogWarning("InventoryUI: No Inventory found. UI disabled.");
+            enabled = false;
+            return;
+        }
+
         BuildUI();
         panelObj.SetActive(false);
 

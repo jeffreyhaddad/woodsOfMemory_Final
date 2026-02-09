@@ -63,32 +63,33 @@ public class PlayerVitals : MonoBehaviour
         stamina = maxStamina;
     }
 
+    private float lastNotifiedHealth;
+    private float lastNotifiedHunger;
+    private float lastNotifiedStamina;
+
     void Update()
     {
-        bool changed = false;
-
         // Hunger drains passively
         if (hunger > 0f)
-        {
             hunger = Mathf.Max(0f, hunger - hungerDrainRate * Time.deltaTime);
-            changed = true;
-        }
 
         // Starvation: lose health when hunger is 0
         if (hunger <= 0f)
-        {
             health = Mathf.Max(0f, health - starvationDamage * Time.deltaTime);
-            changed = true;
-        }
         // Health regen when well-fed
         else if (hunger > 50f && health < maxHealth)
-        {
             health = Mathf.Min(maxHealth, health + healthRegenRate * Time.deltaTime);
-            changed = true;
-        }
 
-        if (changed)
+        // Only notify UI when display values actually change (whole numbers)
+        if (Mathf.CeilToInt(health) != Mathf.CeilToInt(lastNotifiedHealth) ||
+            Mathf.CeilToInt(hunger) != Mathf.CeilToInt(lastNotifiedHunger) ||
+            Mathf.CeilToInt(stamina) != Mathf.CeilToInt(lastNotifiedStamina))
+        {
+            lastNotifiedHealth = health;
+            lastNotifiedHunger = hunger;
+            lastNotifiedStamina = stamina;
             OnVitalsChanged?.Invoke();
+        }
 
         // Death check
         if (health <= 0f)

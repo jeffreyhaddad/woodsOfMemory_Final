@@ -26,6 +26,12 @@ public class VitalsHUD : MonoBehaviour
         if (vitals == null)
             vitals = FindAnyObjectByType<PlayerVitals>();
 
+        if (vitals == null)
+        {
+            Debug.LogWarning("VitalsHUD: No PlayerVitals found. HUD disabled.");
+            return;
+        }
+
         BuildHUD();
 
         vitals.OnVitalsChanged += RefreshBars;

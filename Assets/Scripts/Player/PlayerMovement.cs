@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+    /// <summary>Set to true to block all player input (e.g. when inventory is open).</summary>
+    public static bool inputBlocked = false;
+
     [Header("Movement Speeds")]
     public float walkSpeed = 2f;
     public float runSpeed = 5f;
@@ -17,7 +20,10 @@ public class PlayerMovement : MonoBehaviour
 
     private CharacterController controller;
     private Animator animator;
+    private PlayerVitals vitals;
     private bool isCrouching = false;
+    private bool isJumping = false;
+    private bool hasLeftGround = false;
     private float standControllerHeight;
     private float standCenterY;
     private float verticalVelocity;
@@ -25,7 +31,8 @@ public class PlayerMovement : MonoBehaviour
     void Start()
     {
         controller = GetComponent<CharacterController>();
-        animator = GetComponent<Animator>();
+        animator = GetComponentInChildren<Animator>();
+        vitals = GetComponent<PlayerVitals>();
 
         standControllerHeight = controller.height;
         standCenterY = controller.center.y;
@@ -33,6 +40,8 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        if (inputBlocked) return;
+
         bool grounded = controller.isGrounded;
         animator.SetBool("isGrounded", grounded);
 
@@ -41,10 +50,15 @@ public class PlayerMovement : MonoBehaviour
             verticalVelocity = -2f;
 
         // Jump — works from any state (idle, walk, run, crouch)
-        if (Input.GetKeyDown(KeyCode.Space) && grounded)
+        bool canJump = vitals == null || vitals.CanJump;
+        if (Input.GetKeyDown(KeyCode.Space) && grounded && canJump)
         {
+            if (vitals != null) vitals.UseStaminaForJump();
             verticalVelocity = jumpForce;
+            isJumping = true;
+            hasLeftGround = false;
             animator.SetBool("isJumping", true);
+            animator.CrossFade("Jump", 0.1f);
 
             // Uncrouch when jumping
             if (isCrouching)
@@ -56,9 +70,18 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
-        // Clear jump flag once landed
-        if (grounded && animator.GetBool("isJumping"))
+        // Track when character actually leaves the ground after jumping
+        if (isJumping && !grounded)
+            hasLeftGround = true;
+
+        // Clear jump flag only after character has left the ground and landed again
+        if (isJumping && hasLeftGround && grounded)
+        {
+            isJumping = false;
+            hasLeftGround = false;
             animator.SetBool("isJumping", false);
+            animator.CrossFade("Idle Blend", 0.15f);
+        }
 
         // Crouch toggle — only when grounded and not jumping
         if (Input.GetKeyDown(KeyCode.LeftControl) && grounded)
@@ -89,8 +112,9 @@ public class PlayerMovement : MonoBehaviour
         if (move.magnitude > 1f)
             move.Normalize();
 
-        // Determine speed — no running while crouched
-        bool isRunning = Input.GetKey(KeyCode.LeftShift) && !isCrouching;
+        // Determine speed — no running while crouched or out of stamina
+        bool wantsToRun = Input.GetKey(KeyCode.LeftShift) && !isCrouching;
+        bool isRunning = wantsToRun && (vitals == null || vitals.CanRun);
         float speed;
         if (isCrouching)
             speed = crouchSpeed;
@@ -105,6 +129,15 @@ public class PlayerMovement : MonoBehaviour
         // Move (horizontal + vertical combined)
         Vector3 finalMove = move * speed + Vector3.up * verticalVelocity;
         controller.Move(finalMove * Time.deltaTime);
+
+        // Stamina drain/regen
+        if (vitals != null)
+        {
+            if (isRunning && move.magnitude > 0.01f)
+                vitals.DrainStamina(vitals.staminaDrainRate * Time.deltaTime);
+            else
+                vitals.RegenStamina(vitals.staminaRegenRate * Time.deltaTime);
+        }
 
         // Normalized speed for animator (0 = idle, 1 = walk, 2 = run)
         float normalizedSpeed;

@@ -99,6 +99,11 @@ public class CreatureAI : MonoBehaviour
 
         DropLoot();
         OnCreatureDeath?.Invoke(this);
+
+        // Report kill to mission system
+        if (MissionManager.Instance != null && data != null)
+            MissionManager.Instance.ReportCreatureKill(data.creatureName);
+
         Destroy(gameObject, 4f);
     }
 

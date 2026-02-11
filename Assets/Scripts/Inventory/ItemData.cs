@@ -9,6 +9,15 @@ public enum ItemCategory
     QuestItem
 }
 
+public enum ItemUseAction
+{
+    None,
+    EatFood,
+    UseBandage,
+    PlaceCampfire,
+    EquipTorch
+}
+
 /// <summary>
 /// Defines an item type. Create assets via: right-click → Create → Inventory → Item.
 /// </summary>
@@ -21,4 +30,9 @@ public class ItemData : ScriptableObject
     public ItemCategory category;
     public bool isStackable = true;
     public int maxStack = 10;
+
+    [Header("Use Action")]
+    public ItemUseAction useAction = ItemUseAction.None;
+    [Tooltip("Amount restored/applied when used (hunger for food, health for bandage)")]
+    public float useValue = 0f;
 }

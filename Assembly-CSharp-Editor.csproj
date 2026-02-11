@@ -50,7 +50,6 @@
   <ItemGroup>
     <Compile Include="Assets/NatureStarterKit2/Editor/ImageEffects/CameraMotionBlurEditor.cs" />
     <Compile Include="Assets/NatureStarterKit2/Editor/ImageEffects/ColorCorrectionLookupEditor.cs" />
-    <Compile Include="Assets/TutorialInfo/Scripts/Editor/ReadmeEditor.cs" />
     <Compile Include="Assets/NatureStarterKit2/Editor/ImageEffects/SunShaftsEditor.cs" />
     <Compile Include="Assets/NatureStarterKit2/Editor/ImageEffects/VignetteAndChromaticAberrationEditor.cs" />
     <Compile Include="Assets/NatureStarterKit2/Editor/ImageEffects/ColorCorrectionCurvesEditor.cs" />

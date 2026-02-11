@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 
 public class InventoryUI : MonoBehaviour
@@ -19,6 +20,10 @@ public class InventoryUI : MonoBehaviour
     private Image[] iconImages;
     private TextMeshProUGUI[] quantityTexts;
     private bool isOpen = false;
+
+    // Tooltip / use feedback
+    private TextMeshProUGUI tooltipText;
+    private float feedbackTimer;
 
     void Start()
     {
@@ -54,6 +59,13 @@ public class InventoryUI : MonoBehaviour
         {
             if (isOpen) CloseInventory();
             else OpenInventory();
+        }
+
+        if (feedbackTimer > 0f)
+        {
+            feedbackTimer -= Time.unscaledDeltaTime;
+            if (feedbackTimer <= 0f && tooltipText != null)
+                tooltipText.text = "";
         }
     }
 
@@ -226,6 +238,89 @@ public class InventoryUI : MonoBehaviour
             qtyRect.offsetMin = new Vector2(2, 2);
             qtyRect.offsetMax = new Vector2(-4, -2);
             quantityTexts[i] = qty;
+
+            // Right-click to use item
+            Button slotBtn = slotObj.AddComponent<Button>();
+            slotBtn.targetGraphic = slotImg;
+            int slotIndex = i;
+            slotBtn.onClick.AddListener(() => UseItem(slotIndex));
+        }
+
+        // Tooltip / feedback text at bottom
+        GameObject tipObj = new GameObject("Tooltip");
+        tipObj.transform.SetParent(gridObj.transform, false);
+        tooltipText = tipObj.AddComponent<TextMeshProUGUI>();
+        tooltipText.text = "";
+        tooltipText.fontSize = 16;
+        tooltipText.alignment = TextAlignmentOptions.Center;
+        tooltipText.color = new Color(0.9f, 0.9f, 0.5f);
+        tooltipText.raycastTarget = false;
+        RectTransform tipRect = tooltipText.rectTransform;
+        tipRect.anchorMin = new Vector2(0, 0);
+        tipRect.anchorMax = new Vector2(1, 0);
+        tipRect.pivot = new Vector2(0.5f, 1);
+        tipRect.anchoredPosition = new Vector2(0, -10);
+        tipRect.sizeDelta = new Vector2(0, 30);
+    }
+
+    void UseItem(int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= inventory.slots.Length) return;
+        InventorySlot slot = inventory.slots[slotIndex];
+        if (slot.IsEmpty) return;
+
+        ItemData item = slot.item;
+
+        if (item.useAction == ItemUseAction.None)
+        {
+            ShowFeedback("Can't use " + item.itemName);
+            return;
+        }
+
+        PlayerVitals vitals = FindAnyObjectByType<PlayerVitals>();
+        if (vitals == null) return;
+
+        switch (item.useAction)
+        {
+            case ItemUseAction.EatFood:
+                if (vitals.Hunger >= vitals.maxHunger)
+                {
+                    ShowFeedback("Not hungry");
+                    return;
+                }
+                vitals.Eat(item.useValue);
+                ShowFeedback("Ate " + item.itemName + " (+" + item.useValue + " hunger)");
+                break;
+
+            case ItemUseAction.UseBandage:
+                if (vitals.Health >= vitals.maxHealth)
+                {
+                    ShowFeedback("Health is full");
+                    return;
+                }
+                vitals.Health += item.useValue;
+                ShowFeedback("Used " + item.itemName + " (+" + item.useValue + " health)");
+                break;
+
+            default:
+                ShowFeedback("Can't use that here");
+                return;
+        }
+
+        // Consume one from stack
+        slot.quantity--;
+        if (slot.quantity <= 0)
+            slot.Clear();
+
+        inventory.NotifyChanged();
+    }
+
+    void ShowFeedback(string msg)
+    {
+        if (tooltipText != null)
+        {
+            tooltipText.text = msg;
+            feedbackTimer = 2f;
         }
     }
 }

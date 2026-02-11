@@ -5,7 +5,7 @@ public class PlayerInteraction : MonoBehaviour
 {
     [Header("Interaction Settings")]
     [Tooltip("Max distance to detect interactable objects")]
-    public float interactDistance = 3f;
+    public float interactDistance = 4f;
 
     [Header("UI")]
     [Tooltip("Leave empty to auto-create the prompt UI")]
@@ -37,39 +37,50 @@ public class PlayerInteraction : MonoBehaviour
 
     void CheckForInteractable()
     {
-        // Ray from player's eye level, forward in the direction the player faces
-        Vector3 origin = transform.position + Vector3.up * 1.5f;
-        Vector3 direction = transform.forward;
+        // Find all colliders within interact distance of the player
+        Collider[] nearby = Physics.OverlapSphere(transform.position + Vector3.up * 0.5f, interactDistance);
 
-        if (Physics.Raycast(origin, direction, out RaycastHit hit, interactDistance))
+        Interactable closest = null;
+        float closestDist = float.MaxValue;
+
+        for (int i = 0; i < nearby.Length; i++)
         {
-            Interactable interactable = hit.collider.GetComponentInParent<Interactable>();
+            // Skip self
+            if (nearby[i].transform == transform || nearby[i].transform.IsChildOf(transform))
+                continue;
 
-            if (interactable != null)
+            Interactable interactable = nearby[i].GetComponentInParent<Interactable>();
+            if (interactable == null) continue;
+
+            float dist = Vector3.Distance(transform.position, nearby[i].transform.position);
+            if (dist < closestDist)
             {
-                if (currentTarget != interactable)
-                {
-                    // Switched to a new target
-                    if (currentTarget != null)
-                        currentTarget.OnLoseFocus();
-
-                    currentTarget = interactable;
-                }
-
-                currentTarget.OnFocus();
-                ShowPrompt(currentTarget.promptText);
-                return;
+                closestDist = dist;
+                closest = interactable;
             }
         }
 
-        // Nothing hit — clear current target
-        if (currentTarget != null)
+        if (closest != null)
         {
-            currentTarget.OnLoseFocus();
-            currentTarget = null;
-        }
+            if (currentTarget != closest)
+            {
+                if (currentTarget != null)
+                    currentTarget.OnLoseFocus();
+                currentTarget = closest;
+            }
 
-        HidePrompt();
+            currentTarget.OnFocus();
+            ShowPrompt(currentTarget.promptText);
+        }
+        else
+        {
+            if (currentTarget != null)
+            {
+                currentTarget.OnLoseFocus();
+                currentTarget = null;
+            }
+            HidePrompt();
+        }
     }
 
     void ShowPrompt(string text)

@@ -327,8 +327,8 @@ public class CraftingUI : MonoBehaviour
         items["Stone"]     = MakeItem("Stone",     ItemCategory.Resource, true, 20);
         items["Fiber"]     = MakeItem("Fiber",     ItemCategory.Resource, true, 20);
         items["Deer Hide"] = MakeItem("Deer Hide", ItemCategory.Resource, true, 10);
-        items["Venison"]   = MakeItem("Venison",   ItemCategory.Food,     true, 5);
-        items["Berries"]   = MakeItem("Berries",   ItemCategory.Food,     true, 15);
+        items["Venison"]   = MakeItem("Venison",   ItemCategory.Food,     true, 5,  ItemUseAction.EatFood, 15f);
+        items["Berries"]   = MakeItem("Berries",   ItemCategory.Food,     true, 15, ItemUseAction.EatFood, 5f);
         items["Herbs"]     = MakeItem("Herbs",     ItemCategory.Resource, true, 15);
         items["Bone"]      = MakeItem("Bone",      ItemCategory.Resource, true, 10);
         items["Feather"]   = MakeItem("Feather",   ItemCategory.Resource, true, 20);
@@ -346,10 +346,10 @@ public class CraftingUI : MonoBehaviour
         items["Bow"]            = MakeItem("Bow",            ItemCategory.Weapon, false, 1);
         items["Arrow"]          = MakeItem("Arrow",          ItemCategory.Weapon, true,  20);
         items["Stone Knife"]    = MakeItem("Stone Knife",    ItemCategory.Weapon, false, 1);
-        items["Cooked Venison"] = MakeItem("Cooked Venison", ItemCategory.Food,   true,  5);
-        items["Berry Stew"]     = MakeItem("Berry Stew",     ItemCategory.Food,   true,  5);
-        items["Herbal Tea"]     = MakeItem("Herbal Tea",     ItemCategory.Food,   true,  5);
-        items["Bandage"]        = MakeItem("Bandage",        ItemCategory.Resource, true, 10);
+        items["Cooked Venison"] = MakeItem("Cooked Venison", ItemCategory.Food,   true,  5, ItemUseAction.EatFood, 35f);
+        items["Berry Stew"]     = MakeItem("Berry Stew",     ItemCategory.Food,   true,  5, ItemUseAction.EatFood, 25f);
+        items["Herbal Tea"]     = MakeItem("Herbal Tea",     ItemCategory.Food,   true,  5, ItemUseAction.EatFood, 20f);
+        items["Bandage"]        = MakeItem("Bandage",        ItemCategory.Resource, true, 10, ItemUseAction.UseBandage, 30f);
         items["Leather Armor"]  = MakeItem("Leather Armor",  ItemCategory.Resource, false, 1);
         items["Shelter Kit"]    = MakeItem("Shelter Kit",    ItemCategory.Resource, false, 1);
         items["Fur Bedroll"]    = MakeItem("Fur Bedroll",    ItemCategory.Resource, false, 1);
@@ -437,7 +437,8 @@ public class CraftingUI : MonoBehaviour
         Debug.Log("CraftingUI: Generated " + recipes.Length + " default recipes.");
     }
 
-    ItemData MakeItem(string itemName, ItemCategory cat, bool stackable, int maxStack)
+    ItemData MakeItem(string itemName, ItemCategory cat, bool stackable, int maxStack,
+        ItemUseAction useAction = ItemUseAction.None, float useValue = 0f)
     {
         ItemData item = ScriptableObject.CreateInstance<ItemData>();
         item.name = itemName;
@@ -445,6 +446,8 @@ public class CraftingUI : MonoBehaviour
         item.category = cat;
         item.isStackable = stackable;
         item.maxStack = maxStack;
+        item.useAction = useAction;
+        item.useValue = useValue;
         return item;
     }
 

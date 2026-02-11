@@ -24,6 +24,9 @@ public class Inventory : MonoBehaviour
     /// <summary>Fired whenever the inventory contents change.</summary>
     public event Action OnInventoryChanged;
 
+    /// <summary>Manually notify listeners that inventory changed (e.g. after external slot modification).</summary>
+    public void NotifyChanged() => OnInventoryChanged?.Invoke();
+
     void Awake()
     {
         slots = new InventorySlot[slotCount];

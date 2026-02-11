@@ -5,36 +5,45 @@ public class CameraFollow : MonoBehaviour
     public Transform target; // The player
 
     [Header("Camera Position")]
-    [Tooltip("Distance behind the character")]
-    public float distance = 3f;
-    [Tooltip("Height of the orbit point (character's shoulder)")]
-    public float shoulderHeight = 1.5f;
-    [Tooltip("Horizontal offset — positive puts character on the left side of screen")]
-    public float shoulderOffsetX = 0.7f;
+    [Tooltip("Distance behind the player")]
+    public float distance = 4f;
+    [Tooltip("Height above the player's feet for the orbit pivot")]
+    public float pivotHeight = 3.8f;
+    [Tooltip("Horizontal offset (positive = character on left side of screen)")]
+    public float shoulderOffset = 0.2f;
+
+    [Header("Field of View")]
+    [Tooltip("Camera FOV — Fortnite uses ~80")]
+    public float fieldOfView = 80f;
 
     [Header("Mouse Sensitivity")]
-    public float sensitivityX = 3f;
-    public float sensitivityY = 2f;
+    public float sensitivityX = 2.5f;
+    public float sensitivityY = 1.5f;
 
     [Header("Vertical Limits")]
-    public float minPitch = -35f;
-    public float maxPitch = 55f;
-
-    [Header("Smoothing")]
-    public float positionSmoothing = 15f;
+    public float minPitch = -40f;
+    public float maxPitch = 70f;
 
     [Header("Collision")]
     public float collisionRadius = 0.2f;
     public LayerMask collisionLayers = ~0;
+    [Tooltip("Speed at which camera eases back out after a collision clip")]
+    public float collisionRecoverySpeed = 8f;
 
     private float yaw;
-    private float pitch = 8f;
+    private float pitch = 12f;
+    private float currentDistance;
+    private Camera cam;
 
     void Start()
     {
-        // Initialize yaw from current player facing
         if (target != null)
             yaw = target.eulerAngles.y;
+
+        currentDistance = distance;
+        cam = GetComponent<Camera>();
+        if (cam != null)
+            cam.fieldOfView = fieldOfView;
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -45,45 +54,48 @@ public class CameraFollow : MonoBehaviour
         if (target == null) return;
         if (PlayerMovement.inputBlocked) return;
 
-        // ── Mouse Input ──
+        // ── FOV (allow runtime tweaks) ──
+        if (cam != null && cam.fieldOfView != fieldOfView)
+            cam.fieldOfView = fieldOfView;
+
+        // ── Mouse Input (no smoothing = responsive) ──
         yaw += Input.GetAxis("Mouse X") * sensitivityX;
         pitch -= Input.GetAxis("Mouse Y") * sensitivityY;
         pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
 
-        // ── Rotate Player to Face Camera Direction ──
-        target.rotation = Quaternion.Euler(0, yaw, 0);
+        // ── Rotate Player Body to Match Camera Yaw ──
+        target.rotation = Quaternion.Euler(0f, yaw, 0f);
 
-        // ── Camera Orbit ──
-        // Pivot point is at the character's shoulder
-        Vector3 pivot = target.position + Vector3.up * shoulderHeight;
+        // ── Compute Camera Position ──
+        // Pivot is well above the character's head so the crosshair
+        // (screen center) sits above the character, not on them
+        Vector3 pivot = target.position + Vector3.up * pivotHeight;
+        Quaternion orbitRot = Quaternion.Euler(pitch, yaw, 0f);
 
-        // Camera sits behind and to the right of the pivot, respecting pitch
-        Quaternion orbitRotation = Quaternion.Euler(pitch, yaw, 0);
-        Vector3 cameraOffset = orbitRotation * new Vector3(shoulderOffsetX, 0, -distance);
-        Vector3 desiredPosition = pivot + cameraOffset;
+        // Full-distance offset in camera-local space (right + back)
+        Vector3 idealOffset = orbitRot * new Vector3(shoulderOffset, 0f, -distance);
+        float idealMag = idealOffset.magnitude;
+        Vector3 offsetDir = idealOffset / idealMag; // normalized
 
-        // ── Camera Collision ──
-        // Pull camera forward if something blocks the line of sight
-        Vector3 dirFromPivot = desiredPosition - pivot;
-        float wantedDist = dirFromPivot.magnitude;
+        // ── Collision ──
+        float clippedDist = idealMag;
 
-        if (Physics.SphereCast(pivot, collisionRadius, dirFromPivot.normalized, out RaycastHit hit, wantedDist, collisionLayers))
+        if (Physics.SphereCast(pivot, collisionRadius, offsetDir, out RaycastHit hit, idealMag, collisionLayers))
         {
             if (hit.transform != target && !hit.transform.IsChildOf(target))
-            {
-                // Place camera just in front of the hit
-                desiredPosition = pivot + dirFromPivot.normalized * (hit.distance - collisionRadius * 0.5f);
-            }
+                clippedDist = Mathf.Max(hit.distance - collisionRadius, 0.5f);
         }
 
-        // ── Smooth Position ──
-        transform.position = Vector3.Lerp(transform.position, desiredPosition, positionSmoothing * Time.deltaTime);
+        // Snap closer instantly; ease back out slowly
+        if (clippedDist < currentDistance)
+            currentDistance = clippedDist;
+        else
+            currentDistance = Mathf.MoveTowards(currentDistance, clippedDist, collisionRecoverySpeed * Time.deltaTime);
 
-        // ── Look Direction ──
-        // Camera looks at a point far ahead of the pivot, so the crosshair
-        // (screen center) aims at what's in front of the player, not at the player
-        Vector3 aimDirection = orbitRotation * Vector3.forward;
-        Vector3 lookTarget = pivot + aimDirection * 50f;
-        transform.LookAt(lookTarget);
+        // ── Apply Position (no Lerp = zero input lag) ──
+        transform.position = pivot + offsetDir * currentDistance;
+
+        // ── Camera Rotation = Orbit Rotation (no LookAt) ──
+        transform.rotation = orbitRot;
     }
 }

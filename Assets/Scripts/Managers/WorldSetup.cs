@@ -3,7 +3,7 @@ using UnityEngine.AI;
 
 /// <summary>
 /// Auto-generates mission triggers, resource pickups, and note pickups at runtime.
-/// Add this to a GameObject in SampleScene. Adjust positions in the Inspector.
+/// Add this to a GameObject in GameScene. Adjust positions in the Inspector.
 /// </summary>
 public class WorldSetup : MonoBehaviour
 {

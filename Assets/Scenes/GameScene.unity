@@ -746,15 +746,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
   target: {fileID: 1535302851}
   distance: 7
-  rotationSpeed: 5
-  smoothSpeed: 10
+  pivotHeight: 3.8
+  shoulderOffset: 0.2
+  fieldOfView: 80
+  sensitivityX: 2.5
+  sensitivityY: 1.5
   minPitch: -20
   maxPitch: 60
-  shoulderOffsetX: 1
-  heightOffset: 1.8
-  aimHeight: 1.6
-  aimForwardOffset: 10
   collisionRadius: 0.3
+  collisionLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  collisionRecoverySpeed: 8
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1244,7 +1247,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1837,9 +1840,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ced3fe1ed09904bada1ac75ccd9a8006, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CrosshairUI
-  size: 4
+  size: 6
   color: {r: 1, g: 1, b: 1, a: 0.5}
-  interactColor: {r: 1, g: 0.85, b: 0.3, a: 0.9}
+  interactColor: {r: 0, g: 1, b: 0, a: 1}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

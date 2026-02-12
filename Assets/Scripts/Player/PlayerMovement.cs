@@ -27,6 +27,7 @@ public class PlayerMovement : MonoBehaviour
     private float standControllerHeight;
     private float standCenterY;
     private float verticalVelocity;
+    private float footstepTimer;
 
     void Start()
     {
@@ -40,7 +41,20 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        if (inputBlocked) return;
+        if (inputBlocked)
+        {
+            // Zero out animator so player stops walking/running visually
+            animator.SetFloat("Speed", 0f);
+            animator.SetFloat("Direction", 0f);
+            animator.SetFloat("Vertical", 0f);
+
+            // Still apply gravity so the player doesn't float
+            if (controller.isGrounded && verticalVelocity < 0f)
+                verticalVelocity = -2f;
+            verticalVelocity += gravity * Time.deltaTime;
+            controller.Move(Vector3.up * verticalVelocity * Time.deltaTime);
+            return;
+        }
 
         bool grounded = controller.isGrounded;
         animator.SetBool("isGrounded", grounded);
@@ -152,5 +166,21 @@ public class PlayerMovement : MonoBehaviour
         animator.SetFloat("Speed", normalizedSpeed, 0.1f, Time.deltaTime);
         animator.SetFloat("Direction", horizontal, 0.1f, Time.deltaTime);
         animator.SetFloat("Vertical", vertical, 0.1f, Time.deltaTime);
+
+        // Footstep sounds while moving on ground
+        if (grounded && move.magnitude > 0.01f)
+        {
+            float stepInterval = isRunning ? 0.32f : 0.5f;
+            footstepTimer -= Time.deltaTime;
+            if (footstepTimer <= 0f)
+            {
+                SFXManager.PlayFootstep();
+                footstepTimer = stepInterval;
+            }
+        }
+        else
+        {
+            footstepTimer = 0f;
+        }
     }
 }

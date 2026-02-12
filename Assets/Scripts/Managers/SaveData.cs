@@ -27,6 +27,11 @@ public class SaveData
     // Journal
     public List<string> discoveredEntryTitles = new List<string>();
 
+    // Equipment
+    public string equippedWeaponName = "";
+    public string equippedToolName = "";
+    public string equippedArmorName = "";
+
     // Metadata
     public string saveDate;
 }

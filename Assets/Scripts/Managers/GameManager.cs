@@ -44,6 +44,14 @@ public class GameManager : MonoBehaviour
     {
         CacheReferences();
 
+        // Auto-create managers if not in scene
+        if (EquipmentManager.Instance == null)
+            gameObject.AddComponent<EquipmentManager>();
+        if (SFXManager.Instance == null)
+            gameObject.AddComponent<SFXManager>();
+        if (FindAnyObjectByType<EquipmentHUD>() == null)
+            gameObject.AddComponent<EquipmentHUD>();
+
         // Capture initial player position as spawn point
         if (!spawnCaptured && PlayerVitals != null)
         {

@@ -29,6 +29,7 @@ public class PlayerCombat : MonoBehaviour
 
             Attack();
             lastAttackTime = Time.time;
+            SFXManager.PlaySwing();
 
             if (vitals != null)
                 vitals.DrainStamina(attackStaminaCost);
@@ -40,15 +41,21 @@ public class PlayerCombat : MonoBehaviour
         Vector3 origin = transform.position + Vector3.up * 1.5f;
         Vector3 direction = transform.forward;
 
+        // Total damage = base + equipped weapon bonus
+        float totalDamage = attackDamage;
+        if (EquipmentManager.Instance != null)
+            totalDamage += EquipmentManager.Instance.WeaponDamageBonus;
+
         // SphereCast — wider hit area, much easier to land melee hits
         if (Physics.SphereCast(origin, attackRadius, direction, out RaycastHit hit, attackRange))
         {
             CreatureAI creature = hit.collider.GetComponentInParent<CreatureAI>();
             if (creature != null)
             {
-                creature.TakeDamage(attackDamage);
+                creature.TakeDamage(totalDamage);
                 hitFlashTimer = 0.3f;
-                Debug.Log("Hit " + creature.data.creatureName + " for " + attackDamage +
+                SFXManager.PlayHit();
+                Debug.Log("Hit " + creature.data.creatureName + " for " + totalDamage +
                     " (HP: " + creature.CurrentHealth + "/" + creature.data.maxHealth + ")");
             }
         }

@@ -35,6 +35,18 @@ public class Inventory : MonoBehaviour
     }
 
     /// <summary>
+    /// Compare two items — matches by reference first, then falls back to itemName.
+    /// This allows runtime-generated ItemData (e.g. from auto-generated crafting recipes)
+    /// to match asset-based ItemData stored in the inventory.
+    /// </summary>
+    static bool ItemsMatch(ItemData a, ItemData b)
+    {
+        if (a == b) return true;
+        if (a == null || b == null) return false;
+        return !string.IsNullOrEmpty(a.itemName) && a.itemName == b.itemName;
+    }
+
+    /// <summary>
     /// Add an item to the inventory. Stacks onto existing slots first, then uses empty slots.
     /// Returns true if all items were added, false if inventory is full.
     /// </summary>
@@ -47,7 +59,7 @@ public class Inventory : MonoBehaviour
         {
             for (int i = 0; i < slots.Length && remaining > 0; i++)
             {
-                if (slots[i].item == item && slots[i].quantity < item.maxStack)
+                if (ItemsMatch(slots[i].item, item) && slots[i].quantity < item.maxStack)
                 {
                     int spaceInSlot = item.maxStack - slots[i].quantity;
                     int toAdd = Mathf.Min(remaining, spaceInSlot);
@@ -87,7 +99,7 @@ public class Inventory : MonoBehaviour
 
         for (int i = slots.Length - 1; i >= 0 && remaining > 0; i--)
         {
-            if (slots[i].item == item)
+            if (ItemsMatch(slots[i].item, item))
             {
                 int toRemove = Mathf.Min(remaining, slots[i].quantity);
                 slots[i].quantity -= toRemove;
@@ -114,7 +126,7 @@ public class Inventory : MonoBehaviour
         int count = 0;
         for (int i = 0; i < slots.Length; i++)
         {
-            if (slots[i].item == item)
+            if (ItemsMatch(slots[i].item, item))
                 count += slots[i].quantity;
         }
         return count;

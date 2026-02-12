@@ -58,6 +58,7 @@
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/ImageEffectBase.cs" />
     <Compile Include="Assets/Scripts/Interaction/Interactable.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/Blur.cs" />
+    <Compile Include="Assets/Scripts/Managers/SFXManager.cs" />
     <Compile Include="Assets/Scripts/Inventory/ItemData.cs" />
     <Compile Include="Assets/Scripts/Narrative/JournalEntry.cs" />
     <Compile Include="Assets/Scripts/Managers/GameManager.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/PostEffectsBase.cs" />
     <Compile Include="Assets/Scripts/Managers/SaveManager.cs" />
     <Compile Include="Assets/Scripts/Environment/AmbientAudio.cs" />
+    <Compile Include="Assets/Scripts/Inventory/ItemRegistry.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/Tonemapping.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/ImageEffects.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/PostEffectsHelper.cs" />
@@ -91,6 +93,7 @@
     <Compile Include="Assets/Scripts/UI/CrosshairUI.cs" />
     <Compile Include="Assets/Scripts/UI/GameCompleteUI.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/EdgeDetection.cs" />
+    <Compile Include="Assets/Scripts/Managers/EquipmentManager.cs" />
     <Compile Include="Assets/Scripts/Player/PlayerMovement.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/BlurOptimized.cs" />
     <Compile Include="Assets/Scripts/Missions/MissionObjective.cs" />
@@ -115,6 +118,7 @@
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/NoiseAndScratches.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/DepthOfFieldDeprecated.cs" />
     <Compile Include="Assets/Scripts/Missions/Mission.cs" />
+    <Compile Include="Assets/Scripts/UI/EquipmentHUD.cs" />
     <Compile Include="Assets/Scripts/Inventory/CraftingRecipe.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/Fisheye.cs" />
     <Compile Include="Assets/Scripts/UI/ControlsHintUI.cs" />

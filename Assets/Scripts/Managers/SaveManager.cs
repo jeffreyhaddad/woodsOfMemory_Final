@@ -105,6 +105,15 @@ public class SaveManager : MonoBehaviour
             }
         }
 
+        // Equipment
+        EquipmentManager equip = EquipmentManager.Instance;
+        if (equip != null)
+        {
+            data.equippedWeaponName = equip.EquippedWeapon != null ? equip.EquippedWeapon.itemName : "";
+            data.equippedToolName = equip.EquippedTool != null ? equip.EquippedTool.itemName : "";
+            data.equippedArmorName = equip.EquippedArmor != null ? equip.EquippedArmor.itemName : "";
+        }
+
         data.saveDate = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm");
 
         // Write to file
@@ -144,22 +153,92 @@ public class SaveManager : MonoBehaviour
             vitals.enabled = true;
         }
 
-        // Inventory - clear and restore
+        // Inventory - clear and restore using ItemRegistry
         Inventory inventory = GameManager.Instance != null ? GameManager.Instance.Inventory : FindAnyObjectByType<Inventory>();
         if (inventory != null)
         {
-            // Clear all slots
             for (int i = 0; i < inventory.slots.Length; i++)
                 inventory.slots[i].Clear();
 
-            // We can't easily restore ItemData references from just names
-            // since the crafting system creates them at runtime.
-            // For now, log what was saved so the system is ready for
-            // ScriptableObject-based items in the future.
-            Debug.Log("Save had " + data.inventoryItems.Count + " items. " +
-                      "Inventory restoration requires persistent ItemData assets.");
+            int restored = 0;
+            for (int i = 0; i < data.inventoryItems.Count; i++)
+            {
+                SavedItem saved = data.inventoryItems[i];
+                ItemData item = ItemRegistry.Get(saved.itemName);
+                if (item != null && saved.slotIndex >= 0 && saved.slotIndex < inventory.slots.Length)
+                {
+                    inventory.slots[saved.slotIndex].item = item;
+                    inventory.slots[saved.slotIndex].quantity = saved.quantity;
+                    restored++;
+                }
+            }
 
             inventory.NotifyChanged();
+            Debug.Log("Restored " + restored + "/" + data.inventoryItems.Count + " inventory items.");
+        }
+
+        // Missions - restore progress
+        MissionManager mm = MissionManager.Instance;
+        if (mm != null && mm.missions != null)
+        {
+            // Advance to the saved mission
+            for (int i = 0; i < data.currentMissionIndex && i < mm.missions.Length; i++)
+            {
+                mm.missions[i].isCompleted = true;
+                mm.missions[i].isActive = false;
+            }
+
+            mm.CurrentMissionIndex = data.currentMissionIndex;
+
+            if (data.currentMissionIndex < mm.missions.Length)
+            {
+                Mission current = mm.missions[data.currentMissionIndex];
+                current.isActive = true;
+                current.isCompleted = false;
+
+                for (int i = 0; i < current.objectives.Length && i < data.objectiveProgress.Count; i++)
+                    current.objectives[i].currentCount = data.objectiveProgress[i];
+            }
+        }
+
+        // Journal - restore discovered entries
+        JournalManager journal = JournalManager.Instance;
+        if (journal != null && journal.startingEntries != null)
+        {
+            for (int i = 0; i < data.discoveredEntryTitles.Count; i++)
+            {
+                string title = data.discoveredEntryTitles[i];
+                for (int j = 0; j < journal.startingEntries.Length; j++)
+                {
+                    if (journal.startingEntries[j] != null && journal.startingEntries[j].title == title)
+                    {
+                        journal.AddEntry(journal.startingEntries[j]);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Equipment - restore equipped items
+        EquipmentManager equip = EquipmentManager.Instance;
+        if (equip != null)
+        {
+            equip.UnequipAll();
+            if (!string.IsNullOrEmpty(data.equippedWeaponName))
+            {
+                ItemData weapon = ItemRegistry.Get(data.equippedWeaponName);
+                if (weapon != null) equip.Equip(weapon);
+            }
+            if (!string.IsNullOrEmpty(data.equippedToolName))
+            {
+                ItemData tool = ItemRegistry.Get(data.equippedToolName);
+                if (tool != null) equip.Equip(tool);
+            }
+            if (!string.IsNullOrEmpty(data.equippedArmorName))
+            {
+                ItemData armor = ItemRegistry.Get(data.equippedArmorName);
+                if (armor != null) equip.Equip(armor);
+            }
         }
 
         // Day/Night

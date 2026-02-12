@@ -36,6 +36,7 @@ public class PickupItem : Interactable
         if (inventory.AddItem(itemData, quantity))
         {
             Debug.Log("Picked up " + quantity + "x " + itemData.itemName);
+            SFXManager.PlayPickup();
             Destroy(gameObject);
         }
         else

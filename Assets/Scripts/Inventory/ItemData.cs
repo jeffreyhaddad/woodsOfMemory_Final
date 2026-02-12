@@ -18,6 +18,14 @@ public enum ItemUseAction
     EquipTorch
 }
 
+public enum EquipSlot
+{
+    None,
+    Weapon,
+    Tool,
+    Armor
+}
+
 /// <summary>
 /// Defines an item type. Create assets via: right-click → Create → Inventory → Item.
 /// </summary>
@@ -35,4 +43,11 @@ public class ItemData : ScriptableObject
     public ItemUseAction useAction = ItemUseAction.None;
     [Tooltip("Amount restored/applied when used (hunger for food, health for bandage)")]
     public float useValue = 0f;
+
+    [Header("Equipment")]
+    public EquipSlot equipSlot = EquipSlot.None;
+    [Tooltip("Extra damage when equipped as weapon (added to base melee damage)")]
+    public float damageBonus = 0f;
+    [Tooltip("Damage reduction when equipped as armor (flat amount subtracted from incoming damage)")]
+    public float defenseBonus = 0f;
 }

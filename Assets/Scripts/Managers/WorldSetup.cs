@@ -333,6 +333,7 @@ public class WorldSetup : MonoBehaviour
         item.maxStack = maxStack;
         item.useAction = useAction;
         item.useValue = useValue;
+        ItemRegistry.Register(item);
         return item;
     }
 }

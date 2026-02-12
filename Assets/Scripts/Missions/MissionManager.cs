@@ -10,7 +10,7 @@ public class MissionManager : MonoBehaviour
     [Tooltip("Leave empty to auto-generate the 6 story missions.")]
     public Mission[] missions;
 
-    public int CurrentMissionIndex { get; private set; } = 0;
+    public int CurrentMissionIndex { get; set; } = 0;
     public Mission CurrentMission => (CurrentMissionIndex < missions.Length) ? missions[CurrentMissionIndex] : null;
     public bool AllMissionsComplete => CurrentMissionIndex >= missions.Length;
 

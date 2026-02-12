@@ -92,6 +92,8 @@ public class InventoryUI : MonoBehaviour
 
     void RefreshUI()
     {
+        EquipmentManager equip = EquipmentManager.Instance;
+
         for (int i = 0; i < inventory.slots.Length && i < slotImages.Length; i++)
         {
             InventorySlot slot = inventory.slots[i];
@@ -106,8 +108,13 @@ public class InventoryUI : MonoBehaviour
             }
             else
             {
-                // Highlight filled slots
-                slotImages[i].color = new Color(0.35f, 0.35f, 0.35f, 0.9f);
+                // Check if this item is currently equipped
+                bool isEquipped = equip != null && equip.IsEquipped(slot.item);
+
+                // Equipped items get a gold border, others get default gray
+                slotImages[i].color = isEquipped
+                    ? new Color(0.6f, 0.5f, 0.1f, 0.95f)
+                    : new Color(0.35f, 0.35f, 0.35f, 0.9f);
 
                 if (slot.item.icon != null)
                 {
@@ -127,8 +134,9 @@ public class InventoryUI : MonoBehaviour
                     string displayName = string.IsNullOrEmpty(slot.item.itemName)
                         ? slot.item.name  // fallback to ScriptableObject asset name
                         : slot.item.itemName;
+                    string equipped = isEquipped ? " [E]" : "";
                     string qty = slot.quantity > 1 ? "\nx" + slot.quantity : "";
-                    quantityTexts[i].text = displayName + qty;
+                    quantityTexts[i].text = displayName + equipped + qty;
                 }
             }
         }
@@ -271,6 +279,23 @@ public class InventoryUI : MonoBehaviour
 
         ItemData item = slot.item;
 
+        // Equippable items — toggle equip on click
+        if (item.equipSlot != EquipSlot.None && EquipmentManager.Instance != null)
+        {
+            bool wasEquipped = EquipmentManager.Instance.IsEquipped(item);
+            EquipmentManager.Instance.Equip(item);
+            SFXManager.PlayEquip();
+
+            if (wasEquipped)
+                ShowFeedback("Unequipped " + item.itemName);
+            else
+                ShowFeedback("Equipped " + item.itemName);
+
+            RefreshUI();
+            return;
+        }
+
+        // Consumable items
         if (item.useAction == ItemUseAction.None)
         {
             ShowFeedback("Can't use " + item.itemName);

@@ -292,6 +292,7 @@ public class CraftingUI : MonoBehaviour
         }
 
         inventory.AddItem(selectedRecipe.result, selectedRecipe.resultQuantity);
+        SFXManager.PlayCraft();
     }
 
     // ─── Category Tabs ──────────────────────────────────────
@@ -334,23 +335,23 @@ public class CraftingUI : MonoBehaviour
         items["Feather"]   = MakeItem("Feather",   ItemCategory.Resource, true, 20);
         items["Iron Ore"]  = MakeItem("Iron Ore",  ItemCategory.Resource, true, 10);
 
-        // --- Crafted items ---
-        items["Stone Axe"]      = MakeItem("Stone Axe",      ItemCategory.Tool,   false, 1);
-        items["Stone Pickaxe"]  = MakeItem("Stone Pickaxe",  ItemCategory.Tool,   false, 1);
-        items["Torch"]          = MakeItem("Torch",          ItemCategory.Tool,   true,  5);
-        items["Fishing Rod"]    = MakeItem("Fishing Rod",    ItemCategory.Tool,   false, 1);
+        // --- Crafted items (with equip stats) ---
+        items["Stone Axe"]      = MakeItem("Stone Axe",      ItemCategory.Tool,   false, 1, equipSlot: EquipSlot.Tool);
+        items["Stone Pickaxe"]  = MakeItem("Stone Pickaxe",  ItemCategory.Tool,   false, 1, equipSlot: EquipSlot.Tool);
+        items["Torch"]          = MakeItem("Torch",          ItemCategory.Tool,   true,  5, equipSlot: EquipSlot.Tool);
+        items["Fishing Rod"]    = MakeItem("Fishing Rod",    ItemCategory.Tool,   false, 1, equipSlot: EquipSlot.Tool);
         items["Rope"]           = MakeItem("Rope",           ItemCategory.Tool,   true,  5);
         items["Campfire"]       = MakeItem("Campfire",       ItemCategory.Tool,   true,  3);
         items["Bone Needle"]    = MakeItem("Bone Needle",    ItemCategory.Tool,   true,  5);
-        items["Wooden Spear"]   = MakeItem("Wooden Spear",   ItemCategory.Weapon, false, 1);
-        items["Bow"]            = MakeItem("Bow",            ItemCategory.Weapon, false, 1);
+        items["Wooden Spear"]   = MakeItem("Wooden Spear",   ItemCategory.Weapon, false, 1, equipSlot: EquipSlot.Weapon, damageBonus: 15f);
+        items["Bow"]            = MakeItem("Bow",            ItemCategory.Weapon, false, 1, equipSlot: EquipSlot.Weapon, damageBonus: 20f);
         items["Arrow"]          = MakeItem("Arrow",          ItemCategory.Weapon, true,  20);
-        items["Stone Knife"]    = MakeItem("Stone Knife",    ItemCategory.Weapon, false, 1);
+        items["Stone Knife"]    = MakeItem("Stone Knife",    ItemCategory.Weapon, false, 1, equipSlot: EquipSlot.Weapon, damageBonus: 10f);
         items["Cooked Venison"] = MakeItem("Cooked Venison", ItemCategory.Food,   true,  5, ItemUseAction.EatFood, 35f);
         items["Berry Stew"]     = MakeItem("Berry Stew",     ItemCategory.Food,   true,  5, ItemUseAction.EatFood, 25f);
         items["Herbal Tea"]     = MakeItem("Herbal Tea",     ItemCategory.Food,   true,  5, ItemUseAction.EatFood, 20f);
         items["Bandage"]        = MakeItem("Bandage",        ItemCategory.Resource, true, 10, ItemUseAction.UseBandage, 30f);
-        items["Leather Armor"]  = MakeItem("Leather Armor",  ItemCategory.Resource, false, 1);
+        items["Leather Armor"]  = MakeItem("Leather Armor",  ItemCategory.Resource, false, 1, equipSlot: EquipSlot.Armor, defenseBonus: 8f);
         items["Shelter Kit"]    = MakeItem("Shelter Kit",    ItemCategory.Resource, false, 1);
         items["Fur Bedroll"]    = MakeItem("Fur Bedroll",    ItemCategory.Resource, false, 1);
 
@@ -438,7 +439,8 @@ public class CraftingUI : MonoBehaviour
     }
 
     ItemData MakeItem(string itemName, ItemCategory cat, bool stackable, int maxStack,
-        ItemUseAction useAction = ItemUseAction.None, float useValue = 0f)
+        ItemUseAction useAction = ItemUseAction.None, float useValue = 0f,
+        EquipSlot equipSlot = EquipSlot.None, float damageBonus = 0f, float defenseBonus = 0f)
     {
         ItemData item = ScriptableObject.CreateInstance<ItemData>();
         item.name = itemName;
@@ -448,6 +450,10 @@ public class CraftingUI : MonoBehaviour
         item.maxStack = maxStack;
         item.useAction = useAction;
         item.useValue = useValue;
+        item.equipSlot = equipSlot;
+        item.damageBonus = damageBonus;
+        item.defenseBonus = defenseBonus;
+        ItemRegistry.Register(item);
         return item;
     }
 

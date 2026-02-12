@@ -70,7 +70,7 @@ public class ControlsHintUI : MonoBehaviour
             "Space - Jump\n" +
             "E - Interact/Pickup\n" +
             "LMB - Attack\n" +
-            "Tab - Inventory\n" +
+            "Tab - Inventory (click to equip)\n" +
             "C - Crafting\n" +
             "J - Journal\n" +
             "Esc - Pause</color>";

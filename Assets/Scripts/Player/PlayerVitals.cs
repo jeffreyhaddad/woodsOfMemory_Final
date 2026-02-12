@@ -80,6 +80,10 @@ public class PlayerVitals : MonoBehaviour
         else if (hunger > 50f && health < maxHealth)
             health = Mathf.Min(maxHealth, health + healthRegenRate * Time.deltaTime);
 
+        // Stop heartbeat once health regens above 25%
+        if (health > maxHealth * 0.25f)
+            SFXManager.StopHeartbeat();
+
         // Only notify UI when display values actually change (whole numbers)
         if (Mathf.CeilToInt(health) != Mathf.CeilToInt(lastNotifiedHealth) ||
             Mathf.CeilToInt(hunger) != Mathf.CeilToInt(lastNotifiedHunger) ||
@@ -133,10 +137,20 @@ public class PlayerVitals : MonoBehaviour
         return true;
     }
 
-    /// <summary>Take damage from enemies or hazards.</summary>
+    /// <summary>Take damage from enemies or hazards. Armor reduces incoming damage.</summary>
     public void TakeDamage(float amount)
     {
+        if (EquipmentManager.Instance != null)
+            amount = Mathf.Max(1f, amount - EquipmentManager.Instance.ArmorDefenseBonus);
+
         Health -= amount;
+        SFXManager.PlayHurt();
+
+        // Low health heartbeat warning
+        if (health > 0f && health <= maxHealth * 0.25f)
+            SFXManager.StartHeartbeat();
+        else
+            SFXManager.StopHeartbeat();
     }
 
     /// <summary>Restore hunger from eating food.</summary>

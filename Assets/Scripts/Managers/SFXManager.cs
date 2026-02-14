@@ -1,5 +1,13 @@
 using UnityEngine;
 
+public enum GroundType
+{
+    Default,
+    Grass,
+    Wood,
+    Stone
+}
+
 /// <summary>
 /// Centralized sound effects manager. Generates all sounds procedurally via AudioClip.Create
 /// so no audio assets are required. Call static methods from anywhere.
@@ -22,6 +30,9 @@ public class SFXManager : MonoBehaviour
     private AudioClip equipClip;
     private AudioClip hurtClip;
     private AudioClip footstepClip;
+    private AudioClip footstepGrassClip;
+    private AudioClip footstepWoodClip;
+    private AudioClip footstepStoneClip;
     private AudioClip menuClickClip;
     private AudioClip heartbeatClip;
 
@@ -77,6 +88,27 @@ public class SFXManager : MonoBehaviour
     public static void PlayFootstep()
     {
         if (Instance != null) Instance.Play(Instance.footstepClip, 0.2f);
+    }
+
+    /// <summary>Play a terrain-specific footstep sound.</summary>
+    public static void PlayFootstep(GroundType ground)
+    {
+        if (Instance == null) return;
+        switch (ground)
+        {
+            case GroundType.Wood:
+                Instance.Play(Instance.footstepWoodClip, 0.25f);
+                break;
+            case GroundType.Stone:
+                Instance.Play(Instance.footstepStoneClip, 0.22f);
+                break;
+            case GroundType.Grass:
+                Instance.Play(Instance.footstepGrassClip, 0.18f);
+                break;
+            default:
+                Instance.Play(Instance.footstepClip, 0.2f);
+                break;
+        }
     }
 
     public static void PlayMenuClick()
@@ -171,6 +203,38 @@ public class SFXManager : MonoBehaviour
             float noise = (Random.value * 2f - 1f);
             float thump = Mathf.Sin(2f * Mathf.PI * 80f * t);
             return (noise * 0.4f + thump * 0.6f) * env;
+        });
+
+        // Grass: soft rustling, higher frequency noise, lighter
+        footstepGrassClip = CreateClip("FootstepGrass", sampleRate, 0.1f, (i, len) =>
+        {
+            float t = (float)i / len;
+            float env = Mathf.Exp(-t * 20f);
+            float noise = (Random.value * 2f - 1f);
+            float rustle = Mathf.Sin(2f * Mathf.PI * 2000f * t) * 0.1f;
+            return (noise * 0.7f + rustle) * env * 0.6f;
+        });
+
+        // Wood: hollow thud, mid-frequency resonance
+        footstepWoodClip = CreateClip("FootstepWood", sampleRate, 0.1f, (i, len) =>
+        {
+            float t = (float)i / len;
+            float env = Mathf.Exp(-t * 25f);
+            float thud = Mathf.Sin(2f * Mathf.PI * 150f * t);
+            float knock = Mathf.Sin(2f * Mathf.PI * 400f * t) * Mathf.Exp(-t * 40f);
+            float noise = (Random.value * 2f - 1f) * 0.15f;
+            return (thud * 0.5f + knock * 0.35f + noise) * env;
+        });
+
+        // Stone: sharp clack, high attack, less bass
+        footstepStoneClip = CreateClip("FootstepStone", sampleRate, 0.06f, (i, len) =>
+        {
+            float t = (float)i / len;
+            float env = Mathf.Exp(-t * 40f);
+            float click = Mathf.Sin(2f * Mathf.PI * 600f * t) * Mathf.Exp(-t * 50f);
+            float scrape = (Random.value * 2f - 1f) * 0.3f * Mathf.Exp(-t * 35f);
+            float tap = Mathf.Sin(2f * Mathf.PI * 250f * t) * 0.4f;
+            return (click + scrape + tap) * env;
         });
 
         menuClickClip = CreateClip("Click", sampleRate, 0.05f, (i, len) =>

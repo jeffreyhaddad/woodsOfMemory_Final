@@ -67,6 +67,7 @@
     <Compile Include="Assets/Scripts/UI/InventoryUI.cs" />
     <Compile Include="Assets/Scripts/UI/DeathScreenUI.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/CameraMotionBlur.cs" />
+    <Compile Include="Assets/Scripts/Environment/CampfireFlicker.cs" />
     <Compile Include="Assets/Scripts/Missions/MissionTrigger.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/ScreenSpaceAmbientOcclusion.cs" />
     <Compile Include="Assets/Scripts/UI/MissionHUD.cs" />
@@ -94,6 +95,7 @@
     <Compile Include="Assets/Scripts/UI/GameCompleteUI.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/EdgeDetection.cs" />
     <Compile Include="Assets/Scripts/Managers/EquipmentManager.cs" />
+    <Compile Include="Assets/Scripts/Environment/WeatherManager.cs" />
     <Compile Include="Assets/Scripts/Player/PlayerMovement.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/BlurOptimized.cs" />
     <Compile Include="Assets/Scripts/Missions/MissionObjective.cs" />
@@ -103,6 +105,7 @@
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/GlobalFog.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/DepthOfField.cs" />
     <Compile Include="Assets/Scripts/UI/CraftingUI.cs" />
+    <Compile Include="Assets/Scripts/Player/TorchLight.cs" />
     <Compile Include="Assets/Scripts/Player/PlayerVitals.cs" />
     <Compile Include="Assets/Scripts/Environment/DayNightCycle.cs" />
     <Compile Include="Assets/Scripts/AI/CreatureData.cs" />
@@ -116,10 +119,12 @@
     <Compile Include="Assets/Scripts/Narrative/JournalManager.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/Twirl.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/NoiseAndScratches.cs" />
+    <Compile Include="Assets/Scripts/UI/MissionTransitionUI.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/DepthOfFieldDeprecated.cs" />
     <Compile Include="Assets/Scripts/Missions/Mission.cs" />
     <Compile Include="Assets/Scripts/UI/EquipmentHUD.cs" />
     <Compile Include="Assets/Scripts/Inventory/CraftingRecipe.cs" />
+    <Compile Include="Assets/Scripts/UI/CompassUI.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/Fisheye.cs" />
     <Compile Include="Assets/Scripts/UI/ControlsHintUI.cs" />
     <Compile Include="Assets/NatureStarterKit2/Standard Assets/Effects/ImageEffects/Scripts/Vortex.cs" />

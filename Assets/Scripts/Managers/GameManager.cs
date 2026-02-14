@@ -51,6 +51,18 @@ public class GameManager : MonoBehaviour
             gameObject.AddComponent<SFXManager>();
         if (FindAnyObjectByType<EquipmentHUD>() == null)
             gameObject.AddComponent<EquipmentHUD>();
+        if (FindAnyObjectByType<MissionTransitionUI>() == null)
+            gameObject.AddComponent<MissionTransitionUI>();
+        if (FindAnyObjectByType<CompassUI>() == null)
+            gameObject.AddComponent<CompassUI>();
+        if (WeatherManager.Instance == null)
+            gameObject.AddComponent<WeatherManager>();
+        if (MusicManager.Instance == null)
+            gameObject.AddComponent<MusicManager>();
+
+        // Torch light on the player (listens to EquipmentManager)
+        if (PlayerVitals != null && PlayerVitals.GetComponent<TorchLight>() == null)
+            PlayerVitals.gameObject.AddComponent<TorchLight>();
 
         // Capture initial player position as spawn point
         if (!spawnCaptured && PlayerVitals != null)

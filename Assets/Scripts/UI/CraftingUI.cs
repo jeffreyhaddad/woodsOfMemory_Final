@@ -341,7 +341,7 @@ public class CraftingUI : MonoBehaviour
         items["Torch"]          = MakeItem("Torch",          ItemCategory.Tool,   true,  5, equipSlot: EquipSlot.Tool);
         items["Fishing Rod"]    = MakeItem("Fishing Rod",    ItemCategory.Tool,   false, 1, equipSlot: EquipSlot.Tool);
         items["Rope"]           = MakeItem("Rope",           ItemCategory.Tool,   true,  5);
-        items["Campfire"]       = MakeItem("Campfire",       ItemCategory.Tool,   true,  3);
+        items["Campfire"]       = MakeItem("Campfire",       ItemCategory.Tool,   true,  3, ItemUseAction.PlaceCampfire);
         items["Bone Needle"]    = MakeItem("Bone Needle",    ItemCategory.Tool,   true,  5);
         items["Wooden Spear"]   = MakeItem("Wooden Spear",   ItemCategory.Weapon, false, 1, equipSlot: EquipSlot.Weapon, damageBonus: 15f);
         items["Bow"]            = MakeItem("Bow",            ItemCategory.Weapon, false, 1, equipSlot: EquipSlot.Weapon, damageBonus: 20f);

@@ -327,6 +327,11 @@ public class InventoryUI : MonoBehaviour
                 ShowFeedback("Used " + item.itemName + " (+" + item.useValue + " health)");
                 break;
 
+            case ItemUseAction.PlaceCampfire:
+                PlaceCampfire(vitals.transform);
+                ShowFeedback("Placed campfire");
+                break;
+
             default:
                 ShowFeedback("Can't use that here");
                 return;
@@ -346,6 +351,179 @@ public class InventoryUI : MonoBehaviour
         {
             tooltipText.text = msg;
             feedbackTimer = 2f;
+        }
+    }
+
+    /// <summary>
+    /// Spawns a campfire object at the player's feet with light and fire particles.
+    /// The campfire persists in the world until the scene reloads.
+    /// </summary>
+    void PlaceCampfire(Transform player)
+    {
+        Vector3 pos = player.position + player.forward * 1.5f;
+
+        // Snap to ground
+        if (Physics.Raycast(pos + Vector3.up * 2f, Vector3.down, out RaycastHit hit, 10f))
+            pos.y = hit.point.y;
+
+        GameObject campfire = new GameObject("Campfire");
+        campfire.transform.position = pos;
+
+        // Visual base — dark cylinder
+        GameObject baseObj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        baseObj.transform.SetParent(campfire.transform, false);
+        baseObj.transform.localScale = new Vector3(0.8f, 0.1f, 0.8f);
+        Destroy(baseObj.GetComponent<Collider>());
+        Renderer baseRend = baseObj.GetComponent<Renderer>();
+        Material baseMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        baseMat.color = new Color(0.15f, 0.1f, 0.05f);
+        baseRend.material = baseMat;
+
+        // Log pieces
+        for (int i = 0; i < 4; i++)
+        {
+            GameObject log = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            log.transform.SetParent(campfire.transform, false);
+            log.transform.localScale = new Vector3(0.08f, 0.3f, 0.08f);
+            float angle = i * 90f + Random.Range(-20f, 20f);
+            log.transform.localPosition = new Vector3(
+                Mathf.Cos(angle * Mathf.Deg2Rad) * 0.15f,
+                0.1f,
+                Mathf.Sin(angle * Mathf.Deg2Rad) * 0.15f);
+            log.transform.localRotation = Quaternion.Euler(
+                Random.Range(60f, 80f),
+                angle,
+                0f);
+            Destroy(log.GetComponent<Collider>());
+            Renderer logRend = log.GetComponent<Renderer>();
+            Material logMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            logMat.color = new Color(0.35f, 0.2f, 0.08f);
+            logRend.material = logMat;
+        }
+
+        // Point light — warm flickering glow
+        GameObject lightObj = new GameObject("CampfireLight");
+        lightObj.transform.SetParent(campfire.transform, false);
+        lightObj.transform.localPosition = Vector3.up * 0.5f;
+        Light fireLight = lightObj.AddComponent<Light>();
+        fireLight.type = LightType.Point;
+        fireLight.color = new Color(1f, 0.6f, 0.2f);
+        fireLight.intensity = 2.5f;
+        fireLight.range = 15f;
+        fireLight.shadows = LightShadows.Soft;
+
+        // Flicker script
+        CampfireFlicker flicker = lightObj.AddComponent<CampfireFlicker>();
+        flicker.baseIntensity = 2.5f;
+
+        // Fire particles
+        GameObject particleObj = new GameObject("CampfireFire");
+        particleObj.transform.SetParent(campfire.transform, false);
+        particleObj.transform.localPosition = Vector3.up * 0.15f;
+        CreateCampfireParticles(particleObj);
+
+        // Crackling audio
+        AudioSource audio = campfire.AddComponent<AudioSource>();
+        audio.spatialBlend = 1f; // 3D
+        audio.minDistance = 2f;
+        audio.maxDistance = 15f;
+        audio.loop = true;
+        audio.volume = 0.4f;
+        audio.clip = GenerateCrackleClip();
+        audio.Play();
+
+        SFXManager.PlayCraft();
+    }
+
+    AudioClip GenerateCrackleClip()
+    {
+        int sampleRate = 22050;
+        int length = sampleRate * 3; // 3-second loop
+        float[] samples = new float[length];
+
+        Random.State prevState = Random.state;
+        Random.InitState(42);
+
+        float lastSample = 0f;
+        for (int i = 0; i < length; i++)
+        {
+            float t = (float)i / sampleRate;
+            // Base crackle: filtered noise
+            float white = Random.Range(-1f, 1f);
+            lastSample = (lastSample + 0.05f * white) / 1.05f;
+            // Random pops and crackles
+            float pop = (Random.value > 0.997f) ? Random.Range(0.2f, 0.5f) * (Random.value > 0.5f ? 1f : -1f) : 0f;
+            // Low rumble
+            float rumble = Mathf.Sin(2f * Mathf.PI * 30f * t) * 0.05f;
+            samples[i] = Mathf.Clamp(lastSample * 2f + pop + rumble, -1f, 1f);
+        }
+
+        Random.state = prevState;
+
+        AudioClip clip = AudioClip.Create("Crackle", length, 1, sampleRate, false);
+        clip.SetData(samples, 0);
+        return clip;
+    }
+
+    void CreateCampfireParticles(GameObject obj)
+    {
+        ParticleSystem ps = obj.AddComponent<ParticleSystem>();
+
+        ParticleSystem.MainModule main = ps.main;
+        main.maxParticles = 50;
+        main.startLifetime = new ParticleSystem.MinMaxCurve(0.5f, 1.2f);
+        main.startSpeed = new ParticleSystem.MinMaxCurve(0.8f, 2f);
+        main.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.25f);
+        main.startColor = new ParticleSystem.MinMaxGradient(
+            new Color(1f, 0.8f, 0.2f, 0.9f),
+            new Color(1f, 0.3f, 0.05f, 0.7f));
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        main.gravityModifier = -0.5f;
+
+        ParticleSystem.EmissionModule emission = ps.emission;
+        emission.rateOverTime = 40;
+
+        ParticleSystem.ShapeModule shape = ps.shape;
+        shape.shapeType = ParticleSystemShapeType.Cone;
+        shape.angle = 20f;
+        shape.radius = 0.1f;
+
+        ParticleSystem.SizeOverLifetimeModule sizeOverLife = ps.sizeOverLifetime;
+        sizeOverLife.enabled = true;
+        AnimationCurve shrink = new AnimationCurve(
+            new Keyframe(0f, 1f), new Keyframe(1f, 0f));
+        sizeOverLife.size = new ParticleSystem.MinMaxCurve(1f, shrink);
+
+        ParticleSystem.ColorOverLifetimeModule colorOverLife = ps.colorOverLifetime;
+        colorOverLife.enabled = true;
+        Gradient grad = new Gradient();
+        grad.SetKeys(
+            new GradientColorKey[] {
+                new GradientColorKey(new Color(1f, 0.9f, 0.3f), 0f),
+                new GradientColorKey(new Color(1f, 0.3f, 0.1f), 0.6f),
+                new GradientColorKey(new Color(0.2f, 0.05f, 0.02f), 1f)
+            },
+            new GradientAlphaKey[] {
+                new GradientAlphaKey(0.9f, 0f),
+                new GradientAlphaKey(0.5f, 0.6f),
+                new GradientAlphaKey(0f, 1f)
+            });
+        colorOverLife.color = grad;
+
+        // URP-compatible additive particle material
+        ParticleSystemRenderer rend = obj.GetComponent<ParticleSystemRenderer>();
+        Shader particleShader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        if (particleShader == null) particleShader = Shader.Find("Particles/Standard Unlit");
+        if (particleShader != null)
+        {
+            Material mat = new Material(particleShader);
+            mat.SetColor("_BaseColor", new Color(1f, 0.7f, 0.3f, 0.8f));
+            mat.SetFloat("_Surface", 1);
+            mat.SetOverrideTag("RenderType", "Transparent");
+            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One);
+            mat.renderQueue = 3000;
+            rend.material = mat;
         }
     }
 }

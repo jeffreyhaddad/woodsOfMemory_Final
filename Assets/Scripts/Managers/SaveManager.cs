@@ -20,9 +20,28 @@ public class SaveManager : MonoBehaviour
         Instance = this;
     }
 
+    private MissionManager missionManager;
+
     void Start()
     {
         autoSaveTimer = autoSaveIntervalMinutes * 60f;
+
+        // Checkpoint: auto-save whenever a mission is completed
+        missionManager = FindAnyObjectByType<MissionManager>();
+        if (missionManager != null)
+            missionManager.OnMissionCompleted += OnMissionCompleted;
+    }
+
+    void OnDestroy()
+    {
+        if (missionManager != null)
+            missionManager.OnMissionCompleted -= OnMissionCompleted;
+    }
+
+    void OnMissionCompleted(Mission mission)
+    {
+        Save(0);
+        Debug.Log("Checkpoint saved after completing: " + mission.missionName);
     }
 
     void Update()

@@ -45,6 +45,11 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
+# Auto-generated IDE/Unity project files
+*.csproj
+*.sln
+*.vsconfig
+
 # Visual Studio / Rider cache
 .vs/
 .idea/

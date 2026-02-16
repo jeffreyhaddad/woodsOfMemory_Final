@@ -8,11 +8,13 @@ public class PlayerMovement : MonoBehaviour
     [Header("Movement Speeds")]
     public float walkSpeed = 2f;
     public float runSpeed = 5f;
-    public float crouchSpeed = 1f;
+    public float crouchSpeed = 5f;
 
     [Header("Jump Settings")]
     public float jumpForce = 5f;
     public float gravity = -9.81f;
+    [Tooltip("Extra gravity multiplier when falling for snappier landings")]
+    public float fallMultiplier = 2.5f;
 
     [Header("Crouch Settings")]
     public float crouchControllerHeight = 1.2f;
@@ -94,7 +96,8 @@ public class PlayerMovement : MonoBehaviour
             isJumping = false;
             hasLeftGround = false;
             animator.SetBool("isJumping", false);
-            animator.CrossFade("Idle Blend", 0.15f);
+            // CrossFade back to the movement blend tree (handles idle/walk/run via Speed param)
+            animator.CrossFade("Idle Blend", 0.2f);
         }
 
         // Crouch toggle — only when grounded and not jumping
@@ -137,8 +140,9 @@ public class PlayerMovement : MonoBehaviour
         else
             speed = walkSpeed;
 
-        // Apply gravity
-        verticalVelocity += gravity * Time.deltaTime;
+        // Apply gravity — stronger when falling for a snappier, less floaty jump
+        float gravityScale = (verticalVelocity < 0f) ? fallMultiplier : 1f;
+        verticalVelocity += gravity * gravityScale * Time.deltaTime;
 
         // Move (horizontal + vertical combined)
         Vector3 finalMove = move * speed + Vector3.up * verticalVelocity;

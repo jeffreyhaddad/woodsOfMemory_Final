@@ -375,7 +375,7 @@ public class InventoryUI : MonoBehaviour
         baseObj.transform.localScale = new Vector3(0.8f, 0.1f, 0.8f);
         Destroy(baseObj.GetComponent<Collider>());
         Renderer baseRend = baseObj.GetComponent<Renderer>();
-        Material baseMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        Material baseMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
         baseMat.color = new Color(0.15f, 0.1f, 0.05f);
         baseRend.material = baseMat;
 
@@ -396,7 +396,7 @@ public class InventoryUI : MonoBehaviour
                 0f);
             Destroy(log.GetComponent<Collider>());
             Renderer logRend = log.GetComponent<Renderer>();
-            Material logMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            Material logMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
             logMat.color = new Color(0.35f, 0.2f, 0.08f);
             logRend.material = logMat;
         }

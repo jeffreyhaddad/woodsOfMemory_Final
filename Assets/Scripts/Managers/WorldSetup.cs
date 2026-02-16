@@ -86,11 +86,11 @@ public class WorldSetup : MonoBehaviour
             new Color(0.2f, 0.6f, 0.15f)
         };
         Vector3[] scales = {
-            new Vector3(0.15f, 0.4f, 0.15f),
-            new Vector3(0.25f, 0.2f, 0.25f),
-            new Vector3(0.2f, 0.1f, 0.2f),
-            new Vector3(0.15f, 0.15f, 0.15f),
-            new Vector3(0.15f, 0.15f, 0.15f)
+            new Vector3(0.4f, 0.8f, 0.4f),
+            new Vector3(0.6f, 0.45f, 0.6f),
+            new Vector3(0.5f, 0.35f, 0.5f),
+            new Vector3(0.45f, 0.45f, 0.45f),
+            new Vector3(0.45f, 0.45f, 0.45f)
         };
 
         // Use current player position as center for respawns
@@ -144,10 +144,9 @@ public class WorldSetup : MonoBehaviour
         marker.transform.localScale = new Vector3(1f, 3f, 1f);
         Destroy(marker.GetComponent<Collider>());
         Renderer rend = marker.GetComponent<Renderer>();
-        Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-        mat.color = new Color(1f, 1f, 0f, 0.15f);
+        Material mat = CreateMaterial(new Color(1f, 1f, 0f, 0.15f));
         // Make transparent
-        mat.SetFloat("_Surface", 1); // Transparent
+        mat.SetFloat("_Surface", 1);
         mat.SetFloat("_Blend", 0);
         mat.SetOverrideTag("RenderType", "Transparent");
         mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
@@ -169,11 +168,11 @@ public class WorldSetup : MonoBehaviour
             center = pv.transform.position;
 
         int total = 0;
-        total += SpawnResourceCluster(woodItem, woodCount, center, resourceSpawnRadius, PrimitiveType.Cylinder, new Color(0.45f, 0.25f, 0.1f), new Vector3(0.15f, 0.4f, 0.15f));
-        total += SpawnResourceCluster(stoneItem, stoneCount, center, resourceSpawnRadius, PrimitiveType.Cube, new Color(0.5f, 0.5f, 0.5f), new Vector3(0.25f, 0.2f, 0.25f));
-        total += SpawnResourceCluster(fiberItem, fiberCount, center, resourceSpawnRadius, PrimitiveType.Cube, new Color(0.3f, 0.5f, 0.15f), new Vector3(0.2f, 0.1f, 0.2f));
-        total += SpawnResourceCluster(berryItem, berryCount, center, resourceSpawnRadius * 0.8f, PrimitiveType.Sphere, new Color(0.6f, 0.1f, 0.2f), new Vector3(0.15f, 0.15f, 0.15f));
-        total += SpawnResourceCluster(herbItem, herbCount, center, resourceSpawnRadius * 0.8f, PrimitiveType.Sphere, new Color(0.2f, 0.6f, 0.15f), new Vector3(0.15f, 0.15f, 0.15f));
+        total += SpawnResourceCluster(woodItem, woodCount, center, resourceSpawnRadius, PrimitiveType.Cylinder, new Color(0.45f, 0.25f, 0.1f), new Vector3(0.4f, 0.8f, 0.4f));
+        total += SpawnResourceCluster(stoneItem, stoneCount, center, resourceSpawnRadius, PrimitiveType.Cube, new Color(0.5f, 0.5f, 0.5f), new Vector3(0.6f, 0.45f, 0.6f));
+        total += SpawnResourceCluster(fiberItem, fiberCount, center, resourceSpawnRadius, PrimitiveType.Cube, new Color(0.3f, 0.5f, 0.15f), new Vector3(0.5f, 0.35f, 0.5f));
+        total += SpawnResourceCluster(berryItem, berryCount, center, resourceSpawnRadius * 0.8f, PrimitiveType.Sphere, new Color(0.6f, 0.1f, 0.2f), new Vector3(0.45f, 0.45f, 0.45f));
+        total += SpawnResourceCluster(herbItem, herbCount, center, resourceSpawnRadius * 0.8f, PrimitiveType.Sphere, new Color(0.2f, 0.6f, 0.15f), new Vector3(0.45f, 0.45f, 0.45f));
 
         Debug.Log("WorldSetup: Spawned " + total + " resource pickups.");
     }
@@ -230,13 +229,7 @@ public class WorldSetup : MonoBehaviour
         visual.transform.localRotation = Quaternion.Euler(Random.Range(-15f, 15f), Random.Range(0f, 360f), Random.Range(-15f, 15f));
         Destroy(visual.GetComponent<Collider>());
 
-        Renderer rend = visual.GetComponent<Renderer>();
-        if (rend != null)
-        {
-            Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            mat.color = color;
-            rend.material = mat;
-        }
+        ApplyColor(visual.GetComponent<Renderer>(), color);
     }
 
     // ─── Note Pickups ────────────────────────────────────────
@@ -295,19 +288,36 @@ public class WorldSetup : MonoBehaviour
         visual.transform.localRotation = Quaternion.Euler(0, Random.Range(0f, 360f), 0);
         Destroy(visual.GetComponent<Collider>());
 
-        Renderer rend = visual.GetComponent<Renderer>();
-        if (rend != null)
-        {
-            Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            mat.color = new Color(0.9f, 0.85f, 0.7f); // Parchment color
-            rend.material = mat;
-        }
+        ApplyColor(visual.GetComponent<Renderer>(), new Color(0.9f, 0.85f, 0.7f));
 
         // Slight hover/bob effect
         obj.AddComponent<PickupBob>();
     }
 
     // ─── Helpers ─────────────────────────────────────────────
+
+    Material CreateMaterial(Color color)
+    {
+        // Try URP Lit first, then Standard, then fall back to built-in default
+        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+        if (shader == null)
+            shader = Shader.Find("Standard");
+        if (shader == null)
+            shader = Shader.Find("Sprites/Default");
+
+        Material mat = new Material(shader);
+        mat.color = color;
+        // URP Lit uses _BaseColor instead of _Color
+        if (mat.HasProperty("_BaseColor"))
+            mat.SetColor("_BaseColor", color);
+        return mat;
+    }
+
+    void ApplyColor(Renderer rend, Color color)
+    {
+        if (rend == null) return;
+        rend.material = CreateMaterial(color);
+    }
 
     float GetTerrainHeight(Vector3 position)
     {

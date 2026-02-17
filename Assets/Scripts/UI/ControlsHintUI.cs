@@ -32,7 +32,10 @@ public class ControlsHintUI : MonoBehaviour
         }
 
         if (timer <= 0f)
+        {
             Destroy(canvasGroup.gameObject);
+            Destroy(this);
+        }
     }
 
     void BuildUI()

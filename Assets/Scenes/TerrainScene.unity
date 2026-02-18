@@ -1130,6 +1130,60 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1860984272}
   m_SourcePrefab: {fileID: 100100000, guid: 3126ca4c2d851514395844c0d42d1ca7, type: 3}
+--- !u!1 &398444760
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 398444762}
+  - component: {fileID: 398444761}
+  m_Layer: 0
+  m_Name: CreatureSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &398444761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 398444760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 232d280a1e62847e5b47f88c9160acb8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CreatureSpawner
+  wildlifePrefabs:
+  - {fileID: 1318655962629054076, guid: 17ffee35eed7b428aa66b55d2c051011, type: 3}
+  maxWildlife: 8
+  wildlifeSpawnRadius: 80
+  wildlifeSpawnInterval: 30
+  shadowPrefab: {fileID: 417115913710611975, guid: fcf1f0ce5d7fd40919765eccbb072081, type: 3}
+  maxShadowCreatures: 5
+  shadowSpawnRadius: 50
+  shadowSpawnInterval: 15
+  minSpawnDistance: 30
+--- !u!4 &398444762
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 398444760}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 629.479, y: 105.48775, z: 479.1153}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &446036557
 GameObject:
   m_ObjectHideFlags: 0
@@ -1839,6 +1893,7 @@ GameObject:
   - component: {fileID: 1087206214}
   - component: {fileID: 1087206213}
   - component: {fileID: 1087206212}
+  - component: {fileID: 1087206215}
   m_Layer: 0
   m_Name: Terrain
   m_TagString: Untagged
@@ -1921,6 +1976,38 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1087206215
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1087206211}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshSurface
+  m_SerializedVersion: 0
+  m_AgentTypeID: 0
+  m_CollectObjects: 0
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 2, z: 0}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_UseGeometry: 0
+  m_DefaultArea: 0
+  m_GenerateLinks: 0
+  m_IgnoreNavMeshAgent: 1
+  m_IgnoreNavMeshObstacle: 1
+  m_OverrideTileSize: 0
+  m_TileSize: 256
+  m_OverrideVoxelSize: 0
+  m_VoxelSize: 0.16666667
+  m_MinRegionArea: 2
+  m_NavMeshData: {fileID: 23800000, guid: c75365cdff16f416aa5d4ffcd9834329, type: 2}
+  m_BuildHeightMesh: 0
 --- !u!1 &1088806492
 GameObject:
   m_ObjectHideFlags: 0
@@ -13252,3 +13339,4 @@ SceneRoots:
   - {fileID: 1705413059}
   - {fileID: 1915845847}
   - {fileID: 2047595965}
+  - {fileID: 398444762}

@@ -127,20 +127,15 @@ public class MusicManager : MonoBehaviour
     {
         if (vitals == null) return false;
 
-        // Find any shadow creatures in chase or attack state nearby
-        CreatureAI[] creatures = FindObjectsByType<CreatureAI>(FindObjectsSortMode.None);
+        // Use static active list instead of FindObjectsByType scene scan
         Vector3 playerPos = vitals.transform.position;
+        var shadows = ShadowCreatureAI.ActiveInstances;
 
-        for (int i = 0; i < creatures.Length; i++)
+        for (int i = 0; i < shadows.Count; i++)
         {
-            if (creatures[i] == null) continue;
+            if (shadows[i] == null) continue;
 
-            // Use reflection-free approach: check if creature is a shadow creature
-            // and is close enough to the player
-            ShadowCreatureAI shadow = creatures[i] as ShadowCreatureAI;
-            if (shadow == null) continue;
-
-            float dist = Vector3.Distance(creatures[i].transform.position, playerPos);
+            float dist = Vector3.Distance(shadows[i].transform.position, playerPos);
             if (dist < 25f)
                 return true;
         }

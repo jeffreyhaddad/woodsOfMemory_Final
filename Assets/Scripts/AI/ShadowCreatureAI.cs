@@ -3,6 +3,10 @@ using UnityEngine.AI;
 
 public class ShadowCreatureAI : CreatureAI
 {
+    /// <summary>Static registry of all active shadow creatures for efficient lookups.</summary>
+    public static readonly System.Collections.Generic.List<ShadowCreatureAI> ActiveInstances =
+        new System.Collections.Generic.List<ShadowCreatureAI>();
+
     [Header("Shadow Settings")]
     public float patrolRadius = 20f;
     public float attackInterval = 2f;
@@ -11,13 +15,25 @@ public class ShadowCreatureAI : CreatureAI
 
     private float attackTimer;
     private DayNightCycle dayNight;
+    private PlayerVitals cachedPlayerVitals;
+
+    // Throttle chase path recalculation
+    private float pathUpdateTimer;
+    private Vector3 lastChaseDestination;
 
     protected override void Start()
     {
         base.Start();
         dayNight = FindAnyObjectByType<DayNightCycle>();
+        cachedPlayerVitals = playerTransform != null ? playerTransform.GetComponent<PlayerVitals>() : null;
         currentState = CreatureState.Patrol;
         PickNewPatrolTarget();
+        ActiveInstances.Add(this);
+    }
+
+    void OnDestroy()
+    {
+        ActiveInstances.Remove(this);
     }
 
     protected override void UpdateBehavior(float distToPlayer)
@@ -45,8 +61,18 @@ public class ShadowCreatureAI : CreatureAI
                 break;
 
             case CreatureState.Chase:
+                // Throttle path recalculation — only update when player moves significantly or timer expires
                 if (playerTransform != null)
-                    agent.SetDestination(playerTransform.position);
+                {
+                    pathUpdateTimer -= Time.deltaTime;
+                    if (pathUpdateTimer <= 0f ||
+                        (playerTransform.position - lastChaseDestination).sqrMagnitude > 4f)
+                    {
+                        agent.SetDestination(playerTransform.position);
+                        lastChaseDestination = playerTransform.position;
+                        pathUpdateTimer = 0.25f;
+                    }
+                }
 
                 if (distToPlayer <= data.attackRange)
                 {
@@ -75,11 +101,8 @@ public class ShadowCreatureAI : CreatureAI
                 attackTimer -= Time.deltaTime;
                 if (attackTimer <= 0f)
                 {
-                    PlayerVitals pv = playerTransform != null
-                        ? playerTransform.GetComponent<PlayerVitals>()
-                        : null;
-                    if (pv != null)
-                        pv.TakeDamage(data.damage);
+                    if (cachedPlayerVitals != null)
+                        cachedPlayerVitals.TakeDamage(data.damage);
 
                     attackTimer = attackInterval;
                 }

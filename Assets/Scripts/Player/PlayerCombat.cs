@@ -55,8 +55,6 @@ public class PlayerCombat : MonoBehaviour
                 creature.TakeDamage(totalDamage);
                 hitFlashTimer = 0.3f;
                 SFXManager.PlayHit();
-                Debug.Log("Hit " + creature.data.creatureName + " for " + totalDamage +
-                    " (HP: " + creature.CurrentHealth + "/" + creature.data.maxHealth + ")");
             }
         }
     }

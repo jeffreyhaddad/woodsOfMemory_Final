@@ -26,22 +26,9 @@ public class CrosshairUI : MonoBehaviour
         // Change color when near an interactable
         if (!hidden && interaction != null)
         {
-            // Check if there's an active prompt (meaning something is in range)
-            bool hasTarget = interaction.GetComponent<PlayerInteraction>() != null &&
-                             GetCurrentTarget(interaction) != null;
+            bool hasTarget = interaction.CurrentTarget != null;
             dot.color = hasTarget ? interactColor : color;
         }
-    }
-
-    Interactable GetCurrentTarget(PlayerInteraction pi)
-    {
-        // Use reflection-free approach: check if the prompt UI is active
-        // The prompt is shown when a target exists
-        var promptField = typeof(PlayerInteraction).GetField("currentTarget",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        if (promptField != null)
-            return promptField.GetValue(pi) as Interactable;
-        return null;
     }
 
     void BuildUI()

@@ -105,16 +105,17 @@ public class PlayerVitals : MonoBehaviour
         }
     }
 
-    /// <summary>Drain stamina while running. Called by PlayerMovement each frame.</summary>
+    /// <summary>Drain stamina while running. Called by PlayerMovement each frame.
+    /// UI notification is handled by the throttled check in Update().</summary>
     public void DrainStamina(float amount)
     {
         stamina = Mathf.Max(0f, stamina - amount);
         if (stamina <= 0f)
             isExhausted = true;
-        OnVitalsChanged?.Invoke();
     }
 
-    /// <summary>Regenerate stamina when not running. Called by PlayerMovement each frame.</summary>
+    /// <summary>Regenerate stamina when not running. Called by PlayerMovement each frame.
+    /// UI notification is handled by the throttled check in Update().</summary>
     public void RegenStamina(float amount)
     {
         if (stamina < maxStamina)
@@ -122,7 +123,6 @@ public class PlayerVitals : MonoBehaviour
             stamina = Mathf.Min(maxStamina, stamina + amount);
             if (isExhausted && stamina >= exhaustionRecoveryThreshold)
                 isExhausted = false;
-            OnVitalsChanged?.Invoke();
         }
     }
 
@@ -133,7 +133,6 @@ public class PlayerVitals : MonoBehaviour
             return false;
 
         stamina -= jumpStaminaCost;
-        OnVitalsChanged?.Invoke();
         return true;
     }
 

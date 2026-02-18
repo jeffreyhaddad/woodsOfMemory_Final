@@ -35,13 +35,20 @@ public class CreatureSpawner : MonoBehaviour
             playerTransform = pv.transform;
     }
 
+    private float cleanupTimer;
+
     void Update()
     {
         if (playerTransform == null) return;
 
-        // Clean up destroyed creatures
-        activeWildlife.RemoveAll(c => c == null);
-        activeShadows.RemoveAll(c => c == null);
+        // Clean up destroyed creatures periodically instead of every frame
+        cleanupTimer -= Time.deltaTime;
+        if (cleanupTimer <= 0f)
+        {
+            activeWildlife.RemoveAll(c => c == null);
+            activeShadows.RemoveAll(c => c == null);
+            cleanupTimer = 5f;
+        }
 
         // Wildlife spawning (always)
         wildlifeTimer -= Time.deltaTime;

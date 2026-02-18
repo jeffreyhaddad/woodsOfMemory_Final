@@ -11,6 +11,7 @@ public class WildlifeAI : CreatureAI
 
     private Vector3 spawnPoint;
     private float idleTimer;
+    private float fleePathTimer;
 
     protected override void Start()
     {
@@ -78,6 +79,11 @@ public class WildlifeAI : CreatureAI
     private void FleeFromPlayer()
     {
         if (playerTransform == null) return;
+
+        // Throttle flee path recalculation to every 0.5 seconds
+        fleePathTimer -= Time.deltaTime;
+        if (fleePathTimer > 0f) return;
+        fleePathTimer = 0.5f;
 
         Vector3 fleeDir = (transform.position - playerTransform.position).normalized;
         Vector3 fleeTarget = transform.position + fleeDir * 10f;

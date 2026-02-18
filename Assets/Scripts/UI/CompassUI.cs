@@ -75,7 +75,15 @@ public class CompassUI : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing)
             return;
 
-        // Periodic scan for targets
+        // Periodically refresh cached object arrays (less often than target scan)
+        fullScanTimer -= Time.deltaTime;
+        if (fullScanTimer <= 0f)
+        {
+            RefreshCaches();
+            fullScanTimer = fullScanInterval;
+        }
+
+        // Periodic scan for targets using cached arrays
         scanTimer -= Time.deltaTime;
         if (scanTimer <= 0f)
         {
@@ -213,21 +221,36 @@ public class CompassUI : MonoBehaviour
         });
     }
 
+    // Cached arrays to avoid FindObjectsByType allocations every scan
+    private MissionTrigger[] cachedTriggers;
+    private PickupItem[] cachedPickups;
+    private CreatureAI[] cachedCreatures;
+    private float fullScanTimer;
+    private const float fullScanInterval = 10f; // Re-find all objects every 10s
+
+    void RefreshCaches()
+    {
+        cachedTriggers = FindObjectsByType<MissionTrigger>(FindObjectsSortMode.None);
+        cachedPickups = FindObjectsByType<PickupItem>(FindObjectsSortMode.None);
+        cachedCreatures = FindObjectsByType<CreatureAI>(FindObjectsSortMode.None);
+    }
+
     void ScanForTriggers(string objectiveDesc)
     {
-        MissionTrigger[] triggers = FindObjectsByType<MissionTrigger>(FindObjectsSortMode.None);
-        for (int i = 0; i < triggers.Length; i++)
+        if (cachedTriggers == null) return;
+        for (int i = 0; i < cachedTriggers.Length; i++)
         {
+            if (cachedTriggers[i] == null) continue;
             // Match cabin triggers to cabin objectives, exit to exit objectives
-            string locName = triggers[i].locationName.ToLower();
+            string locName = cachedTriggers[i].locationName.ToLower();
             string desc = objectiveDesc.ToLower();
             if (desc.Contains(locName) || desc.Contains("cabin") && locName.Contains("cabin")
                 || desc.Contains("exit") && locName.Contains("exit"))
             {
                 trackedTargets.Add(new TrackedTarget
                 {
-                    position = triggers[i].transform.position,
-                    label = triggers[i].locationName,
+                    position = cachedTriggers[i].transform.position,
+                    label = cachedTriggers[i].locationName,
                     color = new Color(1f, 0.85f, 0.3f) // Gold
                 });
             }
@@ -236,9 +259,9 @@ public class CompassUI : MonoBehaviour
 
     void ScanForPickups(string itemName, string objectiveDesc)
     {
-        if (string.IsNullOrEmpty(itemName)) return;
+        if (string.IsNullOrEmpty(itemName) || cachedPickups == null) return;
 
-        PickupItem[] pickups = FindObjectsByType<PickupItem>(FindObjectsSortMode.None);
+        PickupItem[] pickups = cachedPickups;
         int found = 0;
         float closestDist = float.MaxValue;
         PickupItem closest = null;
@@ -271,9 +294,9 @@ public class CompassUI : MonoBehaviour
 
     void ScanForCreatures(string creatureName, string objectiveDesc)
     {
-        if (string.IsNullOrEmpty(creatureName)) return;
+        if (string.IsNullOrEmpty(creatureName) || cachedCreatures == null) return;
 
-        CreatureAI[] creatures = FindObjectsByType<CreatureAI>(FindObjectsSortMode.None);
+        CreatureAI[] creatures = cachedCreatures;
         float closestDist = float.MaxValue;
         CreatureAI closest = null;
         int found = 0;

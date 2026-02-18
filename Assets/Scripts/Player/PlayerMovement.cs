@@ -31,6 +31,10 @@ public class PlayerMovement : MonoBehaviour
     private float verticalVelocity;
     private float footstepTimer;
 
+    // Cached terrain data for footstep ground detection
+    private Terrain cachedTerrain;
+    private TerrainData cachedTerrainData;
+
     void Start()
     {
         controller = GetComponent<CharacterController>();
@@ -39,6 +43,10 @@ public class PlayerMovement : MonoBehaviour
 
         standControllerHeight = controller.height;
         standCenterY = controller.center.y;
+
+        cachedTerrain = Terrain.activeTerrain;
+        if (cachedTerrain != null)
+            cachedTerrainData = cachedTerrain.terrainData;
     }
 
     void Update()
@@ -194,35 +202,44 @@ public class PlayerMovement : MonoBehaviour
         // Raycast down to find ground object
         if (Physics.Raycast(transform.position + Vector3.up * 0.2f, Vector3.down, out RaycastHit hit, 2f))
         {
-            // Check object name/tag for common surface types
-            string name = hit.collider.gameObject.name.ToLower();
-            if (name.Contains("wood") || name.Contains("floor") || name.Contains("plank") ||
-                name.Contains("cabin") || name.Contains("bridge"))
+            // Check object name using case-insensitive comparison (avoids ToLower() string alloc)
+            string objName = hit.collider.gameObject.name;
+            if (ContainsAnyCI(objName, "wood", "floor", "plank", "cabin", "bridge"))
                 return GroundType.Wood;
-            if (name.Contains("stone") || name.Contains("rock") || name.Contains("cave") ||
-                name.Contains("path") || name.Contains("road"))
+            if (ContainsAnyCI(objName, "stone", "rock", "cave", "path", "road"))
                 return GroundType.Stone;
 
-            // Check if we're on terrain — use texture splatmap
-            Terrain terrain = hit.collider.GetComponent<Terrain>();
-            if (terrain != null)
-                return GetTerrainGroundType(terrain, hit.point);
+            // Check if we're on terrain — use cached reference
+            if (cachedTerrain != null && hit.collider.gameObject == cachedTerrain.gameObject)
+                return GetTerrainGroundType(hit.point);
         }
 
-        return GroundType.Grass; // Default outdoor surface
+        return GroundType.Grass;
     }
 
-    GroundType GetTerrainGroundType(Terrain terrain, Vector3 worldPos)
+    static bool ContainsAnyCI(string source, params string[] terms)
     {
-        TerrainData data = terrain.terrainData;
-        if (data.alphamapLayers == 0) return GroundType.Grass;
+        for (int i = 0; i < terms.Length; i++)
+        {
+            if (source.IndexOf(terms[i], System.StringComparison.OrdinalIgnoreCase) >= 0)
+                return true;
+        }
+        return false;
+    }
 
-        // Convert world position to terrain-local coordinates
-        Vector3 terrainPos = worldPos - terrain.transform.position;
-        int mapX = Mathf.Clamp(Mathf.RoundToInt(terrainPos.x / data.size.x * data.alphamapWidth), 0, data.alphamapWidth - 1);
-        int mapZ = Mathf.Clamp(Mathf.RoundToInt(terrainPos.z / data.size.z * data.alphamapHeight), 0, data.alphamapHeight - 1);
+    // Pre-allocated splatmap buffer to avoid per-call allocation
+    private float[,,] splatmapBuffer;
 
-        float[,,] splatmap = data.GetAlphamaps(mapX, mapZ, 1, 1);
+    GroundType GetTerrainGroundType(Vector3 worldPos)
+    {
+        if (cachedTerrainData == null || cachedTerrainData.alphamapLayers == 0)
+            return GroundType.Grass;
+
+        Vector3 terrainPos = worldPos - cachedTerrain.transform.position;
+        int mapX = Mathf.Clamp(Mathf.RoundToInt(terrainPos.x / cachedTerrainData.size.x * cachedTerrainData.alphamapWidth), 0, cachedTerrainData.alphamapWidth - 1);
+        int mapZ = Mathf.Clamp(Mathf.RoundToInt(terrainPos.z / cachedTerrainData.size.z * cachedTerrainData.alphamapHeight), 0, cachedTerrainData.alphamapHeight - 1);
+
+        float[,,] splatmap = cachedTerrainData.GetAlphamaps(mapX, mapZ, 1, 1);
 
         // Find the dominant texture layer
         int dominantLayer = 0;
@@ -236,15 +253,15 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
-        // Map terrain layer names to ground types
-        if (dominantLayer < data.terrainLayers.Length)
+        // Map terrain layer names to ground types (case-insensitive, no alloc)
+        if (dominantLayer < cachedTerrainData.terrainLayers.Length)
         {
-            string layerName = data.terrainLayers[dominantLayer].name.ToLower();
-            if (layerName.Contains("rock") || layerName.Contains("stone") || layerName.Contains("gravel"))
+            string layerName = cachedTerrainData.terrainLayers[dominantLayer].name;
+            if (ContainsAnyCI(layerName, "rock", "stone", "gravel"))
                 return GroundType.Stone;
-            if (layerName.Contains("wood") || layerName.Contains("plank"))
+            if (ContainsAnyCI(layerName, "wood", "plank"))
                 return GroundType.Wood;
-            if (layerName.Contains("dirt") || layerName.Contains("mud") || layerName.Contains("sand"))
+            if (ContainsAnyCI(layerName, "dirt", "mud", "sand"))
                 return GroundType.Default;
         }
 

@@ -35,13 +35,13 @@ public class EquipmentHUD : MonoBehaviour
         if (!anyEquipped) return;
 
         weaponText.text = equip.EquippedWeapon != null
-            ? "Weapon: " + equip.EquippedWeapon.itemName + " (+" + equip.EquippedWeapon.damageBonus + " dmg)"
+            ? $"Weapon: {equip.EquippedWeapon.itemName} (+{equip.EquippedWeapon.damageBonus} dmg)"
             : "";
         toolText.text = equip.EquippedTool != null
-            ? "Tool: " + equip.EquippedTool.itemName
+            ? $"Tool: {equip.EquippedTool.itemName}"
             : "";
         armorText.text = equip.EquippedArmor != null
-            ? "Armor: " + equip.EquippedArmor.itemName + " (+" + equip.EquippedArmor.defenseBonus + " def)"
+            ? $"Armor: {equip.EquippedArmor.itemName} (+{equip.EquippedArmor.defenseBonus} def)"
             : "";
     }
 

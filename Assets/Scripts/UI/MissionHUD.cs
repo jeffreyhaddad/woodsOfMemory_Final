@@ -1,9 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Text;
 
 public class MissionHUD : MonoBehaviour
 {
+    private static readonly StringBuilder sb = new StringBuilder(256);
     private MissionManager missionManager;
     private TextMeshProUGUI missionTitle;
     private TextMeshProUGUI objectiveText;
@@ -101,14 +103,15 @@ public class MissionHUD : MonoBehaviour
 
         missionTitle.text = mission.missionName;
 
-        string objectives = "";
+        sb.Clear();
         for (int i = 0; i < mission.objectives.Length; i++)
         {
             MissionObjective obj = mission.objectives[i];
-            string check = obj.IsCompleted ? "<color=#66ff66>[Done]</color> " : "- ";
-            objectives += check + obj.GetProgressText() + "\n";
+            if (i > 0) sb.Append('\n');
+            sb.Append(obj.IsCompleted ? "<color=#66ff66>[Done]</color> " : "- ");
+            sb.Append(obj.GetProgressText());
         }
-        objectiveText.text = objectives.TrimEnd('\n');
+        objectiveText.text = sb.ToString();
     }
 
     void ShowBanner(string text)

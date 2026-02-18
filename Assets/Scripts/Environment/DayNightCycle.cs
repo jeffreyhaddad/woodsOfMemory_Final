@@ -44,7 +44,23 @@ public class DayNightCycle : MonoBehaviour
     [Tooltip("Enable star particles at night")]
     public bool enableStars = true;
     private ParticleSystem starParticles;
+    private ParticleSystemRenderer starRenderer;
     private Material skyboxMat;
+
+    // Cached references
+    private Transform cachedPlayerTransform;
+    private WeatherManager cachedWeather;
+    private bool lastFogState;
+
+    // Cached shader property IDs (avoid string hash lookups every frame)
+    private static readonly int _SkyTint = Shader.PropertyToID("_SkyTint");
+    private static readonly int _Exposure = Shader.PropertyToID("_Exposure");
+    private static readonly int _AtmosphereThickness = Shader.PropertyToID("_AtmosphereThickness");
+    private static readonly int _GroundColor = Shader.PropertyToID("_GroundColor");
+    private static readonly int _BaseColor = Shader.PropertyToID("_BaseColor");
+
+    // Throttle counter for expensive updates
+    private int updateCounter;
 
     [Range(0f, 1f)]
     [Tooltip("Current time of day (0 = midnight, 0.5 = noon)")]
@@ -83,6 +99,11 @@ public class DayNightCycle : MonoBehaviour
 
         // Initialize skybox gradients/curves if not set (Reset() only runs in Editor)
         InitSkyboxDefaults();
+
+        // Cache references to avoid per-frame lookups
+        PlayerVitals pv = FindAnyObjectByType<PlayerVitals>();
+        if (pv != null) cachedPlayerTransform = pv.transform;
+        cachedWeather = WeatherManager.Instance;
 
         if (enableSkybox)
             SetupProceduralSkybox();
@@ -140,10 +161,16 @@ public class DayNightCycle : MonoBehaviour
         if (timeOfDay >= 1f)
             timeOfDay -= 1f;
 
+        updateCounter++;
+
         UpdateSun();
-        UpdateAmbientLight();
-        UpdateFog();
-        if (enableSkybox) UpdateSkybox();
+        // Throttle slow-changing visuals to every 3rd frame
+        if (updateCounter % 3 == 0)
+        {
+            UpdateAmbientLight();
+            UpdateFog();
+            if (enableSkybox) UpdateSkybox();
+        }
         if (enableStars) UpdateStars();
     }
 
@@ -169,15 +196,18 @@ public class DayNightCycle : MonoBehaviour
 
     void UpdateFog()
     {
-        RenderSettings.fog = enableFog;
+        // Only write fog bool when it changes to avoid redundant render pipeline notification
+        if (RenderSettings.fog != enableFog)
+            RenderSettings.fog = enableFog;
 
         if (!enableFog) return;
 
         float baseDensity = fogDensityCurve.Evaluate(timeOfDay);
 
         // Weather system multiplies fog density
-        if (WeatherManager.Instance != null)
-            baseDensity *= WeatherManager.Instance.FogMultiplier;
+        if (cachedWeather == null) cachedWeather = WeatherManager.Instance;
+        if (cachedWeather != null)
+            baseDensity *= cachedWeather.FogMultiplier;
 
         RenderSettings.fogDensity = baseDensity;
         RenderSettings.fogColor = fogColorGradient.Evaluate(timeOfDay);
@@ -226,13 +256,10 @@ public class DayNightCycle : MonoBehaviour
     {
         if (skyboxMat == null) return;
 
-        Color tint = skyTintGradient.Evaluate(timeOfDay);
-        skyboxMat.SetColor("_SkyTint", tint);
-        skyboxMat.SetFloat("_Exposure", skyExposureCurve.Evaluate(timeOfDay));
-        skyboxMat.SetFloat("_AtmosphereThickness", skyAtmosphereThickness.Evaluate(timeOfDay));
-
-        // Ground color follows the fog color for cohesion
-        skyboxMat.SetColor("_GroundColor", fogColorGradient.Evaluate(timeOfDay) * 0.5f);
+        skyboxMat.SetColor(_SkyTint, skyTintGradient.Evaluate(timeOfDay));
+        skyboxMat.SetFloat(_Exposure, skyExposureCurve.Evaluate(timeOfDay));
+        skyboxMat.SetFloat(_AtmosphereThickness, skyAtmosphereThickness.Evaluate(timeOfDay));
+        skyboxMat.SetColor(_GroundColor, fogColorGradient.Evaluate(timeOfDay) * 0.5f);
     }
 
     // ─── Stars ──────────────────────────────────────────────
@@ -274,18 +301,18 @@ public class DayNightCycle : MonoBehaviour
         ParticleSystem.EmissionModule emission = starParticles.emission;
         emission.rateOverTime = 0;
 
-        // Renderer
-        ParticleSystemRenderer rend = starObj.GetComponent<ParticleSystemRenderer>();
-        rend.renderMode = ParticleSystemRenderMode.Billboard;
+        // Renderer (cache for per-frame access)
+        starRenderer = starObj.GetComponent<ParticleSystemRenderer>();
+        starRenderer.renderMode = ParticleSystemRenderMode.Billboard;
         Material starMat = new Material(particleShader);
-        starMat.SetColor("_BaseColor", Color.white);
+        starMat.SetColor(_BaseColor, Color.white);
         // Additive blending for glow
         starMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
         starMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One);
         starMat.SetFloat("_Surface", 1); // Transparent
         starMat.SetOverrideTag("RenderType", "Transparent");
         starMat.renderQueue = 3000;
-        rend.material = starMat;
+        starRenderer.material = starMat;
 
         // Emit initial stars
         EmitStars();
@@ -295,9 +322,7 @@ public class DayNightCycle : MonoBehaviour
     {
         if (starParticles == null) return;
 
-        // Get player position for centering
-        PlayerVitals pv = FindAnyObjectByType<PlayerVitals>();
-        Vector3 center = pv != null ? pv.transform.position : Vector3.zero;
+        Vector3 center = cachedPlayerTransform != null ? cachedPlayerTransform.position : Vector3.zero;
         center.y += 50f;
 
         starParticles.transform.position = center;
@@ -310,51 +335,47 @@ public class DayNightCycle : MonoBehaviour
 
         // Stars visible at night, fade during dawn/dusk
         float starAlpha = 0f;
-        if (timeOfDay < 0.2f) // midnight to pre-dawn
+        if (timeOfDay < 0.2f)
             starAlpha = 1f;
-        else if (timeOfDay < 0.28f) // dawn fade out
+        else if (timeOfDay < 0.28f)
             starAlpha = 1f - ((timeOfDay - 0.2f) / 0.08f);
-        else if (timeOfDay > 0.8f) // dusk fade in
+        else if (timeOfDay > 0.8f)
             starAlpha = (timeOfDay - 0.8f) / 0.08f;
-        else
-            starAlpha = 0f;
 
         starAlpha = Mathf.Clamp01(starAlpha);
 
-        // Move star dome to follow player
-        PlayerVitals pv = FindAnyObjectByType<PlayerVitals>();
-        if (pv != null)
+        // Hide completely during day for performance
+        starParticles.gameObject.SetActive(starAlpha > 0.01f);
+        if (starAlpha <= 0.01f) return;
+
+        // Move star dome to follow player (using cached reference)
+        if (cachedPlayerTransform != null)
         {
-            Vector3 center = pv.transform.position;
+            Vector3 center = cachedPlayerTransform.position;
             center.y += 50f;
             starParticles.transform.position = center;
         }
 
         // Re-emit if particles died
-        if (starAlpha > 0f && starParticles.particleCount < 50)
+        if (starParticles.particleCount < 50)
             EmitStars();
 
-        // Control visibility via renderer
-        ParticleSystemRenderer rend = starParticles.GetComponent<ParticleSystemRenderer>();
-        if (rend != null && rend.material != null)
+        // Control visibility via cached renderer
+        if (starRenderer != null && starRenderer.material != null)
         {
-            // Try URP property first, fall back to built-in
-            if (rend.material.HasProperty("_BaseColor"))
+            if (starRenderer.material.HasProperty(_BaseColor))
             {
-                Color c = rend.material.GetColor("_BaseColor");
+                Color c = starRenderer.material.GetColor(_BaseColor);
                 c.a = starAlpha;
-                rend.material.SetColor("_BaseColor", c);
+                starRenderer.material.SetColor(_BaseColor, c);
             }
             else
             {
-                Color c = rend.material.color;
+                Color c = starRenderer.material.color;
                 c.a = starAlpha;
-                rend.material.color = c;
+                starRenderer.material.color = c;
             }
         }
-
-        // Hide completely during day for performance
-        starParticles.gameObject.SetActive(starAlpha > 0.01f);
     }
 
     // Provide sensible defaults when the component is first added in the Editor

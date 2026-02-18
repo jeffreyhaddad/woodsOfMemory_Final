@@ -26,7 +26,8 @@ public class CameraFollow : MonoBehaviour
 
     [Header("Collision")]
     public float collisionRadius = 0.2f;
-    public LayerMask collisionLayers = ~0;
+    [Tooltip("Set to only solid geometry layers (terrain, walls) — exclude triggers, creatures, pickups")]
+    public LayerMask collisionLayers = 1; // Default layer only; configure in Inspector
     [Tooltip("Speed at which camera eases back out after a collision clip")]
     public float collisionRecoverySpeed = 8f;
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -49,14 +50,29 @@ public class WorldSetup : MonoBehaviour
 
     private float respawnTimer;
     private Vector3 spawnCenter;
+    private Transform playerTransform;
+    private static Shader cachedURPLitShader;
+
+    // Shared material cache — all pickups of the same color reuse one material (enables GPU batching)
+    private static readonly Dictionary<Color, Material> sharedMaterials = new Dictionary<Color, Material>();
+    private static Material sharedTransparentMarkerMat;
 
     void Start()
     {
+        // Cache the URP Lit shader once to avoid repeated Shader.Find calls
+        if (cachedURPLitShader == null)
+        {
+            cachedURPLitShader = Shader.Find("Universal Render Pipeline/Lit");
+            if (cachedURPLitShader == null) cachedURPLitShader = Shader.Find("Standard");
+            if (cachedURPLitShader == null) cachedURPLitShader = Shader.Find("Sprites/Default");
+        }
+
         CreateItemData();
         CreateMissionTriggers();
 
         PlayerVitals pv = FindAnyObjectByType<PlayerVitals>();
-        spawnCenter = pv != null ? pv.transform.position : Vector3.zero;
+        if (pv != null) playerTransform = pv.transform;
+        spawnCenter = playerTransform != null ? playerTransform.position : Vector3.zero;
 
         SpawnResources();
         CreateNotePickups();
@@ -93,9 +109,8 @@ public class WorldSetup : MonoBehaviour
             new Vector3(0.45f, 0.45f, 0.45f)
         };
 
-        // Use current player position as center for respawns
-        PlayerVitals pv = FindAnyObjectByType<PlayerVitals>();
-        Vector3 center = pv != null ? pv.transform.position : spawnCenter;
+        // Use cached player transform for respawn center
+        Vector3 center = playerTransform != null ? playerTransform.position : spawnCenter;
 
         for (int t = 0; t < types.Length; t++)
         {
@@ -144,28 +159,27 @@ public class WorldSetup : MonoBehaviour
         marker.transform.localScale = new Vector3(1f, 3f, 1f);
         Destroy(marker.GetComponent<Collider>());
         Renderer rend = marker.GetComponent<Renderer>();
-        Material mat = CreateMaterial(new Color(1f, 1f, 0f, 0.15f));
-        // Make transparent
-        mat.SetFloat("_Surface", 1);
-        mat.SetFloat("_Blend", 0);
-        mat.SetOverrideTag("RenderType", "Transparent");
-        mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-        mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-        mat.SetInt("_ZWrite", 0);
-        mat.renderQueue = 3000;
-        rend.material = mat;
+        // Share one transparent marker material across all triggers
+        if (sharedTransparentMarkerMat == null)
+        {
+            sharedTransparentMarkerMat = new Material(cachedURPLitShader);
+            sharedTransparentMarkerMat.color = new Color(1f, 1f, 0f, 0.15f);
+            sharedTransparentMarkerMat.SetFloat("_Surface", 1);
+            sharedTransparentMarkerMat.SetFloat("_Blend", 0);
+            sharedTransparentMarkerMat.SetOverrideTag("RenderType", "Transparent");
+            sharedTransparentMarkerMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            sharedTransparentMarkerMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            sharedTransparentMarkerMat.SetInt("_ZWrite", 0);
+            sharedTransparentMarkerMat.renderQueue = 3000;
+        }
+        rend.sharedMaterial = sharedTransparentMarkerMat;
     }
 
     // ─── Resource Spawning ───────────────────────────────────
 
     void SpawnResources()
     {
-        Vector3 center = Vector3.zero;
-
-        // Use player position as center if available
-        PlayerVitals pv = FindAnyObjectByType<PlayerVitals>();
-        if (pv != null)
-            center = pv.transform.position;
+        Vector3 center = playerTransform != null ? playerTransform.position : Vector3.zero;
 
         int total = 0;
         total += SpawnResourceCluster(woodItem, woodCount, center, resourceSpawnRadius, PrimitiveType.Cylinder, new Color(0.45f, 0.25f, 0.1f), new Vector3(0.4f, 0.8f, 0.4f));
@@ -296,27 +310,25 @@ public class WorldSetup : MonoBehaviour
 
     // ─── Helpers ─────────────────────────────────────────────
 
-    Material CreateMaterial(Color color)
+    Material GetSharedMaterial(Color color)
     {
-        // Try URP Lit first, then Standard, then fall back to built-in default
-        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-        if (shader == null)
-            shader = Shader.Find("Standard");
-        if (shader == null)
-            shader = Shader.Find("Sprites/Default");
+        if (sharedMaterials.TryGetValue(color, out Material existing))
+            return existing;
 
-        Material mat = new Material(shader);
+        Material mat = new Material(cachedURPLitShader);
         mat.color = color;
-        // URP Lit uses _BaseColor instead of _Color
         if (mat.HasProperty("_BaseColor"))
             mat.SetColor("_BaseColor", color);
+        mat.enableInstancing = true;
+        sharedMaterials[color] = mat;
         return mat;
     }
 
     void ApplyColor(Renderer rend, Color color)
     {
         if (rend == null) return;
-        rend.material = CreateMaterial(color);
+        // Use sharedMaterial (not .material) to avoid creating per-renderer copies
+        rend.sharedMaterial = GetSharedMaterial(color);
     }
 
     float GetTerrainHeight(Vector3 position)

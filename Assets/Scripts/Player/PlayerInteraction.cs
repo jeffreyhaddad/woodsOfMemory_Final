@@ -14,6 +14,13 @@ public class PlayerInteraction : MonoBehaviour
     private Camera cam;
     private Interactable currentTarget;
 
+    /// <summary>Public read-only access to the current interaction target.</summary>
+    public Interactable CurrentTarget => currentTarget;
+
+    // Pre-allocated buffer for non-allocating physics query
+    private readonly Collider[] overlapBuffer = new Collider[16];
+    private int checkCounter;
+
     void Start()
     {
         cam = Camera.main;
@@ -26,7 +33,9 @@ public class PlayerInteraction : MonoBehaviour
 
     void Update()
     {
-        CheckForInteractable();
+        // Only scan every 5th frame — interaction detection doesn't need per-frame precision
+        if (++checkCounter % 5 == 0)
+            CheckForInteractable();
 
         if (currentTarget != null && Input.GetKeyDown(KeyCode.E))
         {
@@ -37,22 +46,23 @@ public class PlayerInteraction : MonoBehaviour
 
     void CheckForInteractable()
     {
-        // Find all colliders within interact distance of the player
-        Collider[] nearby = Physics.OverlapSphere(transform.position + Vector3.up * 0.5f, interactDistance);
+        // Non-allocating overlap query using pre-allocated buffer
+        int count = Physics.OverlapSphereNonAlloc(
+            transform.position + Vector3.up * 0.5f, interactDistance, overlapBuffer);
 
         Interactable closest = null;
         float closestDist = float.MaxValue;
 
-        for (int i = 0; i < nearby.Length; i++)
+        for (int i = 0; i < count; i++)
         {
             // Skip self
-            if (nearby[i].transform == transform || nearby[i].transform.IsChildOf(transform))
+            if (overlapBuffer[i].transform == transform || overlapBuffer[i].transform.IsChildOf(transform))
                 continue;
 
-            Interactable interactable = nearby[i].GetComponentInParent<Interactable>();
+            Interactable interactable = overlapBuffer[i].GetComponentInParent<Interactable>();
             if (interactable == null) continue;
 
-            float dist = Vector3.Distance(transform.position, nearby[i].transform.position);
+            float dist = Vector3.Distance(transform.position, overlapBuffer[i].transform.position);
             if (dist < closestDist)
             {
                 closestDist = dist;

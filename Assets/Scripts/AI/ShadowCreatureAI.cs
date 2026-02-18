@@ -129,6 +129,7 @@ public class ShadowCreatureAI : CreatureAI
 
     private void PickNewPatrolTarget()
     {
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
         if (TryGetRandomNavMeshPoint(transform.position, patrolRadius, out Vector3 point))
             agent.SetDestination(point);
     }

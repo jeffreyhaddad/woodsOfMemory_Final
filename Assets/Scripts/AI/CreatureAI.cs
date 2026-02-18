@@ -18,6 +18,7 @@ public class CreatureAI : MonoBehaviour
     public CreatureData data;
 
     protected NavMeshAgent agent;
+    protected Animator animator;
     protected CreatureState currentState = CreatureState.Idle;
     protected Transform playerTransform;
     protected float currentHealth;
@@ -28,14 +29,30 @@ public class CreatureAI : MonoBehaviour
     protected virtual void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-        agent.speed = data.moveSpeed;
-        agent.stoppingDistance = 1f;
-
+        animator = GetComponentInChildren<Animator>();
         currentHealth = data.maxHealth;
 
         PlayerVitals playerVitals = FindAnyObjectByType<PlayerVitals>();
         if (playerVitals != null)
             playerTransform = playerVitals.transform;
+
+        // If NavMeshAgent can't find a valid NavMesh, disable it so the creature still exists
+        if (agent != null && agent.isOnNavMesh)
+        {
+            agent.speed = data.moveSpeed;
+            agent.stoppingDistance = 1f;
+        }
+        else if (agent != null)
+        {
+            Debug.LogWarning($"[CreatureAI] {gameObject.name} not on NavMesh — disabling agent. Bake a NavMesh!");
+            agent.enabled = false;
+        }
+    }
+
+    protected void PlayAnimation(string clipName, float crossFade = 0.25f)
+    {
+        if (animator == null) return;
+        animator.CrossFadeInFixedTime(clipName, crossFade);
     }
 
     private float deathTimer;

@@ -33,6 +33,28 @@ public class CreatureSpawner : MonoBehaviour
         PlayerVitals pv = FindAnyObjectByType<PlayerVitals>();
         if (pv != null)
             playerTransform = pv.transform;
+
+        // Auto-load prefabs if none assigned in Inspector
+        TryLoadPrefabsFromPath();
+    }
+
+    void TryLoadPrefabsFromPath()
+    {
+#if UNITY_EDITOR
+        var deer = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Creatures/DeerPrefab.prefab");
+        var shadow = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Creatures/ShadowCreaturePrefab.prefab");
+
+        if (deer != null && (wildlifePrefabs == null || wildlifePrefabs.Length == 0))
+        {
+            wildlifePrefabs = new GameObject[] { deer };
+            Debug.Log("[CreatureSpawner] Auto-loaded Deer prefab from Assets/Prefabs/Creatures/");
+        }
+        if (shadow != null && shadowPrefab == null)
+        {
+            shadowPrefab = shadow;
+            Debug.Log("[CreatureSpawner] Auto-loaded Shadow Creature prefab from Assets/Prefabs/Creatures/");
+        }
+#endif
     }
 
     private float cleanupTimer;
@@ -72,7 +94,11 @@ public class CreatureSpawner : MonoBehaviour
 
     void SpawnWildlife()
     {
-        if (wildlifePrefabs.Length == 0) return;
+        if (wildlifePrefabs == null || wildlifePrefabs.Length == 0)
+        {
+            Debug.LogWarning("[CreatureSpawner] No wildlife prefabs assigned!");
+            return;
+        }
 
         if (TryGetSpawnPoint(wildlifeSpawnRadius, out Vector3 point))
         {
@@ -84,6 +110,7 @@ public class CreatureSpawner : MonoBehaviour
                 ai.OnCreatureDeath += c => activeWildlife.Remove(c);
                 activeWildlife.Add(ai);
             }
+            Debug.Log($"[CreatureSpawner] Spawned wildlife '{go.name}' at {point}, active renderers: {go.GetComponentsInChildren<Renderer>().Length}");
         }
     }
 
@@ -105,6 +132,7 @@ public class CreatureSpawner : MonoBehaviour
 
     bool TryGetSpawnPoint(float radius, out Vector3 result)
     {
+        // First try NavMesh-based spawn
         for (int i = 0; i < 10; i++)
         {
             Vector2 rnd = Random.insideUnitCircle.normalized * Random.Range(minSpawnDistance, radius);
@@ -116,6 +144,23 @@ public class CreatureSpawner : MonoBehaviour
                 return true;
             }
         }
+
+        // Fallback: use terrain height if NavMesh isn't baked
+        Terrain terrain = Terrain.activeTerrain;
+        if (terrain != null)
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                Vector2 rnd = Random.insideUnitCircle.normalized * Random.Range(minSpawnDistance, radius);
+                Vector3 candidate = playerTransform.position + new Vector3(rnd.x, 0, rnd.y);
+                float terrainY = terrain.SampleHeight(candidate) + terrain.transform.position.y;
+                candidate.y = terrainY;
+                result = candidate;
+                return true;
+            }
+        }
+
+        Debug.LogWarning("[CreatureSpawner] Could not find spawn point! Is NavMesh baked or Terrain present?");
         result = Vector3.zero;
         return false;
     }

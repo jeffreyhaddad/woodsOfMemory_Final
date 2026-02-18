@@ -69,9 +69,9 @@ public class PlayerMovement : MonoBehaviour
         bool grounded = controller.isGrounded;
         animator.SetBool("isGrounded", grounded);
 
-        // Reset vertical velocity when grounded
+        // Stick to ground when grounded — stronger downward push prevents hovering
         if (grounded && verticalVelocity < 0f)
-            verticalVelocity = -2f;
+            verticalVelocity = -8f;
 
         // Jump — works from any state (idle, walk, run, crouch)
         bool canJump = vitals == null || vitals.CanJump;

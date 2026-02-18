@@ -9,16 +9,24 @@ public class WildlifeAI : CreatureAI
     [Tooltip("Patrol radius around spawn point")]
     public float patrolRadius = 15f;
 
+    [Header("Animation Clip Names")]
+    public string idleAnim = "DEERALL_Idle";
+    public string walkAnim = "DEERALL_WalkForward";
+    public string runAnim = "DEERALL_Gallop";
+    public string grazeAnim = "DEERALL_Grazing";
+
     private Vector3 spawnPoint;
     private float idleTimer;
     private float fleePathTimer;
+    private CreatureState lastState;
 
     protected override void Start()
     {
         base.Start();
         spawnPoint = transform.position;
-        currentState = CreatureState.Patrol;
-        PickNewPatrolTarget();
+        currentState = CreatureState.Idle;
+        PlayAnimation(idleAnim);
+        lastState = currentState;
     }
 
     protected override void UpdateBehavior(float distToPlayer)
@@ -35,20 +43,21 @@ public class WildlifeAI : CreatureAI
                 if (distToPlayer < data.detectionRange)
                 {
                     currentState = CreatureState.Flee;
-                    agent.speed = data.runSpeed;
+                    if (agent != null && agent.enabled) agent.speed = data.runSpeed;
                 }
                 break;
 
             case CreatureState.Patrol:
-                if (!agent.pathPending && agent.remainingDistance < 1f)
+                if (agent != null && agent.enabled && !agent.pathPending && agent.remainingDistance < 1f)
                 {
                     currentState = CreatureState.Idle;
+                    // Randomly graze or just idle
                     idleTimer = idleDuration + Random.Range(-1f, 1f);
                 }
                 if (distToPlayer < data.detectionRange)
                 {
                     currentState = CreatureState.Flee;
-                    agent.speed = data.runSpeed;
+                    if (agent != null && agent.enabled) agent.speed = data.runSpeed;
                 }
                 break;
 
@@ -57,21 +66,40 @@ public class WildlifeAI : CreatureAI
                 if (distToPlayer > data.fleeRange)
                 {
                     currentState = CreatureState.Patrol;
-                    agent.speed = data.moveSpeed;
+                    if (agent != null && agent.enabled) agent.speed = data.moveSpeed;
                     PickNewPatrolTarget();
                 }
                 break;
+        }
+
+        // Play animation on state change
+        if (currentState != lastState)
+        {
+            switch (currentState)
+            {
+                case CreatureState.Idle:
+                    PlayAnimation(Random.value > 0.5f ? grazeAnim : idleAnim);
+                    break;
+                case CreatureState.Patrol:
+                    PlayAnimation(walkAnim);
+                    break;
+                case CreatureState.Flee:
+                    PlayAnimation(runAnim);
+                    break;
+            }
+            lastState = currentState;
         }
     }
 
     protected override void OnDamaged()
     {
         currentState = CreatureState.Flee;
-        agent.speed = data.runSpeed;
+        if (agent != null && agent.enabled) agent.speed = data.runSpeed;
     }
 
     private void PickNewPatrolTarget()
     {
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
         if (TryGetRandomNavMeshPoint(spawnPoint, patrolRadius, out Vector3 point))
             agent.SetDestination(point);
     }
@@ -79,8 +107,8 @@ public class WildlifeAI : CreatureAI
     private void FleeFromPlayer()
     {
         if (playerTransform == null) return;
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
 
-        // Throttle flee path recalculation to every 0.5 seconds
         fleePathTimer -= Time.deltaTime;
         if (fleePathTimer > 0f) return;
         fleePathTimer = 0.5f;

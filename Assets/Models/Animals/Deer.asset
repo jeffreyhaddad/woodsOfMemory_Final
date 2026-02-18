@@ -13,12 +13,20 @@ MonoBehaviour:
   m_Name: Deer
   m_EditorClassIdentifier: Assembly-CSharp::CreatureData
   creatureName: Deer
-  maxHealth: 50
-  moveSpeed: 3
-  runSpeed: 7
-  detectionRange: 12
-  fleeRange: 25
-  attackRange: 2
+  maxHealth: 40
+  moveSpeed: 3.5
+  runSpeed: 9
+  detectionRange: 20
+  fleeRange: 40
+  attackRange: 0
   damage: 0
   attackCooldown: 2
-  lootTable: []
+  lootTable:
+  - item: {fileID: 11400000, guid: 81df90575b1804527bec00c8fc60caf7, type: 2}
+    minQuantity: 1
+    maxQuantity: 2
+    dropChance: 0.8
+  - item: {fileID: 11400000, guid: 7e47de62c01894eab82afcffd0af9aa4, type: 2}
+    minQuantity: 1
+    maxQuantity: 1
+    dropChance: 0.6

@@ -268,6 +268,7 @@ public class CompassUI : MonoBehaviour
 
         for (int i = 0; i < pickups.Length; i++)
         {
+            if (pickups[i] == null) continue;
             if (pickups[i].itemData == null) continue;
             if (pickups[i].itemData.itemName != itemName) continue;
 

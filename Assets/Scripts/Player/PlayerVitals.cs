@@ -29,6 +29,7 @@ public class PlayerVitals : MonoBehaviour
     private float health;
     private float hunger;
     private float stamina;
+    private float damageFlashTimer;
     private bool isExhausted = false;
 
     public float Health
@@ -143,6 +144,7 @@ public class PlayerVitals : MonoBehaviour
             amount = Mathf.Max(1f, amount - EquipmentManager.Instance.ArmorDefenseBonus);
 
         Health -= amount;
+        damageFlashTimer = 0.4f;
         SFXManager.PlayHurt();
 
         // Low health heartbeat warning
@@ -156,5 +158,15 @@ public class PlayerVitals : MonoBehaviour
     public void Eat(float hungerRestore)
     {
         Hunger += hungerRestore;
+    }
+
+    void OnGUI()
+    {
+        if (damageFlashTimer <= 0f) return;
+        damageFlashTimer -= Time.deltaTime;
+        float alpha = (damageFlashTimer / 0.4f) * 0.5f;
+        GUI.color = new Color(1f, 0f, 0f, alpha);
+        GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
+        GUI.color = Color.white;
     }
 }

@@ -24,6 +24,7 @@ public class CreatureAI : MonoBehaviour
     protected float currentHealth;
 
     public float CurrentHealth => currentHealth;
+    public CreatureState State => currentState;
     public event Action<CreatureAI> OnCreatureDeath;
 
     protected virtual void Start()

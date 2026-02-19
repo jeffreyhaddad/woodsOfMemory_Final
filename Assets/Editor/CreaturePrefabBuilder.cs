@@ -7,6 +7,7 @@ public class CreaturePrefabBuilder : EditorWindow
 {
     private const string DeerFBXPath = "Assets/Models/Animals/Deer/Deer.fbx";
     private const string ShadowFBXPath = "Assets/Models/Animals/ShadowMonster/ShadowMonster.fbx";
+    private const string ShadowAnimFolder = "Assets/Models/Animals/ShadowMonster/Animations";
     private const string DeerDataPath = "Assets/Models/Animals/Deer.asset";
     private const string ShadowDataPath = "Assets/Models/Animals/ShadowCreature.asset";
     private const string PrefabFolder = "Assets/Prefabs/Creatures";
@@ -123,16 +124,19 @@ public class CreaturePrefabBuilder : EditorWindow
 
         GameObject root = new GameObject("ShadowCreaturePrefab");
 
-        // Instantiate model as child
+        // Instantiate model as child — scale 1 so Unity's file-unit conversion is respected
         GameObject model = (GameObject)PrefabUtility.InstantiatePrefab(modelAsset);
         model.transform.SetParent(root.transform, false);
-        model.transform.localScale = Vector3.one * 0.01f;
+        model.transform.localScale = Vector3.one * 1.0f;
         model.name = "ShadowModel";
 
         // Create and apply material
         CreateAndApplyMaterial(model, "ShadowMat",
             "Assets/Models/Animals/ShadowMonster/Textures/MONSTER SHADOW _ Low _low_poli_BaseColor.png",
             "Assets/Models/Animals/ShadowMonster/Textures/MONSTER SHADOW _ Low _low_poli_Normal.png");
+
+        // Procedural animation — no clips needed, works on any mesh
+        model.AddComponent<ShadowCreatureHoverAnimator>();
 
         // Add NavMeshAgent
         NavMeshAgent agent = root.AddComponent<NavMeshAgent>();
@@ -143,11 +147,12 @@ public class CreaturePrefabBuilder : EditorWindow
         agent.radius = 0.6f;
         agent.height = 2.0f;
 
-        // Add CapsuleCollider
+        // Add CapsuleCollider — trigger so it doesn't physically push the player
         CapsuleCollider col = root.AddComponent<CapsuleCollider>();
-        col.center = new Vector3(0f, 1.0f, 0f);
-        col.radius = 0.6f;
-        col.height = 2.0f;
+        col.center = new Vector3(0f, 1.5f, 0f);
+        col.radius = 1.0f;
+        col.height = 3.5f;
+        col.isTrigger = true;
 
         // Add ShadowCreatureAI and assign data
         ShadowCreatureAI ai = root.AddComponent<ShadowCreatureAI>();
@@ -215,6 +220,62 @@ public class CreaturePrefabBuilder : EditorWindow
 
         EditorUtility.SetDirty(controller);
         Debug.Log("[CreaturePrefabBuilder] Created AnimatorController with " + clips.Count + " clips: " + controllerPath);
+    }
+
+    /// <summary>Builds an AnimatorController by loading one clip from each FBX in a folder.</summary>
+    static void BuildAnimatorControllerFromFolder(string folderPath, string controllerName)
+    {
+        string controllerPath = PrefabFolder + "/" + controllerName + ".controller";
+
+        string[] guids = AssetDatabase.FindAssets("t:Object", new[] { folderPath });
+        var clips = new System.Collections.Generic.List<(AnimationClip clip, string stateName)>();
+
+        foreach (string guid in guids)
+        {
+            string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+            if (!assetPath.EndsWith(".fbx", System.StringComparison.OrdinalIgnoreCase)) continue;
+
+            // Use filename (no extension) as the state name so "zombie idle.fbx" → state "zombie idle"
+            string stateName = System.IO.Path.GetFileNameWithoutExtension(assetPath);
+
+            // Set clip to loop before loading
+            SetClipsToLoop(assetPath);
+
+            Object[] allAssets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
+            foreach (Object asset in allAssets)
+            {
+                if (asset is AnimationClip clip && !clip.name.StartsWith("__preview__"))
+                {
+                    clips.Add((clip, stateName));
+                    break; // one clip per FBX
+                }
+            }
+        }
+
+        if (clips.Count == 0)
+        {
+            Debug.LogWarning("[CreaturePrefabBuilder] No animation clips found in " + folderPath);
+            return;
+        }
+
+        // Delete existing controller so CreateAnimatorControllerAtPath doesn't silently no-op
+        if (AssetDatabase.LoadAssetAtPath<AnimatorController>(controllerPath) != null)
+            AssetDatabase.DeleteAsset(controllerPath);
+
+        AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(controllerPath);
+        AnimatorStateMachine rootSM = controller.layers[0].stateMachine;
+
+        bool firstState = true;
+        foreach ((AnimationClip clip, string stateName) in clips)
+        {
+            AnimatorState state = rootSM.AddState(stateName);
+            state.motion = clip;
+            if (firstState) { rootSM.defaultState = state; firstState = false; }
+        }
+
+        EditorUtility.SetDirty(controller);
+        string stateNames = string.Join(", ", clips.ConvertAll(c => c.stateName));
+        Debug.Log($"[CreaturePrefabBuilder] Created ShadowCreatureAnimController with {clips.Count} clips: [{stateNames}]");
     }
 
     static void SetClipsToLoop(string fbxPath)

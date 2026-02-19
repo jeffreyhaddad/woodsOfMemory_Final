@@ -4,14 +4,15 @@ public class PlayerCombat : MonoBehaviour
 {
     [Header("Melee Attack")]
     public float attackDamage = 25f;
-    public float attackRange = 3f;
-    public float attackRadius = 1f;
+    public float attackRange = 3.5f;
+    public float attackRadius = 2f;
     public float attackCooldown = 0.5f;
     public float attackStaminaCost = 5f;
 
     private float lastAttackTime = -999f;
     private PlayerVitals vitals;
     private float hitFlashTimer;
+    private static readonly Color impactColor = new Color(1f, 1f, 0.85f); // warm white
 
     void Start()
     {
@@ -38,35 +39,40 @@ public class PlayerCombat : MonoBehaviour
 
     void Attack()
     {
-        Vector3 origin = transform.position + Vector3.up * 1.5f;
-        Vector3 direction = transform.forward;
+        // Overlap sphere in front of + at chest height — hits anything in range
+        // regardless of exact facing angle, far more reliable than SphereCast
+        Vector3 center = transform.position
+                       + transform.forward * (attackRange * 0.6f)
+                       + Vector3.up * 1.2f;
 
-        // Total damage = base + equipped weapon bonus
         float totalDamage = attackDamage;
         if (EquipmentManager.Instance != null)
             totalDamage += EquipmentManager.Instance.WeaponDamageBonus;
 
-        // SphereCast — wider hit area, much easier to land melee hits
-        if (Physics.SphereCast(origin, attackRadius, direction, out RaycastHit hit, attackRange))
+        Collider[] hits = Physics.OverlapSphere(center, attackRadius);
+        foreach (Collider col in hits)
         {
-            CreatureAI creature = hit.collider.GetComponentInParent<CreatureAI>();
+            CreatureAI creature = col.GetComponentInParent<CreatureAI>();
             if (creature != null)
             {
                 creature.TakeDamage(totalDamage);
-                hitFlashTimer = 0.3f;
+                hitFlashTimer = 0.15f;
                 SFXManager.PlayHit();
+                break; // one creature per swing
             }
         }
     }
 
     void OnGUI()
     {
-        // Brief red flash when you land a hit
+        // Brief warm-white impact flash when you land a hit
         if (hitFlashTimer > 0f)
         {
             hitFlashTimer -= Time.deltaTime;
-            float alpha = hitFlashTimer / 0.3f * 0.3f;
-            GUI.color = new Color(1f, 0f, 0f, alpha);
+            // Spike quickly then fade — peaks at full duration, gone by 0
+            float t = hitFlashTimer / 0.15f;
+            float alpha = Mathf.Sin(t * Mathf.PI) * 0.45f;
+            GUI.color = new Color(impactColor.r, impactColor.g, impactColor.b, alpha);
             GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
             GUI.color = Color.white;
         }

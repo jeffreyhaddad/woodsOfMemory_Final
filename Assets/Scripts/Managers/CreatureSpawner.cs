@@ -127,6 +127,8 @@ public class CreatureSpawner : MonoBehaviour
                 ai.OnCreatureDeath += c => activeShadows.Remove(c);
                 activeShadows.Add(ai);
             }
+            Vector3 ws = go.transform.lossyScale;
+            Debug.Log($"[CreatureSpawner] Spawned shadow creature '{go.name}' at {point}, renderers: {go.GetComponentsInChildren<Renderer>().Length}, worldScale: ({ws.x:F3}, {ws.y:F3}, {ws.z:F3})");
         }
     }
 

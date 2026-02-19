@@ -26,6 +26,12 @@ public class ShadowCreatureAI : CreatureAI
         base.Start();
         dayNight = FindAnyObjectByType<DayNightCycle>();
         cachedPlayerVitals = playerTransform != null ? playerTransform.GetComponent<PlayerVitals>() : null;
+
+        Debug.Log($"[ShadowCreatureAI] Start — playerTransform={playerTransform}, " +
+                  $"cachedPlayerVitals={cachedPlayerVitals}, dayNight={dayNight}, " +
+                  $"IsNight={(dayNight != null ? dayNight.IsNight.ToString() : "N/A")}, " +
+                  $"agent.isOnNavMesh={agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh}");
+
         currentState = CreatureState.Patrol;
         PickNewPatrolTarget();
         ActiveInstances.Add(this);
@@ -38,6 +44,12 @@ public class ShadowCreatureAI : CreatureAI
 
     protected override void UpdateBehavior(float distToPlayer)
     {
+        // Use flat (XZ) distance so terrain height differences don't inflate the range
+        float hDist = playerTransform != null
+            ? new Vector2(transform.position.x - playerTransform.position.x,
+                          transform.position.z - playerTransform.position.z).magnitude
+            : float.MaxValue;
+
         // Dissolve at sunrise
         if (dayNight != null && !dayNight.IsNight)
         {
@@ -53,15 +65,15 @@ public class ShadowCreatureAI : CreatureAI
                 if (!agent.pathPending && agent.remainingDistance < 1.5f)
                     PickNewPatrolTarget();
 
-                if (distToPlayer < data.detectionRange)
+                if (hDist < data.detectionRange)
                 {
                     currentState = CreatureState.Chase;
                     agent.speed = data.runSpeed;
+                    Debug.Log($"[ShadowCreatureAI] → Chase (hDist={hDist:F1})");
                 }
                 break;
 
             case CreatureState.Chase:
-                // Throttle path recalculation — only update when player moves significantly or timer expires
                 if (playerTransform != null)
                 {
                     pathUpdateTimer -= Time.deltaTime;
@@ -74,13 +86,15 @@ public class ShadowCreatureAI : CreatureAI
                     }
                 }
 
-                if (distToPlayer <= data.attackRange)
+                if (hDist <= data.attackRange)
                 {
                     currentState = CreatureState.Attack;
-                    agent.isStopped = true;
                     attackTimer = 0f;
+                    // Don't stop the agent — keep creeping so distance stays close
+                    agent.speed = data.moveSpeed * 0.3f;
+                    Debug.Log($"[ShadowCreatureAI] → Attack (hDist={hDist:F1}, attackRange={data.attackRange})");
                 }
-                else if (distToPlayer > data.detectionRange * 1.5f)
+                else if (hDist > data.detectionRange * 1.5f)
                 {
                     currentState = CreatureState.Patrol;
                     agent.speed = data.moveSpeed;
@@ -89,9 +103,11 @@ public class ShadowCreatureAI : CreatureAI
                 break;
 
             case CreatureState.Attack:
-                // Face the player
+                // Keep slowly creeping toward player so we stay in range
                 if (playerTransform != null)
                 {
+                    agent.SetDestination(playerTransform.position);
+
                     Vector3 lookDir = (playerTransform.position - transform.position).normalized;
                     lookDir.y = 0;
                     if (lookDir.sqrMagnitude > 0.001f)
@@ -101,21 +117,27 @@ public class ShadowCreatureAI : CreatureAI
                 attackTimer -= Time.deltaTime;
                 if (attackTimer <= 0f)
                 {
+                    if (cachedPlayerVitals == null && playerTransform != null)
+                        cachedPlayerVitals = playerTransform.GetComponent<PlayerVitals>();
                     if (cachedPlayerVitals != null)
+                    {
+                        Debug.Log($"[ShadowCreatureAI] Dealing {data.damage} damage to player");
                         cachedPlayerVitals.TakeDamage(data.damage);
-
+                    }
+                    else
+                        Debug.LogWarning("[ShadowCreatureAI] cachedPlayerVitals is null — cannot deal damage!");
                     attackTimer = attackInterval;
                 }
 
-                // Player moved out of range — chase again
-                if (distToPlayer > data.attackRange * 1.5f)
+                // Player escaped — resume full chase
+                if (hDist > data.attackRange * 2f)
                 {
                     currentState = CreatureState.Chase;
-                    agent.isStopped = false;
                     agent.speed = data.runSpeed;
                 }
                 break;
         }
+
     }
 
     protected override void OnDamaged()

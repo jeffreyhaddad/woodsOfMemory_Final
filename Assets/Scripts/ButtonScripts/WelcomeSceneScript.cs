@@ -6,7 +6,7 @@ public class WelcomeSceneScript :MonoBehaviour
 
     public void LoadGameScene()
     {
-        SceneManager.LoadScene("GameScene");
+        SceneManager.LoadScene("TerrainScene");
     }
 
     public void QuitGame()

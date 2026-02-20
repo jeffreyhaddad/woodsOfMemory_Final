@@ -891,7 +891,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 1
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -5842,6 +5842,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0aa59e409ba57f04d9f2535890718662, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FinalBoneFireScript
+  player: {fileID: 0}
+  fireEffect: {fileID: 0}
+  smokeEffect: {fileID: 0}
+  lightEffect: {fileID: 0}
+  isLit: 0
+  isPlayerInRange: 0
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -6735,7 +6741,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 1
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -12255,7 +12261,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 1
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -16973,6 +16979,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0aa59e409ba57f04d9f2535890718662, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  player: {fileID: 0}
+  fireEffect: {fileID: 0}
+  smokeEffect: {fileID: 0}
+  lightEffect: {fileID: 0}
+  isLit: 0
+  isPlayerInRange: 0
 --- !u!4 &2096573984 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4807864878203656, guid: 57479594e34ed7342a5460cfffef0ddc, type: 3}

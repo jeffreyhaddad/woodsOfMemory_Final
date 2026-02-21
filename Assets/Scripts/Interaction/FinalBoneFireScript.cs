@@ -1,28 +1,29 @@
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class FinalBoneFireScript : MonoBehaviour
 {
-
     Inventory inventory;
     public GameObject player;
 
-    public ParticleSystem[] particuleSystems;
-    public ParticleSystem fireEffect;
-    public ParticleSystem smokeEffect;
-    public ParticleSystem lightEffect;
-
     public bool isLit;
-
     public bool isPlayerInRange;
+
+    private ParticleSystem fireEffect;
+    private ParticleSystem smokeEffect;
+    private ParticleSystem emberEffect;
 
     public void Start()
     {
         inventory = FindAnyObjectByType<Inventory>();
-        particuleSystems = GetComponentsInChildren<ParticleSystem>();
-        fireEffect = particuleSystems[0];
-        smokeEffect = particuleSystems[2];
-        lightEffect = particuleSystems[1];
+
+        Transform fireT  = transform.Find("FireEffect");
+        Transform smokeT = transform.Find("SmokeEffect");
+        Transform lightT = transform.Find("LightEffect");
+
+        if (fireT  != null) fireEffect  = fireT.GetComponent<ParticleSystem>();
+        if (smokeT != null) smokeEffect = smokeT.GetComponent<ParticleSystem>();
+        if (lightT != null) emberEffect = lightT.GetComponent<ParticleSystem>();
+
         isLit = false;
     }
     public void OnTriggerEnter(Collider other)
@@ -43,13 +44,12 @@ public class FinalBoneFireScript : MonoBehaviour
     {
         ItemData wood = ItemRegistry.Get("Wood");
         ItemData stone = ItemRegistry.Get("Stone");
-        if (isPlayerInRange && Input.GetKeyDown(KeyCode.E) && inventory.HasItem(wood, 3) && inventory.HasItem(stone,2) && !isLit)
+        if (isPlayerInRange && Input.GetKeyDown(KeyCode.E) && inventory.HasItem(wood, 3) && inventory.HasItem(stone, 2) && !isLit)
         {
-            fireEffect.Play();
-            lightEffect.Play();
-            smokeEffect.Play();
+            if (fireEffect  != null) fireEffect.Play();
+            if (smokeEffect != null) smokeEffect.Play();
+            if (emberEffect != null) emberEffect.Play();
             isLit = true;
-
         }
     }
 }

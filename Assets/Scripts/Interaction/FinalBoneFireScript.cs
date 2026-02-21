@@ -10,7 +10,7 @@ public class FinalBoneFireScript : MonoBehaviour
 
     private ParticleSystem fireEffect;
     private ParticleSystem smokeEffect;
-    private ParticleSystem emberEffect;
+  
 
     public void Start()
     {
@@ -18,11 +18,11 @@ public class FinalBoneFireScript : MonoBehaviour
 
         Transform fireT  = transform.Find("FireEffect");
         Transform smokeT = transform.Find("SmokeEffect");
-        Transform lightT = transform.Find("LightEffect");
+       
 
         if (fireT  != null) fireEffect  = fireT.GetComponent<ParticleSystem>();
         if (smokeT != null) smokeEffect = smokeT.GetComponent<ParticleSystem>();
-        if (lightT != null) emberEffect = lightT.GetComponent<ParticleSystem>();
+        
 
         isLit = false;
     }
@@ -48,7 +48,7 @@ public class FinalBoneFireScript : MonoBehaviour
         {
             if (fireEffect  != null) fireEffect.Play();
             if (smokeEffect != null) smokeEffect.Play();
-            if (emberEffect != null) emberEffect.Play();
+            
             isLit = true;
         }
     }

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class FinalBoneFireScript : MonoBehaviour
@@ -50,6 +51,15 @@ public class FinalBoneFireScript : MonoBehaviour
             if (smokeEffect != null) smokeEffect.Play();
             
             isLit = true;
+            inventory.RemoveItem(wood, 3);
+            inventory.RemoveItem(stone, 2);
+            StartCoroutine(ReportFireLit());
+            //MissionManager.Instance.ReportLocationReached("campfire");
         }
+    }
+    private IEnumerator ReportFireLit()
+    {
+        yield return new WaitForSeconds(1.5f);
+        MissionManager.Instance.ReportLocationReached("campfire");
     }
 }

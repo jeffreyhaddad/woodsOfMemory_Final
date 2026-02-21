@@ -267,7 +267,8 @@ public class MissionManager : MonoBehaviour
             new MissionObjective[]
             {
                 MakeObjective("Collect Wood", ObjectiveType.CollectItem, "Wood", "", 5),
-                MakeObjective("Collect Stone", ObjectiveType.CollectItem, "Stone", "", 3)
+                MakeObjective("Collect Stone", ObjectiveType.CollectItem, "Stone", "", 3),
+                MakeObjective("Light a campfire",ObjectiveType.ReachLocation,"campfire","",1)
             }));
 
         // Mission 2: Hunting for Sustenance

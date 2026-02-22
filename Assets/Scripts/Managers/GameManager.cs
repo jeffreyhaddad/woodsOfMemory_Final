@@ -59,6 +59,8 @@ public class GameManager : MonoBehaviour
             gameObject.AddComponent<WeatherManager>();
         if (MusicManager.Instance == null)
             gameObject.AddComponent<MusicManager>();
+        if (FindAnyObjectByType<MapSystem>() == null)
+            gameObject.AddComponent<MapSystem>();
 
         // Torch light on the player (listens to EquipmentManager)
         if (PlayerVitals != null && PlayerVitals.GetComponent<TorchLight>() == null)

@@ -33,7 +33,6 @@ public class MissionTransitionUI : MonoBehaviour
     private GameObject dividerObj;
     private TextMeshProUGUI nextLabel;
     private TextMeshProUGUI nextMissionName;
-    private TextMeshProUGUI nextDescription;
     private TextMeshProUGUI continueHint;
 
     // Transition state
@@ -98,7 +97,9 @@ public class MissionTransitionUI : MonoBehaviour
         string subtitle = (completedIndex >= 0 && completedIndex < chapterSubtitles.Length)
             ? chapterSubtitles[completedIndex] : "";
 
-        chapterLabel.text = "Chapter " + chapterNum + " Complete";
+        chapterLabel.text = subtitle.Length > 0
+            ? "Chapter " + chapterNum + ": " + subtitle
+            : "Chapter " + chapterNum + " Complete";
         missionNameText.text = completedMission.missionName;
         descriptionText.text = completedMission.description;
         statusLabel.text = "All objectives completed";
@@ -107,7 +108,6 @@ public class MissionTransitionUI : MonoBehaviour
         dividerObj.SetActive(false);
         nextLabel.gameObject.SetActive(false);
         nextMissionName.gameObject.SetActive(false);
-        nextDescription.gameObject.SetActive(false);
         continueHint.gameObject.SetActive(false);
 
         // Pause game
@@ -209,7 +209,9 @@ public class MissionTransitionUI : MonoBehaviour
             ? chapterSubtitles[completedIndex + 1] : "";
 
         // Transition the text
-        chapterLabel.text = "Chapter " + nextChapter;
+        chapterLabel.text = subtitle.Length > 0
+            ? "Chapter " + nextChapter + ": " + subtitle
+            : "Chapter " + nextChapter;
         missionNameText.text = next.missionName;
         descriptionText.text = next.description;
         statusLabel.text = "";
@@ -227,7 +229,6 @@ public class MissionTransitionUI : MonoBehaviour
         }
         nextMissionName.text = objectives.TrimEnd('\n');
 
-        nextDescription.gameObject.SetActive(false);
         continueHint.gameObject.SetActive(true);
         continueHint.text = "Click or press Space to continue...";
 
@@ -240,16 +241,16 @@ public class MissionTransitionUI : MonoBehaviour
         canvasGroup.alpha = 0f;
         panelObj.SetActive(false);
 
-        // Resume game
+        // Always restore directly — StartTransition set these without going through
+        // SetState, so GameManager.CurrentState is still Playing. Calling
+        // SetState(Playing) would short-circuit the guard and never restore anything.
+        Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        PlayerMovement.inputBlocked = false;
+
         if (GameManager.Instance != null)
             GameManager.Instance.SetState(GameState.Playing);
-        else
-        {
-            Time.timeScale = 1f;
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-            PlayerMovement.inputBlocked = false;
-        }
     }
 
     // ─── UI Construction ──────────────────────────────────────
@@ -316,10 +317,6 @@ public class MissionTransitionUI : MonoBehaviour
         // Next mission objectives list
         nextMissionName = CreateText(panelObj.transform, "", 17, new Color(0.85f, 0.83f, 0.78f),
             new Vector2(0, -120), new Vector2(500, 100), FontStyles.Normal, TextAlignmentOptions.Center);
-
-        // (unused, kept for flexibility)
-        nextDescription = CreateText(panelObj.transform, "", 15, new Color(0.6f, 0.58f, 0.55f),
-            new Vector2(0, -170), new Vector2(500, 40), FontStyles.Normal, TextAlignmentOptions.Center);
 
         // Continue hint
         continueHint = CreateText(panelObj.transform, "", 14, new Color(0.5f, 0.5f, 0.5f),

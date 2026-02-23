@@ -61,6 +61,8 @@ public class GameManager : MonoBehaviour
             gameObject.AddComponent<MusicManager>();
         if (FindAnyObjectByType<MapSystem>() == null)
             gameObject.AddComponent<MapSystem>();
+        if (FindAnyObjectByType<CookingProgressUI>() == null)
+            gameObject.AddComponent<CookingProgressUI>();
 
         // Torch light on the player (listens to EquipmentManager)
         if (PlayerVitals != null && PlayerVitals.GetComponent<TorchLight>() == null)

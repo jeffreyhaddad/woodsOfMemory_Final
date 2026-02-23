@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -220,21 +221,21 @@ public class SaveManager : MonoBehaviour
             }
         }
 
-        // Journal - restore discovered entries
+        // Journal - restore discovered entries (O(n) dictionary lookup instead of O(n²) nested loop)
         JournalManager journal = JournalManager.Instance;
         if (journal != null && journal.startingEntries != null)
         {
+            var entryByTitle = new Dictionary<string, JournalEntry>(journal.startingEntries.Length);
+            for (int j = 0; j < journal.startingEntries.Length; j++)
+            {
+                JournalEntry e = journal.startingEntries[j];
+                if (e != null && !entryByTitle.ContainsKey(e.title))
+                    entryByTitle[e.title] = e;
+            }
             for (int i = 0; i < data.discoveredEntryTitles.Count; i++)
             {
-                string title = data.discoveredEntryTitles[i];
-                for (int j = 0; j < journal.startingEntries.Length; j++)
-                {
-                    if (journal.startingEntries[j] != null && journal.startingEntries[j].title == title)
-                    {
-                        journal.AddEntry(journal.startingEntries[j]);
-                        break;
-                    }
-                }
+                if (entryByTitle.TryGetValue(data.discoveredEntryTitles[i], out JournalEntry found))
+                    journal.AddEntry(found);
             }
         }
 

@@ -134,6 +134,8 @@ GameObject:
   - component: {fileID: 42602812}
   - component: {fileID: 42602817}
   - component: {fileID: 42602818}
+  - component: {fileID: 42602819}
+  - component: {fileID: 42602820}
   m_Layer: 0
   m_Name: Managers
   m_TagString: Untagged
@@ -252,15 +254,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb983eef30af64487be71199b617fef3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WakeUpSequence
-  bedPosition: {x: 615, y: 108, z: 455}
-  bedRotation: {x: 0, y: 0, z: 0}
-  fadeInDuration: 1.5
-  pauseBeforeIntro: 1
-  stage: 0
-  timer: 0
-  introDismissed: 0
-  fadeCanvas: {fileID: 0}
-  fadeImage: {fileID: 0}
+--- !u!114 &42602819
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 42602811}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deb775ed2748f44729d18b7d8e657ae0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IntroSequenceManager
+--- !u!114 &42602820
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 42602811}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 232d280a1e62847e5b47f88c9160acb8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CreatureSpawner
+  wildlifePrefabs: []
+  maxWildlife: 8
+  wildlifeSpawnRadius: 80
+  wildlifeSpawnInterval: 30
+  shadowPrefab: {fileID: 0}
+  maxShadowCreatures: 5
+  shadowSpawnRadius: 50
+  shadowSpawnInterval: 15
+  minSpawnDistance: 30
 --- !u!1001 &60986618
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5762,60 +5788,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1860984272}
   m_SourcePrefab: {fileID: 100100000, guid: 3126ca4c2d851514395844c0d42d1ca7, type: 3}
---- !u!1 &398444760
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 398444762}
-  - component: {fileID: 398444761}
-  m_Layer: 0
-  m_Name: CreatureSpawner
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &398444761
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 398444760}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 232d280a1e62847e5b47f88c9160acb8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CreatureSpawner
-  wildlifePrefabs:
-  - {fileID: 1318655962629054076, guid: 17ffee35eed7b428aa66b55d2c051011, type: 3}
-  maxWildlife: 8
-  wildlifeSpawnRadius: 80
-  wildlifeSpawnInterval: 30
-  shadowPrefab: {fileID: 417115913710611975, guid: fcf1f0ce5d7fd40919765eccbb072081, type: 3}
-  maxShadowCreatures: 5
-  shadowSpawnRadius: 50
-  shadowSpawnInterval: 15
-  minSpawnDistance: 2
---- !u!4 &398444762
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 398444760}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 629.479, y: 105.48775, z: 479.1153}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &462944768
 GameObject:
   m_ObjectHideFlags: 0
@@ -10700,8 +10672,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0aa59e409ba57f04d9f2535890718662, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FinalBoneFireScript
-  isLit: 0
-  isPlayerInRange: 0
+  promptText: Interact
+  requiredWood: 3
+  requiredStone: 2
+  cookDuration: 6
+  burnDuration: 30
 --- !u!114 &648054477
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10714,8 +10689,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0aa59e409ba57f04d9f2535890718662, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FinalBoneFireScript
-  isLit: 0
-  isPlayerInRange: 0
+  promptText: Interact
+  requiredWood: 3
+  requiredStone: 2
+  cookDuration: 6
+  burnDuration: 30
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -11573,31 +11551,31 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 628
+      value: 612.26
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 105.92
+      value: 106.01
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 500
+      value: 452.9
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.64278764
+      value: -0.6196749
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.76604444
+      value: 0.78485864
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -11605,7 +11583,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 100
+      value: 256.585
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -11818,8 +11796,8 @@ MonoBehaviour:
   walkSpeed: 10
   runSpeed: 20
   crouchSpeed: 5
-  jumpForce: 5
-  gravity: -9.81
+  jumpForce: 7
+  gravity: -10
   fallMultiplier: 2.5
   crouchControllerHeight: 1.2
   crouchCenterY: 0.6
@@ -12182,5 +12160,4 @@ SceneRoots:
   - {fileID: 1609092969}
   - {fileID: 1705413059}
   - {fileID: 1915845847}
-  - {fileID: 398444762}
   - {fileID: 1124666906}

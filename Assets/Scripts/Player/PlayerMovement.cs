@@ -11,10 +11,10 @@ public class PlayerMovement : MonoBehaviour
     public float crouchSpeed = 5f;
 
     [Header("Jump Settings")]
-    public float jumpForce = 5f;
-    public float gravity = -9.81f;
+    public float jumpForce = 12f;
+    public float gravity = -20f;
     [Tooltip("Extra gravity multiplier when falling for snappier landings")]
-    public float fallMultiplier = 2.5f;
+    public float fallMultiplier = 1.5f;
 
     [Header("Crouch Settings")]
     public float crouchControllerHeight = 1.2f;
@@ -227,8 +227,10 @@ public class PlayerMovement : MonoBehaviour
         return false;
     }
 
-    // Pre-allocated splatmap buffer to avoid per-call allocation
-    private float[,,] splatmapBuffer;
+    // Cache last splatmap query to avoid allocating a new float[,,] on every footstep
+    private int lastSplatMapX = -1;
+    private int lastSplatMapZ = -1;
+    private int lastDominantLayer = -1;
 
     GroundType GetTerrainGroundType(Vector3 worldPos)
     {
@@ -239,18 +241,28 @@ public class PlayerMovement : MonoBehaviour
         int mapX = Mathf.Clamp(Mathf.RoundToInt(terrainPos.x / cachedTerrainData.size.x * cachedTerrainData.alphamapWidth), 0, cachedTerrainData.alphamapWidth - 1);
         int mapZ = Mathf.Clamp(Mathf.RoundToInt(terrainPos.z / cachedTerrainData.size.z * cachedTerrainData.alphamapHeight), 0, cachedTerrainData.alphamapHeight - 1);
 
-        float[,,] splatmap = cachedTerrainData.GetAlphamaps(mapX, mapZ, 1, 1);
-
-        // Find the dominant texture layer
-        int dominantLayer = 0;
-        float maxWeight = 0f;
-        for (int i = 0; i < splatmap.GetLength(2); i++)
+        // Re-query only when the grid cell changes — avoids GetAlphamaps allocation on every footstep
+        int dominantLayer;
+        if (mapX == lastSplatMapX && mapZ == lastSplatMapZ && lastDominantLayer >= 0)
         {
-            if (splatmap[0, 0, i] > maxWeight)
+            dominantLayer = lastDominantLayer;
+        }
+        else
+        {
+            float[,,] splatmap = cachedTerrainData.GetAlphamaps(mapX, mapZ, 1, 1);
+            dominantLayer = 0;
+            float maxWeight = 0f;
+            for (int i = 0; i < splatmap.GetLength(2); i++)
             {
-                maxWeight = splatmap[0, 0, i];
-                dominantLayer = i;
+                if (splatmap[0, 0, i] > maxWeight)
+                {
+                    maxWeight = splatmap[0, 0, i];
+                    dominantLayer = i;
+                }
             }
+            lastSplatMapX = mapX;
+            lastSplatMapZ = mapZ;
+            lastDominantLayer = dominantLayer;
         }
 
         // Map terrain layer names to ground types (case-insensitive, no alloc)

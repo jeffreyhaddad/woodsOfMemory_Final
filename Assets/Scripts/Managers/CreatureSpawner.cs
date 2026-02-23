@@ -63,12 +63,14 @@ public class CreatureSpawner : MonoBehaviour
     {
         if (playerTransform == null) return;
 
-        // Clean up destroyed creatures periodically instead of every frame
+        // Clean up destroyed creatures periodically (manual reverse loop avoids closure allocation)
         cleanupTimer -= Time.deltaTime;
         if (cleanupTimer <= 0f)
         {
-            activeWildlife.RemoveAll(c => c == null);
-            activeShadows.RemoveAll(c => c == null);
+            for (int i = activeWildlife.Count - 1; i >= 0; i--)
+                if (activeWildlife[i] == null) activeWildlife.RemoveAt(i);
+            for (int i = activeShadows.Count - 1; i >= 0; i--)
+                if (activeShadows[i] == null) activeShadows.RemoveAt(i);
             cleanupTimer = 5f;
         }
 
@@ -110,7 +112,7 @@ public class CreatureSpawner : MonoBehaviour
                 ai.OnCreatureDeath += c => activeWildlife.Remove(c);
                 activeWildlife.Add(ai);
             }
-            Debug.Log($"[CreatureSpawner] Spawned wildlife '{go.name}' at {point}, active renderers: {go.GetComponentsInChildren<Renderer>().Length}");
+            Debug.Log($"[CreatureSpawner] Spawned wildlife '{go.name}' at {point}");
         }
     }
 
@@ -127,8 +129,7 @@ public class CreatureSpawner : MonoBehaviour
                 ai.OnCreatureDeath += c => activeShadows.Remove(c);
                 activeShadows.Add(ai);
             }
-            Vector3 ws = go.transform.lossyScale;
-            Debug.Log($"[CreatureSpawner] Spawned shadow creature '{go.name}' at {point}, renderers: {go.GetComponentsInChildren<Renderer>().Length}, worldScale: ({ws.x:F3}, {ws.y:F3}, {ws.z:F3})");
+            Debug.Log($"[CreatureSpawner] Spawned shadow creature '{go.name}' at {point}");
         }
     }
 

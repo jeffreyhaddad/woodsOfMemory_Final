@@ -369,17 +369,14 @@ public class InventoryUI : MonoBehaviour
         GameObject campfire = new GameObject("Campfire");
         campfire.transform.position = pos;
 
-        // Visual base — dark cylinder
+        // Visual base — dark cylinder (shared material, created once)
         GameObject baseObj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         baseObj.transform.SetParent(campfire.transform, false);
         baseObj.transform.localScale = new Vector3(0.8f, 0.1f, 0.8f);
         Destroy(baseObj.GetComponent<Collider>());
-        Renderer baseRend = baseObj.GetComponent<Renderer>();
-        Material baseMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-        baseMat.color = new Color(0.15f, 0.1f, 0.05f);
-        baseRend.material = baseMat;
+        baseObj.GetComponent<Renderer>().sharedMaterial = GetCampfireBaseMat();
 
-        // Log pieces
+        // Log pieces (shared material, created once)
         for (int i = 0; i < 4; i++)
         {
             GameObject log = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -395,10 +392,7 @@ public class InventoryUI : MonoBehaviour
                 angle,
                 0f);
             Destroy(log.GetComponent<Collider>());
-            Renderer logRend = log.GetComponent<Renderer>();
-            Material logMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-            logMat.color = new Color(0.35f, 0.2f, 0.08f);
-            logRend.material = logMat;
+            log.GetComponent<Renderer>().sharedMaterial = GetCampfireLogMat();
         }
 
         // Point light — warm flickering glow
@@ -435,8 +429,38 @@ public class InventoryUI : MonoBehaviour
         SFXManager.PlayCraft();
     }
 
+    // ─── Campfire static caches ────────────────────────────────
+    // Materials and AudioClip are shared across all placed campfires to avoid
+    // repeated Shader.Find() + new Material() + 130k-float audio buffer each time.
+
+    private static Material s_campfireBaseMat;
+    private static Material s_campfireLogMat;
+    private static AudioClip s_crackleClip;
+
+    static Material GetCampfireBaseMat()
+    {
+        if (s_campfireBaseMat == null)
+        {
+            s_campfireBaseMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
+            s_campfireBaseMat.color = new Color(0.15f, 0.1f, 0.05f);
+        }
+        return s_campfireBaseMat;
+    }
+
+    static Material GetCampfireLogMat()
+    {
+        if (s_campfireLogMat == null)
+        {
+            s_campfireLogMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
+            s_campfireLogMat.color = new Color(0.35f, 0.2f, 0.08f);
+        }
+        return s_campfireLogMat;
+    }
+
     AudioClip GenerateCrackleClip()
     {
+        if (s_crackleClip != null) return s_crackleClip;
+
         int sampleRate = 22050;
         int length = sampleRate * 3; // 3-second loop
         float[] samples = new float[length];
@@ -460,9 +484,9 @@ public class InventoryUI : MonoBehaviour
 
         Random.state = prevState;
 
-        AudioClip clip = AudioClip.Create("Crackle", length, 1, sampleRate, false);
-        clip.SetData(samples, 0);
-        return clip;
+        s_crackleClip = AudioClip.Create("Crackle", length, 1, sampleRate, false);
+        s_crackleClip.SetData(samples, 0);
+        return s_crackleClip;
     }
 
     void CreateCampfireParticles(GameObject obj)

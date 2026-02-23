@@ -65,6 +65,14 @@ public class CompassUI : MonoBehaviour
             return;
         }
 
+        // Cache sort delegate once — captures playerTransform but avoids re-allocating a closure each sort
+        _distCompare = (a, b) =>
+        {
+            float da = (a.position - playerTransform.position).sqrMagnitude;
+            float db = (b.position - playerTransform.position).sqrMagnitude;
+            return da.CompareTo(db);
+        };
+
         BuildUI();
         scanTimer = 0f; // Scan immediately
     }
@@ -194,11 +202,11 @@ public class CompassUI : MonoBehaviour
                     break;
 
                 case ObjectiveType.CollectItem:
-                    ScanForPickups(obj.targetItemName, obj.description);
+                    ScanForPickups(obj.targetItemName);
                     break;
 
                 case ObjectiveType.KillCreature:
-                    ScanForCreatures(obj.targetCreatureName, obj.description);
+                    ScanForCreatures(obj.targetCreatureName);
                     break;
 
                 case ObjectiveType.CraftItem:
@@ -212,25 +220,29 @@ public class CompassUI : MonoBehaviour
             }
         }
 
-        // Sort by distance so closest targets get shown first
-        trackedTargets.Sort((a, b) =>
-        {
-            float da = Vector3.Distance(playerTransform.position, a.position);
-            float db = Vector3.Distance(playerTransform.position, b.position);
-            return da.CompareTo(db);
-        });
+        // Sort by distance so closest targets get shown first (cached delegate, sqrMagnitude avoids sqrt)
+        trackedTargets.Sort(_distCompare);
     }
 
     // Cached arrays to avoid FindObjectsByType allocations every scan
     private MissionTrigger[] cachedTriggers;
+    private string[] cachedTriggerNamesLower; // pre-computed lowercase to avoid ToLower() each scan
     private PickupItem[] cachedPickups;
     private CreatureAI[] cachedCreatures;
     private float fullScanTimer;
     private const float fullScanInterval = 10f; // Re-find all objects every 10s
 
+    // Cached sort delegate — avoids closure re-allocation every ScanForTargets call
+    private System.Comparison<TrackedTarget> _distCompare;
+
     void RefreshCaches()
     {
         cachedTriggers = FindObjectsByType<MissionTrigger>(FindObjectsSortMode.None);
+        // Pre-compute lowercase names once so ScanForTriggers never calls ToLower()
+        cachedTriggerNamesLower = new string[cachedTriggers.Length];
+        for (int i = 0; i < cachedTriggers.Length; i++)
+            cachedTriggerNamesLower[i] = cachedTriggers[i] != null ? cachedTriggers[i].locationName.ToLower() : "";
+
         cachedPickups = FindObjectsByType<PickupItem>(FindObjectsSortMode.None);
         cachedCreatures = FindObjectsByType<CreatureAI>(FindObjectsSortMode.None);
     }
@@ -241,11 +253,12 @@ public class CompassUI : MonoBehaviour
         for (int i = 0; i < cachedTriggers.Length; i++)
         {
             if (cachedTriggers[i] == null) continue;
-            // Match cabin triggers to cabin objectives, exit to exit objectives
-            string locName = cachedTriggers[i].locationName.ToLower();
-            string desc = objectiveDesc.ToLower();
-            if (desc.Contains(locName) || desc.Contains("cabin") && locName.Contains("cabin")
-                || desc.Contains("exit") && locName.Contains("exit"))
+            // Use pre-computed lowercase name; compare objectiveDesc without allocating a new string
+            string locName = cachedTriggerNamesLower[i];
+            bool match = objectiveDesc.IndexOf(locName, System.StringComparison.OrdinalIgnoreCase) >= 0
+                || (objectiveDesc.IndexOf("cabin", System.StringComparison.OrdinalIgnoreCase) >= 0 && locName.Contains("cabin"))
+                || (objectiveDesc.IndexOf("exit", System.StringComparison.OrdinalIgnoreCase) >= 0 && locName.Contains("exit"));
+            if (match)
             {
                 trackedTargets.Add(new TrackedTarget
                 {
@@ -257,7 +270,7 @@ public class CompassUI : MonoBehaviour
         }
     }
 
-    void ScanForPickups(string itemName, string objectiveDesc)
+    void ScanForPickups(string itemName)
     {
         if (string.IsNullOrEmpty(itemName) || cachedPickups == null) return;
 
@@ -293,7 +306,7 @@ public class CompassUI : MonoBehaviour
         }
     }
 
-    void ScanForCreatures(string creatureName, string objectiveDesc)
+    void ScanForCreatures(string creatureName)
     {
         if (string.IsNullOrEmpty(creatureName) || cachedCreatures == null) return;
 

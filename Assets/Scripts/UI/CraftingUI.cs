@@ -25,7 +25,11 @@ public class CraftingUI : MonoBehaviour
 
     // Category tabs
     private Button[] tabButtons;
+    private Image[]  tabButtonImages; // cached to avoid GetComponent every refresh
     private ItemCategory? activeFilter = null;
+
+    // Cached to avoid FindAnyObjectByType every time the panel opens
+    private PlayerMovement cachedPlayerMovement;
 
     // Scroll
     private ScrollRect recipeScroll;
@@ -36,6 +40,7 @@ public class CraftingUI : MonoBehaviour
     void Start()
     {
         inventory = FindAnyObjectByType<Inventory>();
+        cachedPlayerMovement = FindAnyObjectByType<PlayerMovement>();
 
         if (inventory == null)
         {
@@ -93,10 +98,9 @@ public class CraftingUI : MonoBehaviour
         PlayerMovement.inputBlocked = true;
 
         // Stop player animation immediately so character doesn't keep walking
-        PlayerMovement pm = FindAnyObjectByType<PlayerMovement>();
-        if (pm != null)
+        if (cachedPlayerMovement != null)
         {
-            Animator anim = pm.GetComponentInChildren<Animator>();
+            Animator anim = cachedPlayerMovement.GetComponentInChildren<Animator>();
             if (anim != null)
             {
                 anim.SetFloat("Speed", 0f);
@@ -309,11 +313,12 @@ public class CraftingUI : MonoBehaviour
     void RefreshTabColors()
     {
         ItemCategory?[] filters = { null, ItemCategory.Tool, ItemCategory.Weapon, ItemCategory.Food, ItemCategory.Resource };
-        for (int i = 0; i < tabButtons.Length && i < filters.Length; i++)
+        for (int i = 0; i < tabButtonImages.Length && i < filters.Length; i++)
         {
-            Image img = tabButtons[i].GetComponent<Image>();
             bool active = activeFilter == filters[i];
-            img.color = active ? new Color(0.4f, 0.4f, 0.15f, 0.95f) : new Color(0.25f, 0.25f, 0.25f, 0.9f);
+            tabButtonImages[i].color = active
+                ? new Color(0.4f, 0.4f, 0.15f, 0.95f)
+                : new Color(0.25f, 0.25f, 0.25f, 0.9f);
         }
     }
 
@@ -554,7 +559,8 @@ public class CraftingUI : MonoBehaviour
 
         string[] tabNames = { "All", "Tools", "Weapons", "Food", "Resources" };
         ItemCategory?[] filters = { null, ItemCategory.Tool, ItemCategory.Weapon, ItemCategory.Food, ItemCategory.Resource };
-        tabButtons = new Button[tabNames.Length];
+        tabButtons      = new Button[tabNames.Length];
+        tabButtonImages = new Image[tabNames.Length];
 
         float tabWidth = 1f / tabNames.Length;
 
@@ -589,7 +595,8 @@ public class CraftingUI : MonoBehaviour
 
             Button btn = tabObj.AddComponent<Button>();
             btn.targetGraphic = tabBg;
-            tabButtons[i] = btn;
+            tabButtons[i]      = btn;
+            tabButtonImages[i] = tabBg; // cache Image so RefreshTabColors avoids GetComponent
 
             ItemCategory? capturedFilter = filters[i];
             btn.onClick.AddListener(() => SetFilter(capturedFilter));

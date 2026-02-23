@@ -32,9 +32,9 @@ public class MissionObjective
     public string GetProgressText()
     {
         if (objectiveType == ObjectiveType.SurviveNight)
-            return description + (IsCompleted ? " (Done)" : "");
+            return IsCompleted ? $"{description} (Done)" : description;
 
-        return description + " (" + currentCount + "/" + targetCount + ")";
+        return $"{description} ({currentCount}/{targetCount})";
     }
 
     public void Reset()

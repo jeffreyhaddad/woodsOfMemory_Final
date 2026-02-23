@@ -11,16 +11,27 @@ public class PickupItem : Interactable
     [Tooltip("How many of this item to give")]
     public int quantity = 1;
 
+    private Inventory inventory;
+
+    // Shared across all pickup instances — FindAnyObjectByType is only called once
+    // regardless of how many pickups exist in the scene.
+    private static Inventory sharedInventory;
+
     void Awake()
     {
         if (itemData != null && (string.IsNullOrEmpty(promptText) || promptText == "Interact"))
             promptText = "Pick up " + itemData.itemName;
     }
 
+    void Start()
+    {
+        if (sharedInventory == null)
+            sharedInventory = FindAnyObjectByType<Inventory>();
+        inventory = sharedInventory;
+    }
+
     public override void OnInteract()
     {
-        Inventory inventory = FindAnyObjectByType<Inventory>();
-
         if (inventory == null)
         {
             Debug.LogWarning("No Inventory found in scene!");

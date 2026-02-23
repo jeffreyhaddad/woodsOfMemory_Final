@@ -57,6 +57,14 @@ public class WorldSetup : MonoBehaviour
     private static readonly Dictionary<Color, Material> sharedMaterials = new Dictionary<Color, Material>();
     private static Material sharedTransparentMarkerMat;
 
+    void OnDestroy()
+    {
+        // Clear static material caches so they don't accumulate across editor play sessions
+        sharedMaterials.Clear();
+        sharedTransparentMarkerMat = null;
+        cachedURPLitShader = null;
+    }
+
     void Start()
     {
         // Cache the URP Lit shader once to avoid repeated Shader.Find calls

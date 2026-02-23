@@ -27,11 +27,6 @@ public class ShadowCreatureAI : CreatureAI
         dayNight = FindAnyObjectByType<DayNightCycle>();
         cachedPlayerVitals = playerTransform != null ? playerTransform.GetComponent<PlayerVitals>() : null;
 
-        Debug.Log($"[ShadowCreatureAI] Start — playerTransform={playerTransform}, " +
-                  $"cachedPlayerVitals={cachedPlayerVitals}, dayNight={dayNight}, " +
-                  $"IsNight={(dayNight != null ? dayNight.IsNight.ToString() : "N/A")}, " +
-                  $"agent.isOnNavMesh={agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh}");
-
         currentState = CreatureState.Patrol;
         PickNewPatrolTarget();
         ActiveInstances.Add(this);
@@ -69,7 +64,6 @@ public class ShadowCreatureAI : CreatureAI
                 {
                     currentState = CreatureState.Chase;
                     agent.speed = data.runSpeed;
-                    Debug.Log($"[ShadowCreatureAI] → Chase (hDist={hDist:F1})");
                 }
                 break;
 
@@ -92,7 +86,6 @@ public class ShadowCreatureAI : CreatureAI
                     attackTimer = 0f;
                     // Don't stop the agent — keep creeping so distance stays close
                     agent.speed = data.moveSpeed * 0.3f;
-                    Debug.Log($"[ShadowCreatureAI] → Attack (hDist={hDist:F1}, attackRange={data.attackRange})");
                 }
                 else if (hDist > data.detectionRange * 1.5f)
                 {
@@ -120,10 +113,7 @@ public class ShadowCreatureAI : CreatureAI
                     if (cachedPlayerVitals == null && playerTransform != null)
                         cachedPlayerVitals = playerTransform.GetComponent<PlayerVitals>();
                     if (cachedPlayerVitals != null)
-                    {
-                        Debug.Log($"[ShadowCreatureAI] Dealing {data.damage} damage to player");
                         cachedPlayerVitals.TakeDamage(data.damage);
-                    }
                     else
                         Debug.LogWarning("[ShadowCreatureAI] cachedPlayerVitals is null — cannot deal damage!");
                     attackTimer = attackInterval;

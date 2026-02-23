@@ -290,10 +290,10 @@ public class MissionManager : MonoBehaviour
 
         // Mission 3: Exploration
         list.Add(MakeMission("Exploration",
-            "Explore the forest and discover abandoned cabins for clues.",
+            "Someone else has been in these woods. Find the second cabin.",
             new MissionObjective[]
             {
-                MakeObjective("Discover abandoned cabins", ObjectiveType.ReachLocation, "", "", 2)
+                MakeObjective("Find the second cabin", ObjectiveType.ReachLocation, "", "", 1)
             }));
 
         // Mission 4: Crafting Tools

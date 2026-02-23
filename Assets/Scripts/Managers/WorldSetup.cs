@@ -35,11 +35,18 @@ public class WorldSetup : MonoBehaviour
     public int respawnBatchSize = 5;
 
     [Header("Note Pickups")]
-    [Tooltip("World positions for discoverable story notes")]
-    public Vector3 note1Position = new Vector3(15, 0.5f, 20);
-    public Vector3 note2Position = new Vector3(75, 0.5f, 115);
-    public Vector3 note3Position = new Vector3(-55, 0.5f, 175);
-    public Vector3 note4Position = new Vector3(50, 0.5f, 80);
+    [Tooltip("World positions for the 10 discoverable story notes (entries 1-10 in JournalManager). " +
+             "Spread across the map: spawn area → forest → second cabin → exit.")]
+    public Vector3 note1Position  = new Vector3( 15,  0.5f,  20);   // Strange Markings     — near spawn
+    public Vector3 note2Position  = new Vector3( 30,  0.5f,  50);   // Day Three            — early forest
+    public Vector3 note3Position  = new Vector3( 75,  0.5f, 115);   // A Torn Letter        — near cabin 1
+    public Vector3 note4Position  = new Vector3( 50,  0.5f,  80);   // Night Whispers       — mid forest
+    public Vector3 note5Position  = new Vector3(-30,  0.5f, 100);   // They're Not Animals  — west forest
+    public Vector3 note6Position  = new Vector3(-55,  0.5f, 175);   // The Other Cabin      — near cabin 2
+    public Vector3 note7Position  = new Vector3(120,  0.5f, 160);   // The Map Fragment     — deep forest
+    public Vector3 note8Position  = new Vector3(160,  0.5f, 210);   // Almost Out           — approaching exit
+    public Vector3 note9Position  = new Vector3(180,  0.5f, 235);   // Memories Returning   — near exit
+    public Vector3 note10Position = new Vector3(195,  0.5f, 245);   // The Truth            — at exit
 
     // Cached ItemData instances
     private ItemData woodItem;
@@ -139,7 +146,7 @@ public class WorldSetup : MonoBehaviour
 
     void CreateMissionTriggers()
     {
-        CreateTrigger("CabinTrigger1", cabin1Position, cabinTriggerSize, "cabin");
+        CreateTrigger("CabinTrigger1", cabin1Position, cabinTriggerSize, "start_cabin");
         CreateTrigger("CabinTrigger2", cabin2Position, cabinTriggerSize, "cabin");
         CreateTrigger("ForestExit", exitPosition, exitTriggerSize, "exit");
 
@@ -268,9 +275,12 @@ public class WorldSetup : MonoBehaviour
             return;
         }
 
-        // Place notes at specified positions, using entries index 1-4
-        // (index 0 is "Awakening" which auto-adds on start)
-        Vector3[] notePositions = { note1Position, note2Position, note3Position, note4Position };
+        // Place notes at specified positions, using entries index 1-10
+        // (index 0 is "Awakening" which auto-adds on start / via IntroSequenceManager)
+        Vector3[] notePositions = {
+            note1Position, note2Position, note3Position, note4Position, note5Position,
+            note6Position, note7Position, note8Position, note9Position, note10Position
+        };
 
         int placed = 0;
         for (int i = 0; i < notePositions.Length; i++)

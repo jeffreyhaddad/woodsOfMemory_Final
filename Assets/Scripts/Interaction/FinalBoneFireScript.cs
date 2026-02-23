@@ -245,8 +245,8 @@ public class FinalBoneFireScript : Interactable
         item.category     = ItemCategory.Food;
         item.isStackable  = true;
         item.maxStack     = 10;
-        item.useAction    = ItemUseAction.EatFood;
-        item.useValue     = 10f; // raw gives less than cooked
+        item.useAction    = ItemUseAction.None; // must be cooked first
+        item.useValue     = 0f;
         ItemRegistry.Register(item);
         return item;
     }
@@ -263,7 +263,7 @@ public class FinalBoneFireScript : Interactable
         item.isStackable  = true;
         item.maxStack     = 10;
         item.useAction    = ItemUseAction.EatFood;
-        item.useValue     = 40f;
+        item.useValue     = 20f;
         ItemRegistry.Register(item);
         return item;
     }

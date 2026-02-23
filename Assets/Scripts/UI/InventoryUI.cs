@@ -298,7 +298,10 @@ public class InventoryUI : MonoBehaviour
         // Consumable items
         if (item.useAction == ItemUseAction.None)
         {
-            ShowFeedback("Can't use " + item.itemName);
+            string msg = item.itemName == "Venison"
+                ? "Cook Venison before eating"
+                : "Can't use " + item.itemName;
+            ShowFeedback(msg);
             return;
         }
 

@@ -141,6 +141,9 @@ public class CreatureAI : MonoBehaviour
 
     private void SpawnPickup(ItemData item, int quantity)
     {
+        // Ensure the item has its icon loaded (loot table assets bypass ItemRegistry.Register)
+        ItemRegistry.Register(item);
+
         GameObject pickupObj = new GameObject(item.itemName + " Drop");
         pickupObj.transform.position = transform.position + Vector3.up * 0.5f;
 

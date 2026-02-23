@@ -13,16 +13,41 @@ public static class ItemRegistry
     // Maps item names to icon filenames in Resources/Icons/
     private static Dictionary<string, string> iconMap = new Dictionary<string, string>
     {
+        // Raw materials
         { "Wood",           "wood" },
-        { "Stone",          "granite" },
+        { "Stone",          "stone" },
         { "Fiber",          "fiber" },
         { "Berries",        "berries" },
-        { "Herbs",          "mortar" },
-        { "Bandage",        "bandage" },
+        { "Herbs",          "herbs" },
+        { "Deer Hide",      "deer_hide" },
+        { "Venison",        "venison" },
+        { "Bone",           "bone" },
+        { "Feather",        "feather" },
+        { "Iron Ore",       "iron_ore" },
+        // Special
+        { "Lantern",        "lantern" },
+        // Tools
+        { "Stone Axe",      "stone_axe" },
+        { "Stone Pickaxe",  "stone_pickaxe" },
         { "Torch",          "torch" },
-        { "Campfire",       "survival-kit" },
-        { "Stone Axe",      "axe" },
-        { "Stone Pickaxe",  "pickaxe" },
+        { "Fishing Rod",    "fishing_rod" },
+        { "Rope",           "rope" },
+        { "Campfire",       "campfire" },
+        { "Bone Needle",    "bone_needle" },
+        // Weapons
+        { "Wooden Spear",   "wooden_spear" },
+        { "Bow",            "bow" },
+        { "Arrow",          "arrow" },
+        { "Stone Knife",    "stone_knife" },
+        // Food
+        { "Cooked Venison", "cooked_venison" },
+        { "Berry Stew",     "berry_stew" },
+        { "Herbal Tea",     "herbal_tea" },
+        // Consumables / wearables
+        { "Bandage",        "bandage" },
+        { "Leather Armor",  "leather_armor" },
+        { "Shelter Kit",    "shelter_kit" },
+        { "Fur Bedroll",    "fur_bedroll" },
     };
 
     private static Dictionary<string, Sprite> spriteCache = new Dictionary<string, Sprite>();

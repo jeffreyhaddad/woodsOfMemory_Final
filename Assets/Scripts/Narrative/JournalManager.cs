@@ -41,9 +41,13 @@ public class JournalManager : MonoBehaviour
         if (!hasValid)
             CreateDefaultEntries();
 
-        // Add starting entry (player wakes up)
-        if (startingEntries != null && startingEntries.Length > 0 && startingEntries[0] != null)
-            AddEntry(startingEntries[0]);
+        // Add starting entry (player wakes up) — skipped if IntroSequenceManager
+        // is present; it will add the entry after the player reads the intro note.
+        if (FindAnyObjectByType<IntroSequenceManager>() == null)
+        {
+            if (startingEntries != null && startingEntries.Length > 0 && startingEntries[0] != null)
+                AddEntry(startingEntries[0]);
+        }
 
         // Subscribe to mission events for auto-journal
         MissionManager mm = FindAnyObjectByType<MissionManager>();

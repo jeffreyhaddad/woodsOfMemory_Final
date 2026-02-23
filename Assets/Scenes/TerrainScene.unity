@@ -133,6 +133,7 @@ GameObject:
   - component: {fileID: 42602813}
   - component: {fileID: 42602812}
   - component: {fileID: 42602817}
+  - component: {fileID: 42602818}
   m_Layer: 0
   m_Name: Managers
   m_TagString: Untagged
@@ -239,6 +240,27 @@ MonoBehaviour:
   note2Position: {x: 75, y: 0.5, z: 115}
   note3Position: {x: -55, y: 0.5, z: 175}
   note4Position: {x: 50, y: 0.5, z: 80}
+--- !u!114 &42602818
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 42602811}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb983eef30af64487be71199b617fef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WakeUpSequence
+  bedPosition: {x: 615, y: 108, z: 455}
+  bedRotation: {x: 0, y: 0, z: 0}
+  fadeInDuration: 1.5
+  pauseBeforeIntro: 1
+  stage: 0
+  timer: 0
+  introDismissed: 0
+  fadeCanvas: {fileID: 0}
+  fadeImage: {fileID: 0}
 --- !u!1001 &60986618
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10678,7 +10700,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0aa59e409ba57f04d9f2535890718662, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FinalBoneFireScript
-  player: {fileID: 0}
   isLit: 0
   isPlayerInRange: 0
 --- !u!114 &648054477
@@ -10693,7 +10714,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0aa59e409ba57f04d9f2535890718662, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FinalBoneFireScript
-  player: {fileID: 0}
   isLit: 0
   isPlayerInRange: 0
 --- !u!1 &832575517
@@ -11557,7 +11577,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 108
+      value: 105.92
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: af10d0c825ecb496fbf6e4633938ee28, type: 3}
       propertyPath: m_LocalPosition.z
@@ -11821,8 +11841,8 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 2
-  m_Radius: 0.5
+  m_Height: 1.8
+  m_Radius: 0.3
   m_SlopeLimit: 45
   m_StepOffset: 0.3
   m_SkinWidth: 0.08

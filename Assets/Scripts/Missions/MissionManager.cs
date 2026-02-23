@@ -61,7 +61,14 @@ public class MissionManager : MonoBehaviour
         if (inventory != null)
             inventory.OnInventoryChanged += OnInventoryChanged;
 
-        // Start first mission
+        // Start first mission — deferred if IntroSequenceManager is present
+        if (FindAnyObjectByType<IntroSequenceManager>() == null)
+            StartMission(0);
+    }
+
+    /// <summary>Called by IntroSequenceManager after the intro completes.</summary>
+    public void BeginMissions()
+    {
         StartMission(0);
     }
 

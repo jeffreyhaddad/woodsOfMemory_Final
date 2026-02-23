@@ -50,22 +50,36 @@ public class CameraFollow : MonoBehaviour
         Cursor.visible = false;
     }
 
+    /// <summary>
+    /// Re-reads the target's current yaw so the camera snaps to face the same
+    /// direction. Call this after teleporting the player (e.g. intro warp).
+    /// </summary>
+    public void SyncYawWithTarget()
+    {
+        if (target != null)
+            yaw = target.eulerAngles.y;
+    }
+
     void LateUpdate()
     {
         if (target == null) return;
-        if (PlayerMovement.inputBlocked) return;
 
         // ── FOV (allow runtime tweaks) ──
         if (cam != null && cam.fieldOfView != fieldOfView)
             cam.fieldOfView = fieldOfView;
 
-        // ── Mouse Input (no smoothing = responsive) ──
-        yaw += Input.GetAxis("Mouse X") * sensitivityX;
-        pitch -= Input.GetAxis("Mouse Y") * sensitivityY;
-        pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+        if (!PlayerMovement.inputBlocked)
+        {
+            // ── Mouse Input (no smoothing = responsive) ──
+            yaw += Input.GetAxis("Mouse X") * sensitivityX;
+            pitch -= Input.GetAxis("Mouse Y") * sensitivityY;
+            pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
 
-        // ── Rotate Player Body to Match Camera Yaw ──
-        target.rotation = Quaternion.Euler(0f, yaw, 0f);
+            // ── Rotate Player Body to Match Camera Yaw ──
+            target.rotation = Quaternion.Euler(0f, yaw, 0f);
+        }
+        // When input is blocked (e.g. intro sequence), skip mouse input but
+        // still compute the camera position so it tracks the player correctly.
 
         // ── Compute Camera Position ──
         // Pivot is well above the character's head so the crosshair

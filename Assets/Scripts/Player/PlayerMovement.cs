@@ -44,6 +44,10 @@ public class PlayerMovement : MonoBehaviour
         standControllerHeight = controller.height;
         standCenterY = controller.center.y;
 
+        // Ensure root motion never physically moves the CharacterController
+        if (animator != null)
+            animator.applyRootMotion = false;
+
         cachedTerrain = Terrain.activeTerrain;
         if (cachedTerrain != null)
             cachedTerrainData = cachedTerrain.terrainData;
@@ -69,9 +73,9 @@ public class PlayerMovement : MonoBehaviour
         bool grounded = controller.isGrounded;
         animator.SetBool("isGrounded", grounded);
 
-        // Stick to ground when grounded — stronger downward push prevents hovering
+        // Stick to ground when grounded
         if (grounded && verticalVelocity < 0f)
-            verticalVelocity = -8f;
+            verticalVelocity = -2f;
 
         // Jump — works from any state (idle, walk, run, crouch)
         bool canJump = vitals == null || vitals.CanJump;

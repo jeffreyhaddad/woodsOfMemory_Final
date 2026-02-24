@@ -53,17 +53,12 @@ public class DoorInteraction : MonoBehaviour
         isOpen = !isOpen;
         targetRotation = isOpen ? openRotation : closedRotation;
         isMoving = true;
-
-        Debug.Log(isOpen ? "Door opening..." : "Door closing...");
     }
 
     void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
-        {
             isPlayerNear = true;
-            Debug.Log("Player near door - Press " + interactKey + " to interact");
-        }
     }
 
     void OnTriggerExit(Collider other)

@@ -11,12 +11,14 @@ public class PlayerCombat : MonoBehaviour
 
     private float lastAttackTime = -999f;
     private PlayerVitals vitals;
+    private Animator animator;
     private float hitFlashTimer;
     private static readonly Color impactColor = new Color(1f, 1f, 0.85f); // warm white
 
     void Start()
     {
-        vitals = GetComponent<PlayerVitals>();
+        vitals    = GetComponent<PlayerVitals>();
+        animator  = GetComponentInChildren<Animator>();
     }
 
     void Update()
@@ -39,6 +41,18 @@ public class PlayerCombat : MonoBehaviour
 
     void Attack()
     {
+        // Play weapon-appropriate attack animation
+        if (animator != null)
+        {
+            string equipped = EquipmentManager.Instance?.EquippedTool?.itemName ?? "";
+            bool hasWeapon  = EquipmentManager.Instance?.EquippedWeapon != null;
+
+            if (equipped.IndexOf("Pickaxe", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                animator.CrossFade("PickaxeAttack", 0.1f);
+            else if (hasWeapon || equipped.IndexOf("Axe", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                animator.CrossFade("AxeAttack", 0.1f);
+        }
+
         // Overlap sphere in front of + at chest height — hits anything in range
         // regardless of exact facing angle, far more reliable than SphereCast
         Vector3 center = transform.position

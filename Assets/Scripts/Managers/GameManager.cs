@@ -47,6 +47,8 @@ public class GameManager : MonoBehaviour
         // Auto-create managers if not in scene
         if (EquipmentManager.Instance == null)
             gameObject.AddComponent<EquipmentManager>();
+        if (ToolDurabilityManager.Instance == null)
+            gameObject.AddComponent<ToolDurabilityManager>();
         if (SFXManager.Instance == null)
             gameObject.AddComponent<SFXManager>();
         if (FindAnyObjectByType<EquipmentHUD>() == null)

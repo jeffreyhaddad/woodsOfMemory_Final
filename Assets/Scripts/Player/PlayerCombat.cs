@@ -41,16 +41,26 @@ public class PlayerCombat : MonoBehaviour
 
     void Attack()
     {
+        string equipped = EquipmentManager.Instance?.EquippedTool?.itemName ?? "";
+        bool hasWeapon  = EquipmentManager.Instance?.EquippedWeapon != null;
+
         // Play weapon-appropriate attack animation
         if (animator != null)
         {
-            string equipped = EquipmentManager.Instance?.EquippedTool?.itemName ?? "";
-            bool hasWeapon  = EquipmentManager.Instance?.EquippedWeapon != null;
-
             if (equipped.IndexOf("Pickaxe", System.StringComparison.OrdinalIgnoreCase) >= 0)
                 animator.CrossFade("PickaxeAttack", 0.1f);
             else if (hasWeapon || equipped.IndexOf("Axe", System.StringComparison.OrdinalIgnoreCase) >= 0)
                 animator.CrossFade("AxeAttack", 0.1f);
+        }
+
+        // Degrade durability on axe/pickaxe swings
+        if (!string.IsNullOrEmpty(equipped) && ToolDurabilityManager.Instance != null)
+        {
+            if (equipped.IndexOf("Axe", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                equipped.IndexOf("Pickaxe", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                ToolDurabilityManager.Instance.UseTool(equipped);
+            }
         }
 
         // Overlap sphere in front of + at chest height — hits anything in range

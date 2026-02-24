@@ -9,6 +9,11 @@ public class EquipmentHUD : MonoBehaviour
     private TextMeshProUGUI armorText;
     private GameObject container;
 
+    // Durability bar
+    private GameObject durabilityBarObj;
+    private Image      durabilityFill;
+    private bool       durabilitySubscribed;
+
     void Start()
     {
         BuildHUD();
@@ -19,10 +24,22 @@ public class EquipmentHUD : MonoBehaviour
         RefreshHUD();
     }
 
+    void Update()
+    {
+        // Subscribe to ToolDurabilityManager once it's available
+        if (!durabilitySubscribed && ToolDurabilityManager.Instance != null)
+        {
+            ToolDurabilityManager.Instance.OnDurabilityChanged += RefreshHUD;
+            durabilitySubscribed = true;
+        }
+    }
+
     void OnDestroy()
     {
         if (EquipmentManager.Instance != null)
             EquipmentManager.Instance.OnEquipmentChanged -= RefreshHUD;
+        if (ToolDurabilityManager.Instance != null)
+            ToolDurabilityManager.Instance.OnDurabilityChanged -= RefreshHUD;
     }
 
     void RefreshHUD()
@@ -43,6 +60,34 @@ public class EquipmentHUD : MonoBehaviour
         armorText.text = equip.EquippedArmor != null
             ? $"Armor: {equip.EquippedArmor.itemName} (+{equip.EquippedArmor.defenseBonus} def)"
             : "";
+
+        // Durability bar — only for tools with maxDurability > 0
+        string toolName = equip.EquippedTool?.itemName ?? "";
+        bool showBar = ToolDurabilityManager.Instance != null
+                    && !string.IsNullOrEmpty(toolName)
+                    && ToolDurabilityManager.Instance.HasDurability(toolName);
+
+        durabilityBarObj.SetActive(showBar);
+
+        if (showBar)
+        {
+            float frac = ToolDurabilityManager.Instance.GetFraction(toolName);
+
+            // Scale fill width by setting anchorMax.x (standard Unity fill bar)
+            durabilityFill.rectTransform.anchorMax = new Vector2(frac, 1f);
+
+            // Green → yellow → red based on remaining fraction
+            durabilityFill.color = frac > 0.5f
+                ? Color.Lerp(new Color(1f, 0.85f, 0f), new Color(0.2f, 0.85f, 0.2f), (frac - 0.5f) * 2f)
+                : Color.Lerp(new Color(0.85f, 0.1f, 0.1f), new Color(1f, 0.85f, 0f), frac * 2f);
+
+            // Resize container to show the bar row
+            container.GetComponent<RectTransform>().sizeDelta = new Vector2(220, 80);
+        }
+        else
+        {
+            container.GetComponent<RectTransform>().sizeDelta = new Vector2(220, 60);
+        }
     }
 
     void BuildHUD()
@@ -68,8 +113,40 @@ public class EquipmentHUD : MonoBehaviour
         rect.sizeDelta = new Vector2(220, 60);
 
         weaponText = CreateLine(container.transform, 0);
-        toolText = CreateLine(container.transform, 1);
-        armorText = CreateLine(container.transform, 2);
+        toolText   = CreateLine(container.transform, 1);
+        armorText  = CreateLine(container.transform, 2);
+
+        BuildDurabilityBar(container.transform);
+    }
+
+    void BuildDurabilityBar(Transform parent)
+    {
+        // Background
+        durabilityBarObj = new GameObject("DurabilityBar");
+        durabilityBarObj.transform.SetParent(parent, false);
+        Image barBg = durabilityBarObj.AddComponent<Image>();
+        barBg.color = new Color(0.15f, 0.15f, 0.15f, 0.9f);
+        barBg.raycastTarget = false;
+        RectTransform bgRect = durabilityBarObj.GetComponent<RectTransform>();
+        bgRect.anchorMin = new Vector2(0, 1);
+        bgRect.anchorMax = new Vector2(1, 1);
+        bgRect.pivot     = new Vector2(0, 1);
+        bgRect.anchoredPosition = new Vector2(8, -58);
+        bgRect.sizeDelta        = new Vector2(-16, 8);
+
+        // Fill (anchored left, width driven by anchorMax.x in RefreshHUD)
+        GameObject fillObj = new GameObject("Fill");
+        fillObj.transform.SetParent(durabilityBarObj.transform, false);
+        durabilityFill = fillObj.AddComponent<Image>();
+        durabilityFill.color = new Color(0.2f, 0.85f, 0.2f);
+        durabilityFill.raycastTarget = false;
+        RectTransform fillRect = durabilityFill.rectTransform;
+        fillRect.anchorMin  = new Vector2(0, 0);
+        fillRect.anchorMax  = new Vector2(1, 1);
+        fillRect.offsetMin  = Vector2.zero;
+        fillRect.offsetMax  = Vector2.zero;
+
+        durabilityBarObj.SetActive(false);
     }
 
     TextMeshProUGUI CreateLine(Transform parent, int index)

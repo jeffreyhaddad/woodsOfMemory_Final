@@ -25,8 +25,8 @@ public class WeaponHolder : MonoBehaviour
     [Header("Per-Item Configs (adjust offsets here)")]
     public List<ItemConfig> itemConfigs = new List<ItemConfig>
     {
-        new ItemConfig { itemContains = "Pickaxe", resourcePath = "Weapons/Pickaxe",  albedoTexture = "",                           position = Vector3.zero, rotation = new Vector3(0,  0, 0), scale = 3f },
-        new ItemConfig { itemContains = "Axe",     resourcePath = "Weapons/Axe",      albedoTexture = "",                           position = Vector3.zero, rotation = new Vector3(0,  0, 0), scale = 3f },
+        new ItemConfig { itemContains = "Pickaxe", resourcePath = "Weapons/Pickaxe",  albedoTexture = "",                           position = Vector3.zero, rotation = new Vector3(0,  0, 0), scale = 0.02f },
+        new ItemConfig { itemContains = "Axe",     resourcePath = "Weapons/Axe",      albedoTexture = "",                           position = Vector3.zero, rotation = new Vector3(0,  0, 0), scale = 0.06f },
         new ItemConfig { itemContains = "Torch",   resourcePath = "Weapons/Torch",    albedoTexture = "Weapons/torchstickColor",       position = Vector3.zero, rotation = new Vector3(90, 0, 0), scale = 50f },
         new ItemConfig { itemContains = "Lantern", resourcePath = "Weapons/Lantern",  albedoTexture = "Weapons/Lantern_AlbedoOpacity", position = Vector3.zero, rotation = new Vector3(0,  0, 0), scale = 50f },
     };
@@ -104,12 +104,42 @@ public class WeaponHolder : MonoBehaviour
         spawnedModel = Instantiate(prefab, rightHandBone);
         spawnedModel.transform.localPosition    = cfg.position;
         spawnedModel.transform.localEulerAngles = cfg.rotation;
-        spawnedModel.transform.localScale       = Vector3.one * cfg.scale;
 
         foreach (var col in spawnedModel.GetComponentsInChildren<Collider>())
             col.enabled = false;
         foreach (var lt in spawnedModel.GetComponentsInChildren<Light>())
             lt.enabled = false;
+
+        // Axe and Pickaxe: auto-size from real world-space bounds so the
+        // serialized cfg.scale value (which Unity ignores code-default changes for)
+        // cannot interfere. Target sizes are hard-coded here in metres.
+        bool isAxe     = combined.IndexOf("Axe",     System.StringComparison.OrdinalIgnoreCase) >= 0;
+        bool isPickaxe = combined.IndexOf("Pickaxe", System.StringComparison.OrdinalIgnoreCase) >= 0;
+
+        if (isAxe || isPickaxe)
+        {
+            float targetMeters = isPickaxe ? 1.2f : 0.9f;
+
+            // Measure at scale = 1 first
+            spawnedModel.transform.localScale = Vector3.one;
+
+            Bounds wb = new Bounds();
+            bool first = true;
+            foreach (var r in spawnedModel.GetComponentsInChildren<Renderer>(true))
+            {
+                if (first) { wb = r.bounds; first = false; }
+                else wb.Encapsulate(r.bounds);
+            }
+
+            float maxExtent = Mathf.Max(wb.size.x, wb.size.y, wb.size.z);
+            float autoScale = maxExtent > 0.0001f ? targetMeters / maxExtent : 1f;
+            spawnedModel.transform.localScale = Vector3.one * autoScale;
+            Debug.Log($"[WeaponHolder] Auto-sized '{prefab.name}': worldExtent={maxExtent:F3}m → localScale={autoScale:F5} (target {targetMeters}m)");
+        }
+        else
+        {
+            spawnedModel.transform.localScale = Vector3.one * cfg.scale;
+        }
 
         // If an albedoTexture path is given, build a URP material at runtime.
         // Otherwise leave the model's own materials intact (e.g. Cabin Lantern).
@@ -129,8 +159,6 @@ public class WeaponHolder : MonoBehaviour
         }
 
         var renderers = spawnedModel.GetComponentsInChildren<Renderer>(true);
-        Debug.Log($"[WeaponHolder] Spawned '{prefab.name}' — {renderers.Length} renderer(s), scale={cfg.scale}, worldPos={spawnedModel.transform.position}");
-        foreach (var r in renderers)
-            Debug.Log($"  [{r.name}] bounds={r.bounds.size} enabled={r.enabled}");
+        Debug.Log($"[WeaponHolder] Spawned '{prefab.name}' — {renderers.Length} renderer(s), worldPos={spawnedModel.transform.position}");
     }
 }

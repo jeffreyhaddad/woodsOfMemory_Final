@@ -50,4 +50,8 @@ public class ItemData : ScriptableObject
     public float damageBonus = 0f;
     [Tooltip("Damage reduction when equipped as armor (flat amount subtracted from incoming damage)")]
     public float defenseBonus = 0f;
+
+    [Header("Durability")]
+    [Tooltip("Max uses before this item breaks. 0 = indestructible.")]
+    public int maxDurability = 0;
 }

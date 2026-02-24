@@ -8,7 +8,7 @@ public class DayNightCycle : MonoBehaviour
 
     [Range(0f, 1f)]
     [Tooltip("Starting time of day (0 = midnight, 0.25 = 6AM, 0.5 = noon, 0.75 = 6PM)")]
-    public float startTimeOfDay = 0.3f;
+    public float startTimeOfDay = 0f;
 
     [Header("Sun")]
     [Tooltip("Drag the scene's Directional Light here")]
@@ -154,12 +154,10 @@ public class DayNightCycle : MonoBehaviour
         }
     }
 
+
     void Update()
     {
-        // Advance time
-        timeOfDay += Time.deltaTime / (dayLengthInMinutes * 60f);
-        if (timeOfDay >= 1f)
-            timeOfDay -= 1f;
+        // Time is frozen at midnight (timeOfDay = 0)
 
         updateCounter++;
 
@@ -382,7 +380,7 @@ public class DayNightCycle : MonoBehaviour
     void Reset()
     {
         dayLengthInMinutes = 20f;
-        startTimeOfDay = 0.3f;
+        startTimeOfDay = 0f;
         enableFog = true;
 
         // --- Sun Intensity Curve ---

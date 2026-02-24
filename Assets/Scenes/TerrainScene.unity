@@ -389,7 +389,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DayNightCycle
   dayLengthInMinutes: 20
-  startTimeOfDay: 0.3
+  startTimeOfDay: 0
   directionalLight: {fileID: 1169274349}
   sunIntensityCurve:
     serializedVersion: 2
@@ -11034,15 +11034,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 32b6c4444d0100d4b84cdf0a14ac6afa, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 605.86
+      value: 592.7
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 32b6c4444d0100d4b84cdf0a14ac6afa, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 106
+      value: 108
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 32b6c4444d0100d4b84cdf0a14ac6afa, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 464.71
+      value: 454.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 32b6c4444d0100d4b84cdf0a14ac6afa, type: 3}
       propertyPath: m_LocalRotation.w

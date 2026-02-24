@@ -270,7 +270,7 @@ public class MissionManager : MonoBehaviour
 
         // Mission 1: Survival Basics
         list.Add(MakeMission("Survival Basics",
-            "Gather basic resources to survive your first night in the woods.",
+            "Gather basic resources, light the campfire  to survive your first night in the woods.",
             new MissionObjective[]
             {
                 MakeObjective("Collect Wood", ObjectiveType.CollectItem, "Wood", "", 5),

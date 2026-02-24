@@ -68,7 +68,11 @@ public class GameManager : MonoBehaviour
         if (PlayerVitals != null && PlayerVitals.GetComponent<TorchLight>() == null)
             PlayerVitals.gameObject.AddComponent<TorchLight>();
 
-        // Weapon visual in right hand (listens to EquipmentManager)
+        // Lantern light on the player (listens to EquipmentManager)
+        if (PlayerVitals != null && PlayerVitals.GetComponent<LanternLight>() == null)
+            PlayerVitals.gameObject.AddComponent<LanternLight>();
+
+        // Weapon/tool visual in right hand (listens to EquipmentManager)
         if (PlayerVitals != null && PlayerVitals.GetComponent<WeaponHolder>() == null)
             PlayerVitals.gameObject.AddComponent<WeaponHolder>();
 

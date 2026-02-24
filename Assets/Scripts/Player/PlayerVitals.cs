@@ -25,6 +25,8 @@ public class PlayerVitals : MonoBehaviour
     public float jumpStaminaCost = 10f;
     [Tooltip("Must recover this % of max stamina before running again after exhaustion")]
     public float exhaustionRecoveryThreshold = 20f;
+    [Tooltip("Hunger cost per unit of stamina regenerated (body burns calories to restore energy)")]
+    public float staminaRegenHungerCost = 0.04f;
 
     private float health;
     private float hunger;
@@ -121,7 +123,9 @@ public class PlayerVitals : MonoBehaviour
     {
         if (stamina < maxStamina)
         {
-            stamina = Mathf.Min(maxStamina, stamina + amount);
+            float actual = Mathf.Min(maxStamina, stamina + amount) - stamina;
+            stamina += actual;
+            hunger = Mathf.Max(0f, hunger - actual * staminaRegenHungerCost);
             if (isExhausted && stamina >= exhaustionRecoveryThreshold)
                 isExhausted = false;
         }

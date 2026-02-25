@@ -69,7 +69,7 @@ public class MissionManager : MonoBehaviour
     /// <summary>Called by IntroSequenceManager after the intro completes.</summary>
     public void BeginMissions()
     {
-        StartMission(0);
+        StartMission(2);
     }
 
     void OnDestroy()
@@ -293,7 +293,7 @@ public class MissionManager : MonoBehaviour
             "Someone else has been in these woods. Find the second cabin.",
             new MissionObjective[]
             {
-                //MakeObjective("It is dark outside ",)
+                MakeObjective("Find the hidden key in the wooden box", ObjectiveType.ReachLocation, "", "", 1),
                 MakeObjective("Find the second cabin", ObjectiveType.ReachLocation, "", "", 1)
             }));
 

@@ -15,6 +15,9 @@ public class PlayerCombat : MonoBehaviour
     private float hitFlashTimer;
     private static readonly Color impactColor = new Color(1f, 1f, 0.85f); // warm white
 
+    // Pre-allocated buffer — avoids a heap allocation on every attack swing
+    private static readonly Collider[] hitBuffer = new Collider[16];
+
     void Start()
     {
         vitals    = GetComponent<PlayerVitals>();
@@ -73,9 +76,10 @@ public class PlayerCombat : MonoBehaviour
         if (EquipmentManager.Instance != null)
             totalDamage += EquipmentManager.Instance.WeaponDamageBonus;
 
-        Collider[] hits = Physics.OverlapSphere(center, attackRadius);
-        foreach (Collider col in hits)
+        int hitCount = Physics.OverlapSphereNonAlloc(center, attackRadius, hitBuffer);
+        for (int i = 0; i < hitCount; i++)
         {
+            Collider col = hitBuffer[i];
             CreatureAI creature = col.GetComponentInParent<CreatureAI>();
             if (creature != null)
             {

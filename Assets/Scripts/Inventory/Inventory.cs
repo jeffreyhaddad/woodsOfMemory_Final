@@ -18,7 +18,7 @@ public class InventorySlot
 
 public class Inventory : MonoBehaviour
 {
-    public int slotCount = 48;
+    public int slotCount = 30;
     public InventorySlot[] slots;
 
     /// <summary>Fired whenever the inventory contents change.</summary>

@@ -141,7 +141,7 @@ public class PauseMenuUI : MonoBehaviour
                 info = SaveManager.Instance.GetSaveInfo(i + 1);
 
             string slotName = (i == 0) ? "Slot 1" : (i == 1) ? "Slot 2" : "Slot 3";
-            slotLabels[i].text = slotName + "  -  " + info;
+            slotLabels[i].text = string.Concat(slotName, "  -  ", info);
         }
     }
 

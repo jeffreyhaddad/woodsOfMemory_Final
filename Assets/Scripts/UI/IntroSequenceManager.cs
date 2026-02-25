@@ -72,16 +72,17 @@ public class IntroSequenceManager : MonoBehaviour
             return;
         }
 
-        // Stand 1.2 m above the cabin's pivot and 0.5 m in from its forward face
+        // Place player near the back wall, centered, facing the door
+        // cabin.transform.right with Y=180 points West (-X); negate it to go East (+X = back wall)
         Vector3 dest = cabin.transform.position
-                       + cabin.transform.forward * 0.5f
+                       - cabin.transform.right * 4f
                        + Vector3.up * 1.2f;
 
         CharacterController cc = playerTransform.GetComponent<CharacterController>();
         if (cc != null) cc.enabled = false;
         playerTransform.position = dest;
-        // Face the cabin interior (toward −forward of cabin)
-        playerTransform.rotation = Quaternion.LookRotation(-cabin.transform.forward, Vector3.up);
+        // Face toward the door (West = cabin.transform.right direction)
+        playerTransform.rotation = Quaternion.LookRotation(cabin.transform.right, Vector3.up);
         if (cc != null) cc.enabled = true;
 
         // Re-sync the camera yaw so it immediately faces the same direction

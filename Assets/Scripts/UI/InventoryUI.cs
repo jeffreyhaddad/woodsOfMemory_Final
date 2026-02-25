@@ -10,10 +10,10 @@ public class InventoryUI : MonoBehaviour
     public Inventory inventory;
 
     [Header("Grid Settings")]
-    public int columns = 8;
-    public int rows = 6;
-    public float slotSize = 60f;
-    public float slotSpacing = 5f;
+    private int columns = 5;
+    private int rows = 6;
+    private float slotSize = 60f;
+    private float slotSpacing = 5f;
 
     private GameObject panelObj;
     private Image[] slotImages;
@@ -135,8 +135,8 @@ public class InventoryUI : MonoBehaviour
                         ? slot.item.name  // fallback to ScriptableObject asset name
                         : slot.item.itemName;
                     string equipped = isEquipped ? " [E]" : "";
-                    string qty = slot.quantity > 1 ? "\nx" + slot.quantity : "";
-                    quantityTexts[i].text = displayName + equipped + qty;
+                    string qty = slot.quantity > 1 ? "\nx" + slot.quantity.ToString() : "";
+                    quantityTexts[i].text = string.Concat(displayName, equipped, qty);
                 }
             }
         }
@@ -194,8 +194,8 @@ public class InventoryUI : MonoBehaviour
         titleRect.anchorMin = new Vector2(0, 1);
         titleRect.anchorMax = new Vector2(1, 1);
         titleRect.pivot = new Vector2(0.5f, 0);
-        titleRect.anchoredPosition = new Vector2(0, 5);
-        titleRect.sizeDelta = new Vector2(0, 35);
+        titleRect.anchoredPosition = new Vector2(0, 3);
+        titleRect.sizeDelta = new Vector2(0, 20);
 
         // Create slot grid
         for (int i = 0; i < totalSlots; i++)

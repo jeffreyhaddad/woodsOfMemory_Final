@@ -38,6 +38,11 @@ public class GameManager : MonoBehaviour
         }
 
         Instance = this;
+
+        // Disable all Debug.Log output in release builds to prevent GC pressure
+#if !UNITY_EDITOR
+        Debug.unityLogger.logEnabled = false;
+#endif
     }
 
     void Start()

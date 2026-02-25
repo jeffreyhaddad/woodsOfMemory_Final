@@ -27,8 +27,8 @@ public class WeaponHolder : MonoBehaviour
     {
         new ItemConfig { itemContains = "Pickaxe", resourcePath = "Weapons/Pickaxe",  albedoTexture = "",                           position = Vector3.zero, rotation = new Vector3(0,  0, 0), scale = 0.02f },
         new ItemConfig { itemContains = "Axe",     resourcePath = "Weapons/Axe",      albedoTexture = "",                           position = Vector3.zero, rotation = new Vector3(0,  0, 0), scale = 0.06f },
-        new ItemConfig { itemContains = "Torch",   resourcePath = "Weapons/Torch",    albedoTexture = "Weapons/torchstickColor",       position = Vector3.zero, rotation = new Vector3(90, 0, 0), scale = 50f },
-        new ItemConfig { itemContains = "Lantern", resourcePath = "Weapons/Lantern",  albedoTexture = "Weapons/Lantern_AlbedoOpacity", position = Vector3.zero, rotation = new Vector3(0,  0, 0), scale = 50f },
+        new ItemConfig { itemContains = "Torch",   resourcePath = "Weapons/Torch",    albedoTexture = "", position = new Vector3(0f, -0.7f, 0.1f), rotation = new Vector3(180, 0, 0), scale = 1f },
+        new ItemConfig { itemContains = "Lantern", resourcePath = "Weapons/Lantern",  albedoTexture = "", position = new Vector3(0f, 0f,    0.1f), rotation = new Vector3(0, 0, 0), scale = 1f },
     };
 
     private Transform rightHandBone;
@@ -110,23 +110,34 @@ public class WeaponHolder : MonoBehaviour
         foreach (var lt in spawnedModel.GetComponentsInChildren<Light>())
             lt.enabled = false;
 
-        // Axe and Pickaxe: auto-size from real world-space bounds so the
-        // serialized cfg.scale value (which Unity ignores code-default changes for)
-        // cannot interfere. Target sizes are hard-coded here in metres.
+        // Force the entire hierarchy visible — FBX assets can have inactive child nodes
+        // or LOD groups that cull the mesh before it even renders.
+        foreach (Transform t in spawnedModel.GetComponentsInChildren<Transform>(true))
+            t.gameObject.SetActive(true);
+        foreach (var r in spawnedModel.GetComponentsInChildren<Renderer>(true))
+            r.enabled = true;
+        LODGroup lod = spawnedModel.GetComponentInChildren<LODGroup>(true);
+        if (lod != null) lod.enabled = false;
+
+        // Auto-size all hand items from real world-space bounds.
+        // cfg.scale is ignored for named items — sizes are hard-coded here in metres.
         bool isAxe     = combined.IndexOf("Axe",     System.StringComparison.OrdinalIgnoreCase) >= 0;
         bool isPickaxe = combined.IndexOf("Pickaxe", System.StringComparison.OrdinalIgnoreCase) >= 0;
+        bool isTorch   = combined.IndexOf("Torch",   System.StringComparison.OrdinalIgnoreCase) >= 0;
+        bool isLantern = combined.IndexOf("Lantern", System.StringComparison.OrdinalIgnoreCase) >= 0;
 
-        if (isAxe || isPickaxe)
+        float targetMeters = isPickaxe ? 1.2f : isAxe ? 0.9f : isTorch ? 0.8f : isLantern ? 0.6f : -1f;
+
+        if (targetMeters > 0f)
         {
-            float targetMeters = isPickaxe ? 1.2f : 0.9f;
-
-            // Measure at scale = 1 first
+            // Measure mesh bounds at scale = 1 (skip particle renderers — their bounds are unreliable at spawn)
             spawnedModel.transform.localScale = Vector3.one;
 
             Bounds wb = new Bounds();
             bool first = true;
             foreach (var r in spawnedModel.GetComponentsInChildren<Renderer>(true))
             {
+                if (r is ParticleSystemRenderer) continue;
                 if (first) { wb = r.bounds; first = false; }
                 else wb.Encapsulate(r.bounds);
             }
@@ -134,7 +145,7 @@ public class WeaponHolder : MonoBehaviour
             float maxExtent = Mathf.Max(wb.size.x, wb.size.y, wb.size.z);
             float autoScale = maxExtent > 0.0001f ? targetMeters / maxExtent : 1f;
             spawnedModel.transform.localScale = Vector3.one * autoScale;
-            Debug.Log($"[WeaponHolder] Auto-sized '{prefab.name}': worldExtent={maxExtent:F3}m → localScale={autoScale:F5} (target {targetMeters}m)");
+            Debug.Log($"[WeaponHolder] Auto-sized '{prefab.name}': size=({wb.size.x:F4},{wb.size.y:F4},{wb.size.z:F4}) maxExtent={maxExtent:F4}m → localScale={autoScale:F5} (target {targetMeters}m)");
         }
         else
         {

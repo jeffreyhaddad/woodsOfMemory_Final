@@ -439,7 +439,7 @@ public class JournalUI : MonoBehaviour
         detailBody.fontSize = 15;
         detailBody.color = new Color(0.85f, 0.82f, 0.75f);
         detailBody.alignment = TextAlignmentOptions.TopLeft;
-        detailBody.enableWordWrapping = true;
+        detailBody.textWrappingMode = TMPro.TextWrappingModes.Normal;
         detailBody.raycastTarget = false;
 
         detailScroll.content = bcRect;

@@ -130,7 +130,7 @@ public class InventoryUI : MonoBehaviour
                     iconImages[i].enabled = false;
                     quantityTexts[i].fontSize = 10;
                     quantityTexts[i].alignment = TextAlignmentOptions.Center;
-                    quantityTexts[i].enableWordWrapping = true;
+                    quantityTexts[i].textWrappingMode = TMPro.TextWrappingModes.Normal;
                     string displayName = string.IsNullOrEmpty(slot.item.itemName)
                         ? slot.item.name  // fallback to ScriptableObject asset name
                         : slot.item.itemName;

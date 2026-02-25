@@ -335,7 +335,7 @@ public class MissionTransitionUI : MonoBehaviour
         tmp.alignment = alignment;
         tmp.color = color;
         tmp.raycastTarget = false;
-        tmp.enableWordWrapping = true;
+        tmp.textWrappingMode = TMPro.TextWrappingModes.Normal;
         RectTransform rect = tmp.rectTransform;
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);

@@ -285,7 +285,7 @@ public class IntroSequenceManager : MonoBehaviour
         tmp.fontSize           = size;
         tmp.alignment          = TextAlignmentOptions.Center;
         tmp.color              = color;
-        tmp.enableWordWrapping = wordWrap;
+        tmp.textWrappingMode = wordWrap ? TMPro.TextWrappingModes.Normal : TMPro.TextWrappingModes.NoWrap;
 
         RectTransform rt = tmp.rectTransform;
         rt.anchorMin = anchorMin;

@@ -152,15 +152,12 @@ public class CreatureSpawner : MonoBehaviour
         Terrain terrain = Terrain.activeTerrain;
         if (terrain != null)
         {
-            for (int i = 0; i < 10; i++)
-            {
-                Vector2 rnd = Random.insideUnitCircle.normalized * Random.Range(minSpawnDistance, radius);
-                Vector3 candidate = playerTransform.position + new Vector3(rnd.x, 0, rnd.y);
-                float terrainY = terrain.SampleHeight(candidate) + terrain.transform.position.y;
-                candidate.y = terrainY;
-                result = candidate;
-                return true;
-            }
+            Vector2 rnd = Random.insideUnitCircle.normalized * Random.Range(minSpawnDistance, radius);
+            Vector3 candidate = playerTransform.position + new Vector3(rnd.x, 0, rnd.y);
+            float terrainY = terrain.SampleHeight(candidate) + terrain.transform.position.y;
+            candidate.y = terrainY;
+            result = candidate;
+            return true;
         }
 
         Debug.LogWarning("[CreatureSpawner] Could not find spawn point! Is NavMesh baked or Terrain present?");

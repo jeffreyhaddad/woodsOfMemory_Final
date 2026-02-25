@@ -124,7 +124,7 @@ public class PlayerInteraction : MonoBehaviour
         promptUI.fontSize = 24;
         promptUI.alignment = TextAlignmentOptions.Center;
         promptUI.color = Color.white;
-        promptUI.enableWordWrapping = false;
+        promptUI.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
 
         // Position at bottom-center of screen
         RectTransform rect = promptUI.rectTransform;

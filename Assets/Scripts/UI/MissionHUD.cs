@@ -173,7 +173,7 @@ public class MissionHUD : MonoBehaviour
         objectiveText.color = new Color(0.85f, 0.85f, 0.85f);
         objectiveText.alignment = TextAlignmentOptions.TopLeft;
         objectiveText.raycastTarget = false;
-        objectiveText.enableWordWrapping = true;
+        objectiveText.textWrappingMode = TMPro.TextWrappingModes.Normal;
         RectTransform objRect = objectiveText.rectTransform;
         objRect.anchorMin = new Vector2(0, 0);
         objRect.anchorMax = new Vector2(1, 1);

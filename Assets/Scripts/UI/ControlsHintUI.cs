@@ -86,7 +86,7 @@ public class ControlsHintUI : MonoBehaviour
         text.color = Color.white;
         text.alignment = TextAlignmentOptions.TopLeft;
         text.raycastTarget = false;
-        text.enableWordWrapping = false;
+        text.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
         RectTransform textRect = text.rectTransform;
         textRect.anchorMin = Vector2.zero;
         textRect.anchorMax = Vector2.one;

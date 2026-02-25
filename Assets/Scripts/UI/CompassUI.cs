@@ -407,7 +407,7 @@ public class CompassUI : MonoBehaviour
             tmp.fontStyle = (i % 2 == 0) ? FontStyles.Bold : FontStyles.Normal;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.raycastTarget = false;
-            tmp.enableWordWrapping = false;
+            tmp.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
 
             // N=white, S=white, E/W=light gray, diagonals=darker
             if (cardinalNames[i] == "N")
@@ -460,7 +460,7 @@ public class CompassUI : MonoBehaviour
             m.distText.alignment = TextAlignmentOptions.Center;
             m.distText.color = new Color(0.8f, 0.8f, 0.8f);
             m.distText.raycastTarget = false;
-            m.distText.enableWordWrapping = false;
+            m.distText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
             RectTransform distRect = m.distText.rectTransform;
             distRect.anchorMin = new Vector2(0.5f, 0.5f);
             distRect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -477,7 +477,7 @@ public class CompassUI : MonoBehaviour
             m.nameText.alignment = TextAlignmentOptions.Center;
             m.nameText.color = new Color(0.9f, 0.85f, 0.6f);
             m.nameText.raycastTarget = false;
-            m.nameText.enableWordWrapping = false;
+            m.nameText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
             RectTransform nameRect = m.nameText.rectTransform;
             nameRect.anchorMin = new Vector2(0.5f, 0.5f);
             nameRect.anchorMax = new Vector2(0.5f, 0.5f);

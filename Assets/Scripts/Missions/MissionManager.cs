@@ -293,6 +293,7 @@ public class MissionManager : MonoBehaviour
             "Someone else has been in these woods. Find the second cabin.",
             new MissionObjective[]
             {
+                //MakeObjective("It is dark outside ",)
                 MakeObjective("Find the second cabin", ObjectiveType.ReachLocation, "", "", 1)
             }));
 

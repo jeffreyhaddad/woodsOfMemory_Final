@@ -10,8 +10,8 @@ public class TorchLight : MonoBehaviour
 {
     [Header("Light Settings")]
     public Color torchColor = new Color(1f, 0.7f, 0.3f);
-    public float baseIntensity = 1.8f;
-    public float lightRange = 12f;
+    public float baseIntensity = 4.0f;
+    public float lightRange = 20f;
 
     [Header("Flicker")]
     public float flickerSpeed = 8f;

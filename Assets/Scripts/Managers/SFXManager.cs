@@ -35,6 +35,7 @@ public class SFXManager : MonoBehaviour
     private AudioClip footstepStoneClip;
     private AudioClip menuClickClip;
     private AudioClip heartbeatClip;
+    private AudioClip burnClip;
 
     void Awake()
     {
@@ -114,6 +115,11 @@ public class SFXManager : MonoBehaviour
     public static void PlayMenuClick()
     {
         if (Instance != null) Instance.Play(Instance.menuClickClip, 0.4f);
+    }
+
+    public static void PlayBurn()
+    {
+        if (Instance != null) Instance.Play(Instance.burnClip, 0.65f);
     }
 
     public static void StartHeartbeat()
@@ -250,6 +256,16 @@ public class SFXManager : MonoBehaviour
             float beat1 = Mathf.Sin(2f * Mathf.PI * 50f * t) * Mathf.Exp(-Mathf.Pow((t - 0.1f) * 20f, 2f));
             float beat2 = Mathf.Sin(2f * Mathf.PI * 40f * t) * Mathf.Exp(-Mathf.Pow((t - 0.25f) * 20f, 2f)) * 0.7f;
             return (beat1 + beat2);
+        });
+
+        // Sizzle/crackle when standing in fire
+        burnClip = CreateClip("Burn", sampleRate, 0.4f, (i, len) =>
+        {
+            float t = (float)i / len;
+            float env = Mathf.Exp(-t * 5f) * 0.85f + Mathf.Exp(-t * 1.2f) * 0.15f;
+            float noise = (Random.value * 2f - 1f);
+            float crackle = Mathf.Sin(2f * Mathf.PI * 80f * t) * Mathf.Exp(-t * 20f) * 0.25f;
+            return (noise * 0.8f + crackle) * env;
         });
     }
 

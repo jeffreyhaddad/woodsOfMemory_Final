@@ -4,122 +4,192 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Horizontal compass bar at the top of the screen.
-/// Shows cardinal directions and markers pointing toward current mission objectives.
-/// Finds objective targets dynamically: MissionTriggers, PickupItems, CreatureAIs.
-/// Auto-creates its own UI — no editor setup required.
+/// Horizontal compass bar — cardinal directions + discovery-based POI markers.
+///
+/// Inspired by RDR2 / The Witcher 3: world landmarks are hidden until the player
+/// physically explores near them. Once discovered they remain permanently.
+///
+/// Other systems register landmarks via the static RegisterPOI() method.
+/// Auto-discovered POIs (e.g. main cabin where the player spawns) are visible
+/// from the very start; everything else is revealed through exploration.
 /// </summary>
 public class CompassUI : MonoBehaviour
 {
-    [Header("Compass")]
-    [Tooltip("Width of the compass bar in pixels")]
+    // ─── POI types ────────────────────────────────────────────
+
+    public enum POIType { Location, Fire, Exit }
+
+    private class POI
+    {
+        public string  label;
+        public Vector3 worldPos;
+        public Color   color;
+        public POIType type;
+        public float   discoveryRadius; // metres — enter this to discover
+        public bool    discovered;
+    }
+
+    // ─── Static registry — survives Start() ordering issues ───
+
+    private static readonly List<POI> _pois = new List<POI>();
+
+    /// <summary>
+    /// Register a world landmark.
+    /// startDiscovered = true  → visible immediately (player already knows this place).
+    /// startDiscovered = false → hidden; appears once player enters discoveryRadius.
+    /// Safe to call before CompassUI.Start() or from any other Start().
+    /// </summary>
+    public static void RegisterPOI(
+        string  label,
+        Vector3 worldPos,
+        bool    startDiscovered,
+        float   discoveryRadius = 30f,
+        Color   color           = default,
+        POIType type            = POIType.Location)
+    {
+        if (color == default(Color)) color = new Color(1f, 0.85f, 0.3f);
+
+        // Deduplicate — same label within 5 m counts as the same POI
+        for (int i = 0; i < _pois.Count; i++)
+            if (_pois[i].label == label && Vector3.Distance(_pois[i].worldPos, worldPos) < 5f)
+                return;
+
+        _pois.Add(new POI
+        {
+            label           = label,
+            worldPos        = worldPos,
+            color           = color,
+            type            = type,
+            discoveryRadius = discoveryRadius,
+            discovered      = startDiscovered
+        });
+    }
+
+    /// <summary>
+    /// Immediately mark a POI as discovered by exact label match.
+    /// Useful as a backup when the player enters a MissionTrigger collider.
+    /// </summary>
+    public static void DiscoverPOI(string label)
+    {
+        for (int i = 0; i < _pois.Count; i++)
+            if (_pois[i].label == label) { _pois[i].discovered = true; return; }
+    }
+
+    // ─── Settings ─────────────────────────────────────────────
+
+    [Header("Compass Bar")]
+    [Tooltip("Pixel width of the visible compass strip")]
     public float compassWidth = 600f;
-    [Tooltip("How often to scan for objective targets (seconds)")]
-    public float scanInterval = 2f;
-    [Tooltip("Max markers visible at once")]
-    public int maxMarkers = 5;
 
-    private Transform playerTransform;
-    private MissionManager missionManager;
+    [Header("Discovery")]
+    [Tooltip("How often (seconds) to check if the player has discovered a new POI")]
+    public float discoveryCheckRate = 0.4f;
 
-    // UI
-    private RectTransform compassBar;
-    private RectTransform compassMask;
+    [Header("Markers")]
+    [Tooltip("Maximum POI markers visible at once")]
+    public int maxMarkers = 8;
+
+    // ─── Runtime ──────────────────────────────────────────────
+
+    private Transform         player;
+    private RectTransform     compassBar;
     private TextMeshProUGUI[] cardinalLabels;
-    private List<ObjectiveMarker> markers = new List<ObjectiveMarker>();
-    private GameObject markerPool;
+    private List<POIMarker>   markerPool = new List<POIMarker>();
+    private float             discoveryTimer;
 
-    // Scanning
-    private float scanTimer;
-    private List<TrackedTarget> trackedTargets = new List<TrackedTarget>();
+    // Cardinals
+    private static readonly string[] CardinalNames  = {"N","NE","E","SE","S","SW","W","NW"};
+    private static readonly float[]  CardinalAngles = {0f,45f,90f,135f,180f,225f,270f,315f};
 
-    private struct TrackedTarget
+    private class POIMarker
     {
-        public Vector3 position;
-        public string label;
-        public Color color;
+        public GameObject      root;
+        public RectTransform   rect;
+        public Image           icon;
+        public TextMeshProUGUI distLabel;
+        public TextMeshProUGUI nameLabel;
     }
 
-    private class ObjectiveMarker
-    {
-        public GameObject root;
-        public RectTransform rect;
-        public Image icon;
-        public TextMeshProUGUI distText;
-        public TextMeshProUGUI nameText;
-    }
+    // ─────────────────────────────────────────────────────────
 
-    // Cardinal direction setup
-    private static readonly string[] cardinalNames = { "N", "NE", "E", "SE", "S", "SW", "W", "NW" };
-    private static readonly float[] cardinalAngles = { 0f, 45f, 90f, 135f, 180f, 225f, 270f, 315f };
+    void Awake()
+    {
+        // Clear on each new play session so stale scene data never leaks
+        _pois.Clear();
+    }
 
     void Start()
     {
-        missionManager = FindAnyObjectByType<MissionManager>();
         PlayerVitals pv = FindAnyObjectByType<PlayerVitals>();
-        if (pv != null) playerTransform = pv.transform;
+        if (pv != null) player = pv.transform;
+        if (player == null) { enabled = false; return; }
 
-        if (playerTransform == null || missionManager == null)
-        {
-            enabled = false;
-            return;
-        }
-
-        // Cache sort delegate once — captures playerTransform but avoids re-allocating a closure each sort
-        _distCompare = (a, b) =>
-        {
-            float da = (a.position - playerTransform.position).sqrMagnitude;
-            float db = (b.position - playerTransform.position).sqrMagnitude;
-            return da.CompareTo(db);
-        };
+        // Auto-register all FinalBoneFireScript objects that exist in the scene
+        // (player-placed ones will register themselves via RegisterPOI when lit)
+        ScanSceneFires();
 
         BuildUI();
-        scanTimer = 0f; // Scan immediately
+        discoveryTimer = 0f; // check immediately on first Update
     }
 
     void Update()
     {
-        if (playerTransform == null) return;
+        if (player == null) return;
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing)
             return;
 
-        // Periodically refresh cached object arrays (less often than target scan)
-        fullScanTimer -= Time.deltaTime;
-        if (fullScanTimer <= 0f)
+        discoveryTimer -= Time.deltaTime;
+        if (discoveryTimer <= 0f)
         {
-            RefreshCaches();
-            fullScanTimer = fullScanInterval;
-        }
-
-        // Periodic scan for targets using cached arrays
-        scanTimer -= Time.deltaTime;
-        if (scanTimer <= 0f)
-        {
-            ScanForTargets();
-            scanTimer = scanInterval;
+            CheckDiscoveries();
+            discoveryTimer = discoveryCheckRate;
         }
 
         UpdateCompass();
         UpdateMarkers();
     }
 
-    // ─── Compass Logic ────────────────────────────────────────
+    // ─── Discovery check ──────────────────────────────────────
+
+    void CheckDiscoveries()
+    {
+        Vector3 pp = player.position;
+        for (int i = 0; i < _pois.Count; i++)
+        {
+            if (_pois[i].discovered) continue;
+            if (Vector3.Distance(pp, _pois[i].worldPos) <= _pois[i].discoveryRadius)
+                _pois[i].discovered = true;
+        }
+    }
+
+    void ScanSceneFires()
+    {
+        FinalBoneFireScript[] fires =
+            FindObjectsByType<FinalBoneFireScript>(FindObjectsSortMode.None);
+
+        for (int i = 0; i < fires.Length; i++)
+        {
+            RegisterPOI("Campfire", fires[i].transform.position,
+                startDiscovered: false,
+                discoveryRadius: 18f,
+                new Color(1f, 0.55f, 0.15f),
+                POIType.Fire);
+        }
+    }
+
+    // ─── Compass rendering ────────────────────────────────────
 
     void UpdateCompass()
     {
-        float playerYaw = playerTransform.eulerAngles.y;
+        float yaw  = player.eulerAngles.y;
+        float half = compassWidth * 0.5f;
 
-        // Move cardinal labels along the bar
         for (int i = 0; i < cardinalLabels.Length; i++)
         {
-            float angle = cardinalAngles[i];
-            float offset = GetCompassOffset(angle, playerYaw);
+            float offset = CompassOffset(CardinalAngles[i], yaw);
             cardinalLabels[i].rectTransform.anchoredPosition = new Vector2(offset, 0);
 
-            // Fade labels near edges
-            float absOffset = Mathf.Abs(offset);
-            float half = compassWidth * 0.5f;
-            float alpha = Mathf.Clamp01(1f - (absOffset / half));
+            float alpha = Mathf.Clamp01(1f - Mathf.Abs(offset) / half);
             Color c = cardinalLabels[i].color;
             c.a = alpha;
             cardinalLabels[i].color = c;
@@ -128,218 +198,68 @@ public class CompassUI : MonoBehaviour
 
     void UpdateMarkers()
     {
-        float playerYaw = playerTransform.eulerAngles.y;
+        float yaw  = player.eulerAngles.y;
+        float half = compassWidth * 0.5f;
+        Vector3 pp = player.position;
 
-        // Hide all markers first
-        for (int i = 0; i < markers.Count; i++)
-            markers[i].root.SetActive(false);
+        // Reset all markers
+        for (int i = 0; i < markerPool.Count; i++)
+            markerPool[i].root.SetActive(false);
 
-        // Show markers for tracked targets
         int shown = 0;
-        for (int t = 0; t < trackedTargets.Count && shown < markers.Count; t++)
+        for (int i = 0; i < _pois.Count && shown < markerPool.Count; i++)
         {
-            TrackedTarget target = trackedTargets[t];
-            Vector3 dir = target.position - playerTransform.position;
-            dir.y = 0;
-            float dist = dir.magnitude;
+            POI poi = _pois[i];
+            if (!poi.discovered) continue;
 
-            float targetAngle = Quaternion.LookRotation(dir).eulerAngles.y;
-            float offset = GetCompassOffset(targetAngle, playerYaw);
+            Vector3 toTarget = poi.worldPos - pp;
+            toTarget.y = 0;
+            float dist = toTarget.magnitude;
 
-            // Only show if within compass range
-            float half = compassWidth * 0.5f;
+            // Skip if the player is standing on top of it (avoids zero-vector LookRotation)
+            if (dist < 2f) continue;
+
+            float angle  = Quaternion.LookRotation(toTarget).eulerAngles.y;
+            float offset = CompassOffset(angle, yaw);
+
+            // Skip if outside the visible compass strip
             if (Mathf.Abs(offset) > half) continue;
 
-            ObjectiveMarker m = markers[shown];
+            POIMarker m = markerPool[shown];
             m.root.SetActive(true);
             m.rect.anchoredPosition = new Vector2(offset, -22);
-            m.icon.color = target.color;
+            m.icon.color = poi.color;
 
-            // Distance text
-            if (dist > 1000f)
-                m.distText.text = (dist / 1000f).ToString("0.0") + "km";
+            // Distance label — suppress when very close (already there)
+            if (dist < 20f)
+                m.distLabel.text = "";
+            else if (dist >= 1000f)
+                m.distLabel.text = (dist / 1000f).ToString("0.0") + "km";
             else
-                m.distText.text = Mathf.RoundToInt(dist) + "m";
+                m.distLabel.text = Mathf.RoundToInt(dist) + "m";
 
-            m.nameText.text = target.label;
+            m.nameLabel.text = poi.label;
 
-            // Fade near edges
-            float alpha = Mathf.Clamp01(1f - (Mathf.Abs(offset) / half));
-            Color ic = m.icon.color; ic.a = alpha; m.icon.color = ic;
-            Color dc = m.distText.color; dc.a = alpha; m.distText.color = dc;
-            Color nc = m.nameText.color; nc.a = alpha; m.nameText.color = nc;
+            // Fade near the edges of the compass strip
+            float edgeFade = Mathf.Clamp01(1f - Mathf.Abs(offset) / half);
+            SetAlpha(m.icon,       edgeFade);
+            SetAlpha(m.distLabel,  edgeFade);
+            SetAlpha(m.nameLabel,  edgeFade);
 
             shown++;
         }
     }
 
-    float GetCompassOffset(float worldAngle, float playerYaw)
+    // ─── Helpers ──────────────────────────────────────────────
+
+    float CompassOffset(float worldAngle, float playerYaw)
+        => (Mathf.DeltaAngle(playerYaw, worldAngle) / 180f) * compassWidth;
+
+    static void SetAlpha(Graphic g, float a)
     {
-        // Difference between world angle and player facing
-        float delta = Mathf.DeltaAngle(playerYaw, worldAngle);
-        // Map to compass bar position (180 degrees = full width)
-        return (delta / 180f) * compassWidth;
-    }
-
-    // ─── Target Scanning ──────────────────────────────────────
-
-    void ScanForTargets()
-    {
-        trackedTargets.Clear();
-
-        Mission mission = missionManager.CurrentMission;
-        if (mission == null) return;
-
-        for (int i = 0; i < mission.objectives.Length; i++)
-        {
-            MissionObjective obj = mission.objectives[i];
-            if (obj.IsCompleted) continue;
-
-            switch (obj.objectiveType)
-            {
-                case ObjectiveType.ReachLocation:
-                    ScanForTriggers(obj.description);
-                    break;
-
-                case ObjectiveType.CollectItem:
-                    ScanForPickups(obj.targetItemName);
-                    break;
-
-                case ObjectiveType.KillCreature:
-                    ScanForCreatures(obj.targetCreatureName);
-                    break;
-
-                case ObjectiveType.CraftItem:
-                    // Crafting is done at the inventory — no world position
-                    // Point toward nearest resource relevant to crafting
-                    break;
-
-                case ObjectiveType.SurviveNight:
-                    // No specific location
-                    break;
-            }
-        }
-
-        // Sort by distance so closest targets get shown first (cached delegate, sqrMagnitude avoids sqrt)
-        trackedTargets.Sort(_distCompare);
-    }
-
-    // Cached arrays to avoid FindObjectsByType allocations every scan
-    private MissionTrigger[] cachedTriggers;
-    private string[] cachedTriggerNamesLower; // pre-computed lowercase to avoid ToLower() each scan
-    private PickupItem[] cachedPickups;
-    private CreatureAI[] cachedCreatures;
-    private float fullScanTimer;
-    private const float fullScanInterval = 10f; // Re-find all objects every 10s
-
-    // Cached sort delegate — avoids closure re-allocation every ScanForTargets call
-    private System.Comparison<TrackedTarget> _distCompare;
-
-    void RefreshCaches()
-    {
-        cachedTriggers = FindObjectsByType<MissionTrigger>(FindObjectsSortMode.None);
-        // Pre-compute lowercase names once so ScanForTriggers never calls ToLower()
-        cachedTriggerNamesLower = new string[cachedTriggers.Length];
-        for (int i = 0; i < cachedTriggers.Length; i++)
-            cachedTriggerNamesLower[i] = cachedTriggers[i] != null ? cachedTriggers[i].locationName.ToLower() : "";
-
-        cachedPickups = FindObjectsByType<PickupItem>(FindObjectsSortMode.None);
-        cachedCreatures = FindObjectsByType<CreatureAI>(FindObjectsSortMode.None);
-    }
-
-    void ScanForTriggers(string objectiveDesc)
-    {
-        if (cachedTriggers == null) return;
-        for (int i = 0; i < cachedTriggers.Length; i++)
-        {
-            if (cachedTriggers[i] == null) continue;
-            // Use pre-computed lowercase name; compare objectiveDesc without allocating a new string
-            string locName = cachedTriggerNamesLower[i];
-            bool match = objectiveDesc.IndexOf(locName, System.StringComparison.OrdinalIgnoreCase) >= 0
-                || (objectiveDesc.IndexOf("cabin", System.StringComparison.OrdinalIgnoreCase) >= 0 && locName.Contains("cabin"))
-                || (objectiveDesc.IndexOf("exit", System.StringComparison.OrdinalIgnoreCase) >= 0 && locName.Contains("exit"));
-            if (match)
-            {
-                trackedTargets.Add(new TrackedTarget
-                {
-                    position = cachedTriggers[i].transform.position,
-                    label = cachedTriggers[i].locationName,
-                    color = new Color(1f, 0.85f, 0.3f) // Gold
-                });
-            }
-        }
-    }
-
-    void ScanForPickups(string itemName)
-    {
-        if (string.IsNullOrEmpty(itemName) || cachedPickups == null) return;
-
-        PickupItem[] pickups = cachedPickups;
-        int found = 0;
-        float closestDist = float.MaxValue;
-        PickupItem closest = null;
-
-        for (int i = 0; i < pickups.Length; i++)
-        {
-            if (pickups[i] == null) continue;
-            if (pickups[i].itemData == null) continue;
-            if (pickups[i].itemData.itemName != itemName) continue;
-
-            float dist = Vector3.Distance(playerTransform.position, pickups[i].transform.position);
-            if (dist < closestDist)
-            {
-                closestDist = dist;
-                closest = pickups[i];
-            }
-            found++;
-        }
-
-        // Only show the closest pickup to avoid compass clutter
-        if (closest != null)
-        {
-            trackedTargets.Add(new TrackedTarget
-            {
-                position = closest.transform.position,
-                label = itemName + (found > 1 ? " (+" + (found - 1) + " more)" : ""),
-                color = new Color(0.4f, 0.85f, 1f) // Light blue
-            });
-        }
-    }
-
-    void ScanForCreatures(string creatureName)
-    {
-        if (string.IsNullOrEmpty(creatureName) || cachedCreatures == null) return;
-
-        CreatureAI[] creatures = cachedCreatures;
-        float closestDist = float.MaxValue;
-        CreatureAI closest = null;
-        int found = 0;
-
-        for (int i = 0; i < creatures.Length; i++)
-        {
-            if (creatures[i].data == null) continue;
-            if (!creatures[i].data.creatureName.Equals(creatureName, System.StringComparison.OrdinalIgnoreCase))
-                continue;
-            if (creatures[i].CurrentHealth <= 0) continue;
-
-            float dist = Vector3.Distance(playerTransform.position, creatures[i].transform.position);
-            if (dist < closestDist)
-            {
-                closestDist = dist;
-                closest = creatures[i];
-            }
-            found++;
-        }
-
-        if (closest != null)
-        {
-            trackedTargets.Add(new TrackedTarget
-            {
-                position = closest.transform.position,
-                label = creatureName + (found > 1 ? " (+" + (found - 1) + " more)" : ""),
-                color = new Color(1f, 0.35f, 0.35f) // Red
-            });
-        }
+        Color c = g.color;
+        c.a = a;
+        g.color = c;
     }
 
     // ─── UI Construction ──────────────────────────────────────
@@ -349,144 +269,135 @@ public class CompassUI : MonoBehaviour
         // Canvas
         GameObject canvasObj = new GameObject("CompassCanvas");
         Canvas canvas = canvasObj.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.renderMode   = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 90;
         CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.uiScaleMode         = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
 
-        // Compass container with mask (clips content outside the bar)
+        // Mask — clips content outside the bar
         GameObject maskObj = new GameObject("CompassMask");
         maskObj.transform.SetParent(canvasObj.transform, false);
-        compassMask = maskObj.AddComponent<RectTransform>();
+        RectTransform compassMask = maskObj.AddComponent<RectTransform>();
         compassMask.anchorMin = new Vector2(0.5f, 1f);
         compassMask.anchorMax = new Vector2(0.5f, 1f);
-        compassMask.pivot = new Vector2(0.5f, 1f);
+        compassMask.pivot     = new Vector2(0.5f, 1f);
         compassMask.anchoredPosition = new Vector2(0, -8);
-        compassMask.sizeDelta = new Vector2(compassWidth + 20f, 55f);
+        compassMask.sizeDelta        = new Vector2(compassWidth + 20f, 55f);
 
-        // Background bar
         Image maskBg = maskObj.AddComponent<Image>();
-        maskBg.color = new Color(0f, 0f, 0f, 0.35f);
+        maskBg.color         = new Color(0f, 0f, 0f, 0.35f);
         maskBg.raycastTarget = false;
-        Mask mask = maskObj.AddComponent<Mask>();
-        mask.showMaskGraphic = true;
+        maskObj.AddComponent<Mask>().showMaskGraphic = true;
 
-        // Center tick mark
+        // Center tick
         GameObject tick = new GameObject("CenterTick");
         tick.transform.SetParent(maskObj.transform, false);
         Image tickImg = tick.AddComponent<Image>();
-        tickImg.color = new Color(1f, 1f, 1f, 0.7f);
+        tickImg.color         = new Color(1f, 1f, 1f, 0.7f);
         tickImg.raycastTarget = false;
         RectTransform tickRect = tick.GetComponent<RectTransform>();
-        tickRect.anchorMin = new Vector2(0.5f, 1f);
-        tickRect.anchorMax = new Vector2(0.5f, 1f);
-        tickRect.pivot = new Vector2(0.5f, 1f);
+        tickRect.anchorMin = tickRect.anchorMax = new Vector2(0.5f, 1f);
+        tickRect.pivot           = new Vector2(0.5f, 1f);
         tickRect.anchoredPosition = Vector2.zero;
-        tickRect.sizeDelta = new Vector2(2f, 10f);
+        tickRect.sizeDelta        = new Vector2(2f, 10f);
 
-        // Compass bar (holds cardinal labels)
+        // Compass bar (parent for scrolling cardinal labels)
         GameObject barObj = new GameObject("CompassBar");
         barObj.transform.SetParent(maskObj.transform, false);
         compassBar = barObj.AddComponent<RectTransform>();
-        compassBar.anchorMin = new Vector2(0.5f, 0.5f);
-        compassBar.anchorMax = new Vector2(0.5f, 0.5f);
-        compassBar.pivot = new Vector2(0.5f, 0.5f);
-        compassBar.anchoredPosition = new Vector2(0, 4);
-        compassBar.sizeDelta = new Vector2(compassWidth, 20f);
+        compassBar.anchorMin = compassBar.anchorMax = new Vector2(0.5f, 0.5f);
+        compassBar.pivot             = new Vector2(0.5f, 0.5f);
+        compassBar.anchoredPosition  = new Vector2(0, 4);
+        compassBar.sizeDelta         = new Vector2(compassWidth, 20f);
 
-        // Cardinal direction labels
-        cardinalLabels = new TextMeshProUGUI[cardinalNames.Length];
-        for (int i = 0; i < cardinalNames.Length; i++)
+        // Cardinal labels
+        cardinalLabels = new TextMeshProUGUI[CardinalNames.Length];
+        for (int i = 0; i < CardinalNames.Length; i++)
         {
-            GameObject lbl = new GameObject("Cardinal_" + cardinalNames[i]);
+            GameObject lbl = new GameObject("Cardinal_" + CardinalNames[i]);
             lbl.transform.SetParent(compassBar.transform, false);
+
             TextMeshProUGUI tmp = lbl.AddComponent<TextMeshProUGUI>();
-            tmp.text = cardinalNames[i];
-            tmp.fontSize = (i % 2 == 0) ? 16 : 12; // Main directions bigger
+            tmp.text    = CardinalNames[i];
+            tmp.fontSize = (i % 2 == 0) ? 16 : 12;
             tmp.fontStyle = (i % 2 == 0) ? FontStyles.Bold : FontStyles.Normal;
-            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.alignment     = TextAlignmentOptions.Center;
             tmp.raycastTarget = false;
             tmp.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
 
-            // N=white, S=white, E/W=light gray, diagonals=darker
-            if (cardinalNames[i] == "N")
-                tmp.color = new Color(1f, 0.3f, 0.3f); // Red for North
-            else if (i % 2 == 0)
-                tmp.color = new Color(0.9f, 0.9f, 0.9f);
-            else
-                tmp.color = new Color(0.6f, 0.6f, 0.6f);
+            tmp.color = CardinalNames[i] == "N"
+                ? new Color(1f, 0.3f, 0.3f)       // North = red
+                : (i % 2 == 0)
+                    ? new Color(0.9f, 0.9f, 0.9f)  // E / S / W = light grey
+                    : new Color(0.6f, 0.6f, 0.6f); // diagonals = dark grey
 
             RectTransform r = tmp.rectTransform;
             r.sizeDelta = new Vector2(30, 20);
             cardinalLabels[i] = tmp;
         }
 
-        // Objective markers pool
-        markerPool = new GameObject("MarkerPool");
-        markerPool.transform.SetParent(maskObj.transform, false);
+        // POI marker pool
+        GameObject pool = new GameObject("MarkerPool");
+        pool.transform.SetParent(maskObj.transform, false);
 
         for (int i = 0; i < maxMarkers; i++)
         {
-            ObjectiveMarker m = new ObjectiveMarker();
+            POIMarker m = new POIMarker();
 
             m.root = new GameObject("Marker_" + i);
-            m.root.transform.SetParent(markerPool.transform, false);
+            m.root.transform.SetParent(pool.transform, false);
             m.rect = m.root.AddComponent<RectTransform>();
-            m.rect.anchorMin = new Vector2(0.5f, 0.5f);
-            m.rect.anchorMax = new Vector2(0.5f, 0.5f);
-            m.rect.pivot = new Vector2(0.5f, 0.5f);
+            m.rect.anchorMin = m.rect.anchorMax = new Vector2(0.5f, 0.5f);
+            m.rect.pivot     = new Vector2(0.5f, 0.5f);
             m.rect.sizeDelta = new Vector2(12, 12);
 
             // Diamond icon
             GameObject iconObj = new GameObject("Icon");
             iconObj.transform.SetParent(m.root.transform, false);
-            m.icon = iconObj.AddComponent<Image>();
-            m.icon.color = Color.yellow;
+            m.icon               = iconObj.AddComponent<Image>();
+            m.icon.color         = Color.yellow;
             m.icon.raycastTarget = false;
             RectTransform iconRect = iconObj.GetComponent<RectTransform>();
-            iconRect.anchorMin = new Vector2(0.5f, 0.5f);
-            iconRect.anchorMax = new Vector2(0.5f, 0.5f);
-            iconRect.pivot = new Vector2(0.5f, 0.5f);
-            iconRect.sizeDelta = new Vector2(10, 10);
-            iconRect.localRotation = Quaternion.Euler(0, 0, 45); // Diamond shape
+            iconRect.anchorMin = iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+            iconRect.pivot      = new Vector2(0.5f, 0.5f);
+            iconRect.sizeDelta  = new Vector2(10, 10);
+            iconRect.localRotation = Quaternion.Euler(0, 0, 45); // rotated square = diamond
 
-            // Distance label
+            // Distance label (below icon)
             GameObject distObj = new GameObject("Dist");
             distObj.transform.SetParent(m.root.transform, false);
-            m.distText = distObj.AddComponent<TextMeshProUGUI>();
-            m.distText.text = "";
-            m.distText.fontSize = 10;
-            m.distText.alignment = TextAlignmentOptions.Center;
-            m.distText.color = new Color(0.8f, 0.8f, 0.8f);
-            m.distText.raycastTarget = false;
-            m.distText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
-            RectTransform distRect = m.distText.rectTransform;
-            distRect.anchorMin = new Vector2(0.5f, 0.5f);
-            distRect.anchorMax = new Vector2(0.5f, 0.5f);
-            distRect.pivot = new Vector2(0.5f, 1f);
+            m.distLabel = distObj.AddComponent<TextMeshProUGUI>();
+            m.distLabel.text         = "";
+            m.distLabel.fontSize     = 10;
+            m.distLabel.alignment    = TextAlignmentOptions.Center;
+            m.distLabel.color        = new Color(0.8f, 0.8f, 0.8f);
+            m.distLabel.raycastTarget = false;
+            m.distLabel.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
+            RectTransform distRect = m.distLabel.rectTransform;
+            distRect.anchorMin = distRect.anchorMax = new Vector2(0.5f, 0.5f);
+            distRect.pivot           = new Vector2(0.5f, 1f);
             distRect.anchoredPosition = new Vector2(0, -8);
-            distRect.sizeDelta = new Vector2(80, 14);
+            distRect.sizeDelta        = new Vector2(80, 14);
 
             // Name label (above icon)
             GameObject nameObj = new GameObject("Name");
             nameObj.transform.SetParent(m.root.transform, false);
-            m.nameText = nameObj.AddComponent<TextMeshProUGUI>();
-            m.nameText.text = "";
-            m.nameText.fontSize = 9;
-            m.nameText.alignment = TextAlignmentOptions.Center;
-            m.nameText.color = new Color(0.9f, 0.85f, 0.6f);
-            m.nameText.raycastTarget = false;
-            m.nameText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
-            RectTransform nameRect = m.nameText.rectTransform;
-            nameRect.anchorMin = new Vector2(0.5f, 0.5f);
-            nameRect.anchorMax = new Vector2(0.5f, 0.5f);
-            nameRect.pivot = new Vector2(0.5f, 0f);
+            m.nameLabel = nameObj.AddComponent<TextMeshProUGUI>();
+            m.nameLabel.text         = "";
+            m.nameLabel.fontSize     = 9;
+            m.nameLabel.alignment    = TextAlignmentOptions.Center;
+            m.nameLabel.color        = new Color(0.9f, 0.85f, 0.6f);
+            m.nameLabel.raycastTarget = false;
+            m.nameLabel.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
+            RectTransform nameRect = m.nameLabel.rectTransform;
+            nameRect.anchorMin = nameRect.anchorMax = new Vector2(0.5f, 0.5f);
+            nameRect.pivot           = new Vector2(0.5f, 0f);
             nameRect.anchoredPosition = new Vector2(0, 8);
-            nameRect.sizeDelta = new Vector2(100, 14);
+            nameRect.sizeDelta        = new Vector2(100, 14);
 
             m.root.SetActive(false);
-            markers.Add(m);
+            markerPool.Add(m);
         }
     }
 }

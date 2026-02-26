@@ -31,13 +31,21 @@ public class CameraFollow : MonoBehaviour
     [Tooltip("Speed at which camera eases back out after a collision clip")]
     public float collisionRecoverySpeed = 8f;
 
+    public static CameraFollow Instance { get; private set; }
+
     private float yaw;
     private float pitch = 12f;
     private float currentDistance;
     private Camera cam;
 
+    // Screen shake state
+    private float shakeTimer;
+    private float shakeMagnitude;
+
     void Start()
     {
+        Instance = this;
+
         if (target != null)
             yaw = target.eulerAngles.y;
 
@@ -48,6 +56,14 @@ public class CameraFollow : MonoBehaviour
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+
+    /// <summary>Trigger a screen shake. Safe to call from any script.</summary>
+    public static void Shake(float duration, float magnitude)
+    {
+        if (Instance == null) return;
+        Instance.shakeTimer = duration;
+        Instance.shakeMagnitude = magnitude;
     }
 
     /// <summary>
@@ -109,6 +125,13 @@ public class CameraFollow : MonoBehaviour
 
         // ── Apply Position (no Lerp = zero input lag) ──
         transform.position = pivot + offsetDir * currentDistance;
+
+        // ── Screen Shake ──
+        if (shakeTimer > 0f)
+        {
+            shakeTimer -= Time.deltaTime;
+            transform.position += Random.insideUnitSphere * shakeMagnitude;
+        }
 
         // ── Camera Rotation = Orbit Rotation (no LookAt) ──
         transform.rotation = orbitRot;

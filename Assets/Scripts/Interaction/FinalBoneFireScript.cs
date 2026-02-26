@@ -22,6 +22,14 @@ public class FinalBoneFireScript : Interactable
     [Tooltip("Seconds the cooked pickup stays before burning away")]
     public float burnDuration = 30f;
 
+    [Header("Burn Damage")]
+    [Tooltip("Radius around the fire center that deals burn damage")]
+    public float burnDamageRadius = 1.2f;
+    [Tooltip("Health lost per hit while standing in the fire")]
+    public float burnDamagePerHit = 8f;
+    [Tooltip("Seconds between burn damage ticks (after the first immediate hit)")]
+    public float burnDamageInterval = 1.5f;
+
     public bool isLit { get; private set; }
 
     private enum CookState { Idle, Cooking, Ready }
@@ -40,6 +48,10 @@ public class FinalBoneFireScript : Interactable
     private ItemData venisonItem;
     private ItemData cookedVenisonItem;
 
+    private PlayerVitals playerVitals;
+    private bool wasPlayerInFire;
+    private float burnTimer;
+
     void Start()
     {
         if (sharedInventory == null)
@@ -55,6 +67,7 @@ public class FinalBoneFireScript : Interactable
         stoneItem       = ItemRegistry.Get("Stone") ?? MakeStub("Stone", ItemCategory.Resource);
         venisonItem     = GetOrMakeVenison();
         cookedVenisonItem = GetOrMakeCookedVenison();
+        playerVitals    = FindAnyObjectByType<PlayerVitals>();
 
         UpdatePrompt();
     }
@@ -73,6 +86,9 @@ public class FinalBoneFireScript : Interactable
             cookState = CookState.Idle;
             UpdatePrompt();
         }
+
+        if (isLit)
+            UpdateBurnZone();
     }
 
     // ─── Interactable overrides ───────────────────────────────
@@ -92,7 +108,14 @@ public class FinalBoneFireScript : Interactable
         else if (cookState == CookState.Cooking)
             CancelCooking();
         else if (cookState == CookState.Ready)
-            Debug.Log("[Bonfire] Pick up the cooked venison near the fire first.");
+        {
+            // Delegate directly to the pickup so the player doesn't have to hunt for it
+            if (readyPickup != null)
+            {
+                PickupItem pickup = readyPickup.GetComponent<PickupItem>();
+                if (pickup != null) pickup.OnInteract();
+            }
+        }
         else
             TryCookVenison();
     }
@@ -230,6 +253,36 @@ public class FinalBoneFireScript : Interactable
             promptText = "Cook Venison";
         else
             promptText = "Bonfire (burning)";
+    }
+
+    // ─── Burn damage ──────────────────────────────────────────
+
+    void UpdateBurnZone()
+    {
+        if (playerVitals == null) return;
+
+        float dist = Vector3.Distance(transform.position, playerVitals.transform.position);
+        bool inFire = dist <= burnDamageRadius;
+
+        if (inFire)
+        {
+            burnTimer += Time.deltaTime;
+
+            // Immediate hit on first contact, then every interval
+            if (!wasPlayerInFire || burnTimer >= burnDamageInterval)
+            {
+                burnTimer = 0f;
+                playerVitals.TakeDamage(burnDamagePerHit);
+                SFXManager.PlayBurn();
+                CameraFollow.Shake(0.35f, 0.09f);
+            }
+        }
+        else
+        {
+            burnTimer = 0f;
+        }
+
+        wasPlayerInFire = inFire;
     }
 
     // ─── Item helpers ─────────────────────────────────────────

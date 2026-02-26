@@ -83,12 +83,14 @@ public class WorldSetup : MonoBehaviour
         }
 
         CreateItemData();
-        CreateMissionTriggers();
 
+        // Find player BEFORE creating triggers so cabin1 can be placed at the
+        // actual spawn position rather than the hardcoded inspector default.
         PlayerVitals pv = FindAnyObjectByType<PlayerVitals>();
         if (pv != null) playerTransform = pv.transform;
         spawnCenter = playerTransform != null ? playerTransform.position : Vector3.zero;
 
+        CreateMissionTriggers();
         SpawnResources();
         CreateNotePickups();
         respawnTimer = respawnInterval;
@@ -146,11 +148,35 @@ public class WorldSetup : MonoBehaviour
 
     void CreateMissionTriggers()
     {
-        CreateTrigger("CabinTrigger1", cabin1Position, cabinTriggerSize, "start_cabin");
+        // Cabin 1: place trigger at actual player spawn (they start inside the cabin).
+        // Falls back to the inspector value only if no player was found.
+        Vector3 c1 = spawnCenter != Vector3.zero ? spawnCenter : cabin1Position;
+        CreateTrigger("CabinTrigger1", c1, cabinTriggerSize, "start_cabin");
         CreateTrigger("CabinTrigger2", cabin2Position, cabinTriggerSize, "cabin");
         CreateTrigger("ForestExit", exitPosition, exitTriggerSize, "exit");
 
-        Debug.Log("WorldSetup: Created 3 mission triggers.");
+        // Register compass POIs.
+        // Main cabin is auto-discovered — player starts here.
+        // Second cabin and forest exit are hidden until the player explores to them.
+        CompassUI.RegisterPOI("Main Cabin", c1,
+            startDiscovered: true,
+            discoveryRadius: 30f,
+            new Color(0.9f, 0.78f, 0.5f),
+            CompassUI.POIType.Location);
+
+        CompassUI.RegisterPOI("Second Cabin", cabin2Position,
+            startDiscovered: false,
+            discoveryRadius: 35f,
+            new Color(1f, 0.85f, 0.4f),
+            CompassUI.POIType.Location);
+
+        CompassUI.RegisterPOI("Forest Exit", exitPosition,
+            startDiscovered: false,
+            discoveryRadius: 30f,
+            new Color(0.45f, 1f, 0.5f),
+            CompassUI.POIType.Exit);
+
+        Debug.Log("WorldSetup: Created 3 mission triggers + compass POIs.");
     }
 
     void CreateTrigger(string name, Vector3 position, float size, string locationName)
@@ -215,16 +241,15 @@ public class WorldSetup : MonoBehaviour
             Vector2 rnd = Random.insideUnitCircle * radius;
             Vector3 candidate = center + new Vector3(rnd.x, 0, rnd.y);
 
-            // Try NavMesh first, then terrain, then raycast
-            float groundY;
+            // Snap XZ to nearest walkable NavMesh position; always use terrain
+            // height for Y so resources never float on top of elevated NavMesh surfaces
             if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 10f, NavMesh.AllAreas))
             {
-                groundY = hit.position.y;
+                candidate.x = hit.position.x;
+                candidate.z = hit.position.z;
             }
-            else
-            {
-                groundY = GetTerrainHeight(candidate);
-            }
+
+            float groundY = GetTerrainHeight(candidate);
 
             Vector3 pos = new Vector3(candidate.x, groundY + scale.y * 0.5f, candidate.z);
             CreateResourcePickup(item, pos, shape, color, scale);

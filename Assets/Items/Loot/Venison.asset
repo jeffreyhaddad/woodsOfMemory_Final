@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemName: Venison
   icon: {fileID: 0}
-  description: Cooked venison meat. Restores hunger.
+  description: Raw venison from a deer. Cook it over a fire for better nutrition.
   category: 3
   isStackable: 1
   maxStack: 10
   useAction: 1
-  useValue: 25
+  useValue: 0
   equipSlot: 0
   damageBonus: 0
   defenseBonus: 0

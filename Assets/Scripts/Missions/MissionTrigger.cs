@@ -30,6 +30,18 @@ public class MissionTrigger : MonoBehaviour
         if (MissionManager.Instance != null)
             MissionManager.Instance.ReportLocationReached(locationName);
 
+        // Map location name → compass POI label and guarantee discovery
+        // even if the player somehow bypassed the proximity radius check.
+        string poiLabel = locationName switch
+        {
+            "start_cabin" => "Main Cabin",
+            "cabin"       => "Second Cabin",
+            "exit"        => "Forest Exit",
+            _             => null
+        };
+        if (poiLabel != null)
+            CompassUI.DiscoverPOI(poiLabel);
+
         Debug.Log("MissionTrigger: Player reached " + locationName);
 
         if (oneShot)

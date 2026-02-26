@@ -8,8 +8,8 @@ public class LanternLight : MonoBehaviour
 {
     [Header("Light Settings")]
     public Color lanternColor   = new Color(1f, 0.85f, 0.5f);
-    public float baseIntensity  = 2.2f;
-    public float lightRange     = 16f;
+    public float baseIntensity  = 5.0f;
+    public float lightRange     = 25f;
 
     [Header("Flicker")]
     public float flickerSpeed  = 5f;

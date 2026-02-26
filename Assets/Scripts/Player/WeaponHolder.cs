@@ -27,7 +27,7 @@ public class WeaponHolder : MonoBehaviour
     {
         new ItemConfig { itemContains = "Pickaxe", resourcePath = "Weapons/Pickaxe",  albedoTexture = "",                           position = Vector3.zero, rotation = new Vector3(0,  0, 0), scale = 0.02f },
         new ItemConfig { itemContains = "Axe",     resourcePath = "Weapons/Axe",      albedoTexture = "",                           position = Vector3.zero, rotation = new Vector3(0,  0, 0), scale = 0.06f },
-        new ItemConfig { itemContains = "Torch",   resourcePath = "Weapons/Torch",    albedoTexture = "", position = new Vector3(0f, -0.7f, 0.1f), rotation = new Vector3(180, 0, 0), scale = 1f },
+        new ItemConfig { itemContains = "Torch",   resourcePath = "Weapons/Torch",    albedoTexture = "", position = new Vector3(0.0f, 0.05f, 0.1f), rotation = new Vector3(-90, 0, 0), scale = 1f },
         new ItemConfig { itemContains = "Lantern", resourcePath = "Weapons/Lantern",  albedoTexture = "", position = new Vector3(0f, 0f,    0.1f), rotation = new Vector3(0, 0, 0), scale = 1f },
     };
 
@@ -42,7 +42,7 @@ public class WeaponHolder : MonoBehaviour
         if (rightHandBone == null)
             Debug.LogWarning("[WeaponHolder] Could not find right hand bone.");
         else
-            Debug.Log($"[WeaponHolder] Hand bone: '{rightHandBone.name}'");
+            Debug.Log($"[WeaponHolder] Hand bone: '{rightHandBone.name}' lossyScale={rightHandBone.lossyScale} right={rightHandBone.right} up={rightHandBone.up} forward={rightHandBone.forward}");
     }
 
     void Update()

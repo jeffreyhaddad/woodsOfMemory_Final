@@ -14,8 +14,13 @@ public class CabinDoorInteractable : Interactable
     [Tooltip("Speed of the open/close animation")]
     public float rotationSpeed = 4f;
 
+    [Header("Lock Settings")]
+    public ItemData rustedKey;
+
     private bool isOpen = false;
     private bool isMoving = false;
+    private bool isUnlocked = false;
+    private Inventory inventory;
 
     private Quaternion closedRotation;
     private Quaternion openRotation;
@@ -26,6 +31,7 @@ public class CabinDoorInteractable : Interactable
         closedRotation = transform.localRotation;
         openRotation = closedRotation * Quaternion.Euler(0f, openAngle, 0f);
         targetRotation = closedRotation;
+        inventory = FindAnyObjectByType<Inventory>();
 
         promptText = "Open Door";
     }
@@ -49,6 +55,21 @@ public class CabinDoorInteractable : Interactable
 
     public override void OnInteract()
     {
+        if (!isUnlocked)
+        {
+            if (rustedKey != null && inventory != null && inventory.HasItem(rustedKey))
+            {
+                isUnlocked = true;
+                inventory.RemoveItem(rustedKey, 1);
+                Debug.Log("Door unlocked with Rusted Key");
+            }
+            else
+            {
+                Debug.Log("This door is locked. You need a rusted key.");
+                return;
+            }
+        }
+
         isOpen = !isOpen;
         targetRotation = isOpen ? openRotation : closedRotation;
         isMoving = true;

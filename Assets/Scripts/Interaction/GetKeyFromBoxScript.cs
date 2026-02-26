@@ -2,10 +2,12 @@ using UnityEngine;
 
 public class GetKeyFromBoxScript : MonoBehaviour
 {
-    public GameObject spawnPrefab;
-
+   
+    
     GameObject player;
     GameObject woodenBox;
+    GameObject rustedKey;
+    
     DayNightCycle dayNight;
     bool isPlayerNear = false;
     bool hasbeenOpened = false;
@@ -15,7 +17,10 @@ public class GetKeyFromBoxScript : MonoBehaviour
         player = GameObject.FindGameObjectWithTag("Player");
         woodenBox = GameObject.FindGameObjectWithTag("WoodenBox");
         dayNight = FindAnyObjectByType<DayNightCycle>();
-    }
+        rustedKey = GameObject.FindGameObjectWithTag("Rusted key");
+        
+       
+    }   
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
@@ -38,24 +43,26 @@ public class GetKeyFromBoxScript : MonoBehaviour
     {
         if (isPlayerNear && !hasbeenOpened && MissionManager.Instance.CurrentMissionIndex == 2)
         {
-           // if (dayNight != null && dayNight.IsNight)
+           
                 GUI.Label(new Rect(Screen.width / 2 - 150, Screen.height - 100, 300, 30), "Press O to open the box");
-            //else
-                //GUI.Label(new Rect(Screen.width / 2 - 150, Screen.height - 100, 300, 30), "This can only be opened at night");
+            
         }
+        
     }
 
     void Update()
     {
         if (MissionManager.Instance.CurrentMissionIndex == 2 && isPlayerNear && Input.GetKeyDown(KeyCode.O) && !hasbeenOpened)
         {
+            
             hasbeenOpened = true;
             MissionManager.Instance.ReportLocationReached("wooden box");
-            if (woodenBox != null && woodenBox != gameObject)
+            
+                
                 Destroy(woodenBox);
-            Destroy(gameObject);
-            if (spawnPrefab != null)
-                Instantiate(spawnPrefab, new Vector3(625.5f, 108f, 382f), Quaternion.identity);
+                Destroy(gameObject);
+                
+            
         }
     }
 }

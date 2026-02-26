@@ -294,6 +294,7 @@ public class MissionManager : MonoBehaviour
             new MissionObjective[]
             {
                 MakeObjective("Find the hidden key in the wooden box", ObjectiveType.ReachLocation, "", "", 1),
+                MakeObjective("Collect the key inside the wooden box",ObjectiveType.CollectItem,"Rusted Key","",1),
                 MakeObjective("Find the second cabin", ObjectiveType.ReachLocation, "", "", 1)
             }));
 

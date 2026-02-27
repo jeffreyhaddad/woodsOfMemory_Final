@@ -72,6 +72,15 @@ public class PlayerVitals : MonoBehaviour
 
     void Update()
     {
+        // Death check first — before regen can reverse lethal damage
+        if (health <= 0f)
+        {
+            health = 0f;
+            OnPlayerDeath?.Invoke();
+            enabled = false;
+            return;
+        }
+
         // Hunger drains passively
         if (hunger > 0f)
             hunger = Mathf.Max(0f, hunger - hungerDrainRate * Time.deltaTime);
@@ -96,15 +105,6 @@ public class PlayerVitals : MonoBehaviour
             lastNotifiedHunger = hunger;
             lastNotifiedStamina = stamina;
             OnVitalsChanged?.Invoke();
-        }
-
-        // Death check
-        if (health <= 0f)
-        {
-            health = 0f;
-            Debug.Log("Player has died!");
-            OnPlayerDeath?.Invoke();
-            enabled = false;
         }
     }
 

@@ -121,7 +121,7 @@ public class PlayerInteraction : MonoBehaviour
 
         promptUI = textObj.AddComponent<TextMeshProUGUI>();
         promptUI.text = "[E] Interact";
-        promptUI.fontSize = 24;
+        promptUI.fontSize = 15;
         promptUI.alignment = TextAlignmentOptions.Center;
         promptUI.color = Color.white;
         promptUI.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
@@ -131,6 +131,6 @@ public class PlayerInteraction : MonoBehaviour
         rect.anchorMin = new Vector2(0.5f, 0.15f);
         rect.anchorMax = new Vector2(0.5f, 0.15f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(400f, 50f);
+        rect.sizeDelta = new Vector2(300f, 30f);
     }
 }

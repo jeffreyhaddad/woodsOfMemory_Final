@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -33,6 +34,30 @@ public class DeathScreenUI : MonoBehaviour
 
     void ShowDeathScreen()
     {
+        // Block input immediately but keep time running so the animation plays
+        PlayerMovement.inputBlocked = true;
+
+        // Zero locomotion params so death anim isn't fighting blend tree
+        Animator anim = vitals.GetComponentInChildren<Animator>();
+        if (anim != null)
+        {
+            anim.SetFloat("Speed", 0f);
+            anim.SetFloat("Direction", 0f);
+            anim.SetFloat("Vertical", 0f);
+            anim.SetBool("isJumping", false);
+            anim.SetBool("isCrouching", false);
+            anim.SetTrigger("Death");
+            anim.CrossFade("Standing Death Left 01", 0.15f);
+        }
+
+        StartCoroutine(DeathSequence());
+    }
+
+    IEnumerator DeathSequence()
+    {
+        // Let the death animation play out
+        yield return new WaitForSeconds(2.5f);
+
         panelObj.SetActive(true);
 
         if (GameManager.Instance != null)
@@ -42,7 +67,6 @@ public class DeathScreenUI : MonoBehaviour
             Time.timeScale = 0f;
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-            PlayerMovement.inputBlocked = true;
         }
     }
 

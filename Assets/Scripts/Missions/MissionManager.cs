@@ -295,7 +295,7 @@ public class MissionManager : MonoBehaviour
             {
                 MakeObjective("Find the hidden key in the wooden box", ObjectiveType.ReachLocation, "", "", 1),
                 MakeObjective("Collect the key inside the wooden box",ObjectiveType.CollectItem,"Rusted Key","",1),
-                MakeObjective("Find the second cabin", ObjectiveType.ReachLocation, "", "", 1)
+                MakeObjective("Open the door of the cabin_area", ObjectiveType.ReachLocation, "", "", 1)
             }));
 
         // Mission 4: Crafting Tools

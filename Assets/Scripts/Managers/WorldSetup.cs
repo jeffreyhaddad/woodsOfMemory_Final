@@ -152,7 +152,7 @@ public class WorldSetup : MonoBehaviour
         // Falls back to the inspector value only if no player was found.
         Vector3 c1 = spawnCenter != Vector3.zero ? spawnCenter : cabin1Position;
         CreateTrigger("CabinTrigger1", c1, cabinTriggerSize, "start_cabin");
-        CreateTrigger("CabinTrigger2", cabin2Position, cabinTriggerSize, "cabin");
+        //CreateTrigger("CabinTrigger2", cabin2Position, cabinTriggerSize, "cabin_area");
         CreateTrigger("ForestExit", exitPosition, exitTriggerSize, "exit");
 
         // Register compass POIs.

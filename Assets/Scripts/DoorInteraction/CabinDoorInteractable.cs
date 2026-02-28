@@ -20,6 +20,7 @@ public class CabinDoorInteractable : Interactable
     private bool isOpen = false;
     private bool isMoving = false;
     private bool isUnlocked = false;
+    private bool hasReportedObjective = false;
     private Inventory inventory;
 
     private Quaternion closedRotation;
@@ -60,7 +61,7 @@ public class CabinDoorInteractable : Interactable
             if (rustedKey != null && inventory != null && inventory.HasItem(rustedKey))
             {
                 isUnlocked = true;
-                inventory.RemoveItem(rustedKey, 1);
+                //inventory.RemoveItem(rustedKey, 1);
                 Debug.Log("Door unlocked with Rusted Key");
             }
             else
@@ -74,5 +75,11 @@ public class CabinDoorInteractable : Interactable
         targetRotation = isOpen ? openRotation : closedRotation;
         isMoving = true;
         promptText = isOpen ? "Close Door" : "Open Door";
+
+        if (isOpen && !hasReportedObjective)
+        {
+            hasReportedObjective = true;
+            MissionManager.Instance?.ReportLocationReached("cabin_area");
+        }
     }
 }

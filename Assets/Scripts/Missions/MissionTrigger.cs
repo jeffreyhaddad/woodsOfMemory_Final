@@ -35,7 +35,7 @@ public class MissionTrigger : MonoBehaviour
         string poiLabel = locationName switch
         {
             "start_cabin" => "Main Cabin",
-            "cabin"       => "Second Cabin",
+            "cabin_area"  => "Second Cabin",
             "exit"        => "Forest Exit",
             _             => null
         };

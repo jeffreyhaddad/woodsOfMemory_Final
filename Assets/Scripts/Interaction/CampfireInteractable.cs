@@ -29,6 +29,7 @@ public class CampfireInteractable : Interactable
 
         // Make sure all effects are off at start
         if (fireEffect != null) fireEffect.SetActive(false);
+        else Debug.Log("Halim");
         if (smokeEffect != null) smokeEffect.SetActive(false);
         if (fireLight != null) fireLight.SetActive(false);
     }

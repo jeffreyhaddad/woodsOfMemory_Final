@@ -69,7 +69,7 @@ public class MissionManager : MonoBehaviour
     /// <summary>Called by IntroSequenceManager after the intro completes.</summary>
     public void BeginMissions()
     {
-        StartMission(2);
+        StartMission(3);
     }
 
     void OnDestroy()
@@ -298,7 +298,21 @@ public class MissionManager : MonoBehaviour
                 MakeObjective("Open the door of the cabin_area", ObjectiveType.ReachLocation, "", "", 1)
             }));
 
-        // Mission 4: Crafting Tools
+        /// Mission 4 : Stew Cooking inside the pot 
+        list.Add(MakeMission("Stew Cooking", "Get some fresh water from the well and cook the deer meat", new MissionObjective[]
+        {
+            
+           MakeObjective("Extract some water from the well",ObjectiveType.CollectItem,"Water from well","",1),
+           MakeObjective("Light boneFire with pot", ObjectiveType.ReachLocation,"","",1),
+           MakeObjective("Pour Water inside the pot", ObjectiveType.CraftItem,"Pot Water","",1),
+           MakeObjective("Put vension inside the pot with water",ObjectiveType.CraftItem,"Stew vension","",1),
+           MakeObjective("Eat the cooked vension stew",ObjectiveType.CollectItem,"Vension Stew","",1)
+        }));
+        
+            
+            
+
+        // Mission 5: Crafting Tools
         list.Add(MakeMission("Crafting Tools",
             "Create essential equipment for survival.",
             new MissionObjective[]
@@ -307,7 +321,7 @@ public class MissionManager : MonoBehaviour
                 MakeObjective("Craft a Torch", ObjectiveType.CraftItem, "Torch", "", 1)
             }));
 
-        // Mission 5: Forest Threats
+        // Mission 6: Forest Threats
         list.Add(MakeMission("Forest Threats",
             "The shadow creatures emerge at night. Survive and fight back.",
             new MissionObjective[]
@@ -316,7 +330,7 @@ public class MissionManager : MonoBehaviour
                 MakeObjective("Kill shadow creatures", ObjectiveType.KillCreature, "", "Shadow Creature", 3)
             }));
 
-        // Mission 6: The Escape
+        // Mission 7: The Escape
         list.Add(MakeMission("The Escape",
             "You've gathered enough knowledge. Find the way out of the woods.",
             new MissionObjective[]

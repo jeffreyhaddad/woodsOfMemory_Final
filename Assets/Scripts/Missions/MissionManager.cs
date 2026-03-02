@@ -69,7 +69,7 @@ public class MissionManager : MonoBehaviour
     /// <summary>Called by IntroSequenceManager after the intro completes.</summary>
     public void BeginMissions()
     {
-        StartMission(3);
+        StartMission(0);
     }
 
     void OnDestroy()
@@ -278,14 +278,13 @@ public class MissionManager : MonoBehaviour
                 MakeObjective("Light a campfire",ObjectiveType.ReachLocation,"campfire","",1)
             }));
 
-        // Mission 2: Hunting for Sustenance
-        list.Add(MakeMission("Hunting for Sustenance",
-            "Hunt wildlife for food and learn to cook.",
+        // Mission 2: Crafting Tools
+        list.Add(MakeMission("Crafting Tools",
+            "Create essential equipment for survival.",
             new MissionObjective[]
             {
-                MakeObjective("Kill deer", ObjectiveType.KillCreature, "", "Deer", 2),
-                MakeObjective("Collect Venison", ObjectiveType.CollectItem, "Venison", "", 2),
-                MakeObjective("Craft Cooked Venison", ObjectiveType.CraftItem, "Cooked Venison", "", 2)
+                MakeObjective("Craft a Stone Axe", ObjectiveType.CraftItem, "Stone Axe", "", 1),
+                MakeObjective("Craft a Torch", ObjectiveType.CraftItem, "Torch", "", 1)
             }));
 
         // Mission 3: Exploration
@@ -301,7 +300,7 @@ public class MissionManager : MonoBehaviour
         /// Mission 4 : Stew Cooking inside the pot 
         list.Add(MakeMission("Stew Cooking", "Get some fresh water from the well and cook the deer meat", new MissionObjective[]
         {
-            
+            MakeObjective("Kill deer", ObjectiveType.KillCreature, "", "Deer", 1),
            MakeObjective("Extract some water from the well",ObjectiveType.CollectItem,"Water from well","",1),
            MakeObjective("Light boneFire with pot", ObjectiveType.ReachLocation,"","",1),
            MakeObjective("Pour Water inside the pot", ObjectiveType.CraftItem,"Pot Water","",1),
@@ -309,18 +308,6 @@ public class MissionManager : MonoBehaviour
            MakeObjective("Eat the cooked vension stew",ObjectiveType.CollectItem,"Vension Stew","",1)
         }));
         
-            
-            
-
-        // Mission 5: Crafting Tools
-        list.Add(MakeMission("Crafting Tools",
-            "Create essential equipment for survival.",
-            new MissionObjective[]
-            {
-                MakeObjective("Craft a Stone Axe", ObjectiveType.CraftItem, "Stone Axe", "", 1),
-                MakeObjective("Craft a Torch", ObjectiveType.CraftItem, "Torch", "", 1)
-            }));
-
         // Mission 6: Forest Threats
         list.Add(MakeMission("Forest Threats",
             "The shadow creatures emerge at night. Survive and fight back.",

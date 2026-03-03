@@ -24,7 +24,8 @@ public static class ItemRegistry
         { "Bone",           "bone" },
         { "Feather",        "feather" },
         { "Iron Ore",       "iron_ore" },
-        // Special
+        // Special / quest items
+        { "Rusted Key",     "rusted_key" },
         { "Lantern",        "lantern" },
         // Tools
         { "Stone Axe",      "stone_axe" },

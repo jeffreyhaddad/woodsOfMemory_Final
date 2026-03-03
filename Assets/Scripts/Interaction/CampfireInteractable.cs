@@ -29,7 +29,7 @@ public class CampfireInteractable : Interactable
 
         // Make sure all effects are off at start
         if (fireEffect != null) fireEffect.SetActive(false);
-        else Debug.Log("Halim");
+        else Debug.LogWarning("CampfireInteractable: 'Fire Effect' child object not found on " + gameObject.name);
         if (smokeEffect != null) smokeEffect.SetActive(false);
         if (fireLight != null) fireLight.SetActive(false);
     }
@@ -77,7 +77,6 @@ public class CampfireInteractable : Interactable
         if (MissionManager.Instance != null)
             MissionManager.Instance.ReportLocationReached("campfire");
 
-        Debug.Log("Campfire lit!");
     }
 
     public override void OnFocus()

@@ -7,7 +7,8 @@ public class WaterWellInteraction : Interactable
 
     private void Start()
     {
-        sharedInventory = FindAnyObjectByType<Inventory>();
+        if (sharedInventory == null)
+            sharedInventory = FindAnyObjectByType<Inventory>();
 
         if (water == null)
             water = GetOrMakeWater();

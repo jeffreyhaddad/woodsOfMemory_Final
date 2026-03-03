@@ -70,7 +70,7 @@ public class MissionHUD : MonoBehaviour
     void OnMissionStarted(Mission mission)
     {
         RefreshDisplay();
-        ShowBanner("New Mission: " + mission.missionName);
+        ShowBanner($"New Mission: {mission.missionName}");
     }
 
     void OnObjectiveProgress(MissionObjective objective)
@@ -80,7 +80,7 @@ public class MissionHUD : MonoBehaviour
 
     void OnMissionCompleted(Mission mission)
     {
-        ShowBanner("Mission Complete: " + mission.missionName);
+        ShowBanner($"Mission Complete: {mission.missionName}");
         RefreshDisplay();
     }
 

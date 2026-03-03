@@ -43,24 +43,16 @@ public class ShadowCreatureHoverAnimator : MonoBehaviour
         ai           = GetComponentInParent<CreatureAI>();
         baseLocalPos = transform.localPosition;
         phase        = Random.Range(0f, Mathf.PI * 2f);
-        Debug.Log($"[ShadowHover] ai={(ai != null ? ai.gameObject.name : "NULL")} | baseLocalPos={baseLocalPos}");
 
         Transform[] all = GetComponentsInChildren<Transform>();
-
-        // Print every bone name so we can see the full hierarchy
-        var allNames = new List<string>();
-        foreach (Transform t in all)
-            if (t != transform) allNames.Add(t.name);
-        Debug.Log($"[ShadowHover] ALL bones ({allNames.Count}): {string.Join(", ", allNames)}");
 
         // Pass 1 — keyword match
         foreach (Transform t in all)
         {
             if (t == transform) continue;
-            string lower = t.name.ToLower();
             foreach (string kw in ArmKeywords)
             {
-                if (lower.Contains(kw))
+                if (t.name.IndexOf(kw, System.StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     armBones.Add(t);
                     armBaseRots.Add(t.localRotation);
@@ -104,11 +96,7 @@ public class ShadowCreatureHoverAnimator : MonoBehaviour
                 armBones.Add(t);
                 armBaseRots.Add(t.localRotation);
             }
-            Debug.Log($"[ShadowHover] Pass 3 fallback — animating all {armBones.Count} child transforms.");
         }
-
-        Debug.Log($"[ShadowHover] Arm bones selected ({armBones.Count}): " +
-                  $"[{string.Join(", ", armBones.ConvertAll(b => b.name))}]");
     }
 
     void LateUpdate()

@@ -153,7 +153,6 @@ public class WeatherManager : MonoBehaviour
             case WeatherState.Rainy: targetFogMult = rainyFogMultiplier; break;
         }
 
-        Debug.Log("Weather changing to: " + next);
     }
 
     void SetRainActive(bool active)

@@ -305,10 +305,14 @@ public class IntroSequenceManager : MonoBehaviour
 
     IEnumerator PulseText(TextMeshProUGUI tmp)
     {
+        // Cache base color once so we don't read the property getter 3× per frame
+        Color baseColor = tmp.color;
         while (tmp != null)
         {
             float a = 0.4f + 0.6f * Mathf.Abs(Mathf.Sin(Time.time * 1.5f));
-            tmp.color = new Color(tmp.color.r, tmp.color.g, tmp.color.b, a);
+            Color c = baseColor;
+            c.a = a;
+            tmp.color = c;
             yield return null;
         }
     }

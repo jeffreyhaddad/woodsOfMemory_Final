@@ -51,7 +51,7 @@ public class CompassUI : MonoBehaviour
 
         // Deduplicate — same label within 5 m counts as the same POI
         for (int i = 0; i < _pois.Count; i++)
-            if (_pois[i].label == label && Vector3.Distance(_pois[i].worldPos, worldPos) < 5f)
+            if (_pois[i].label == label && (_pois[i].worldPos - worldPos).sqrMagnitude < 25f)
                 return;
 
         _pois.Add(new POI
@@ -73,6 +73,16 @@ public class CompassUI : MonoBehaviour
     {
         for (int i = 0; i < _pois.Count; i++)
             if (_pois[i].label == label) { _pois[i].discovered = true; return; }
+    }
+
+    /// <summary>
+    /// Remove a POI by exact label match. Use when the world object no longer exists
+    /// (e.g. the wooden box has been opened and destroyed).
+    /// </summary>
+    public static void RemovePOI(string label)
+    {
+        for (int i = _pois.Count - 1; i >= 0; i--)
+            if (_pois[i].label == label) { _pois.RemoveAt(i); return; }
     }
 
     // ─── Settings ─────────────────────────────────────────────
@@ -108,6 +118,9 @@ public class CompassUI : MonoBehaviour
         public Image           icon;
         public TextMeshProUGUI distLabel;
         public TextMeshProUGUI nameLabel;
+        // Cache POI identity and last shown distance to avoid per-frame string allocations
+        public int             lastPoiIdx = -1;
+        public float           lastDist   = -1f;
     }
 
     // ─────────────────────────────────────────────────────────
@@ -190,9 +203,7 @@ public class CompassUI : MonoBehaviour
             cardinalLabels[i].rectTransform.anchoredPosition = new Vector2(offset, 0);
 
             float alpha = Mathf.Clamp01(1f - Mathf.Abs(offset) / half);
-            Color c = cardinalLabels[i].color;
-            c.a = alpha;
-            cardinalLabels[i].color = c;
+            SetAlpha(cardinalLabels[i], alpha);
         }
     }
 
@@ -228,17 +239,28 @@ public class CompassUI : MonoBehaviour
             POIMarker m = markerPool[shown];
             m.root.SetActive(true);
             m.rect.anchoredPosition = new Vector2(offset, -22);
-            m.icon.color = poi.color;
 
-            // Distance label — suppress when very close (already there)
-            if (dist < 20f)
-                m.distLabel.text = "";
-            else if (dist >= 1000f)
-                m.distLabel.text = (dist / 1000f).ToString("0.0") + "km";
-            else
-                m.distLabel.text = Mathf.RoundToInt(dist) + "m";
+            // Only update POI-specific fields when a different POI occupies this marker slot
+            if (m.lastPoiIdx != i)
+            {
+                m.lastPoiIdx     = i;
+                m.icon.color     = poi.color;
+                m.nameLabel.text = poi.label;
+                m.lastDist       = -1f; // force distance refresh
+            }
 
-            m.nameLabel.text = poi.label;
+            // Only rebuild distance string when value changes by > 5 m — avoids
+            // a heap allocation every frame per visible marker.
+            if (Mathf.Abs(dist - m.lastDist) > 5f)
+            {
+                m.lastDist = dist;
+                if (dist < 20f)
+                    m.distLabel.text = "";
+                else if (dist >= 1000f)
+                    m.distLabel.text = $"{dist / 1000f:0.0}km";
+                else
+                    m.distLabel.text = $"{Mathf.RoundToInt(dist)}m";
+            }
 
             // Fade near the edges of the compass strip
             float edgeFade = Mathf.Clamp01(1f - Mathf.Abs(offset) / half);

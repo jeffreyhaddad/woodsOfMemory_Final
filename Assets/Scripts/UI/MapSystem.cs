@@ -57,6 +57,10 @@ public class MapSystem : MonoBehaviour
     private Vector3?         cachedObjPos;
     private float            scanCooldown;
 
+    // ─── Minimap UV cache (constant after Start) ───────────────
+    private float minimapUVW;
+    private float minimapUVH;
+
     // ──────────────────────────────────────────────────────────
 
     void Start()
@@ -70,6 +74,11 @@ public class MapSystem : MonoBehaviour
         BuildFogTexture();
         BuildMinimapUI();
         BuildFullMapUI();
+
+        // Cache minimap UV dimensions — these only depend on minimapRadius and terrain size,
+        // neither of which changes at runtime.
+        minimapUVW = Mathf.Clamp(minimapRadius * 2f / tSX, 0.01f, 1f);
+        minimapUVH = Mathf.Clamp(minimapRadius * 2f / tSZ, 0.01f, 1f);
     }
 
     void Update()
@@ -529,10 +538,9 @@ public class MapSystem : MonoBehaviour
 
         float uvX = (player.position.x - tOX) / tSX;
         float uvZ = (player.position.z - tOZ) / tSZ;
-        float uvW = Mathf.Clamp(minimapRadius * 2f / tSX, 0.01f, 1f);
-        float uvH = Mathf.Clamp(minimapRadius * 2f / tSZ, 0.01f, 1f);
 
-        var rect = new Rect(uvX - uvW * 0.5f, uvZ - uvH * 0.5f, uvW, uvH);
+        // minimapUVW/H are pre-computed constants — no per-frame division or Clamp
+        var rect = new Rect(uvX - minimapUVW * 0.5f, uvZ - minimapUVH * 0.5f, minimapUVW, minimapUVH);
         mmMapImg.uvRect = rect;
         mmFogImg.uvRect = rect;
     }

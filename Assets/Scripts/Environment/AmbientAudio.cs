@@ -78,6 +78,7 @@ public class AmbientAudio : MonoBehaviour
     void Update()
     {
         bool isNight = dayNight != null && dayNight.IsNight;
+        WeatherManager wm = WeatherManager.Instance; // cache — avoids repeated static property lookup
 
         // Base ambience
         targetBaseVolume = isNight ? nightVolume : dayVolume;
@@ -85,18 +86,18 @@ public class AmbientAudio : MonoBehaviour
 
         // Wind — louder during day, softer at night; louder during foggy/rainy weather
         float windTarget = isNight ? windNightVolume : windDayVolume;
-        if (WeatherManager.Instance != null)
+        if (wm != null)
         {
-            if (WeatherManager.Instance.CurrentWeather == WeatherState.Rainy)
+            if (wm.CurrentWeather == WeatherState.Rainy)
                 windTarget *= 2.5f;
-            else if (WeatherManager.Instance.CurrentWeather == WeatherState.Foggy)
+            else if (wm.CurrentWeather == WeatherState.Foggy)
                 windTarget *= 1.5f;
         }
         windSource.volume = Mathf.MoveTowards(windSource.volume, windTarget, volumeTransitionSpeed * Time.deltaTime);
 
         // Crickets — only at night, silent during rain
         float cricketTarget = isNight ? cricketNightVolume : 0f;
-        if (WeatherManager.Instance != null && WeatherManager.Instance.IsRaining)
+        if (wm != null && wm.IsRaining)
             cricketTarget = 0f;
         cricketSource.volume = Mathf.MoveTowards(cricketSource.volume, cricketTarget, volumeTransitionSpeed * 0.5f * Time.deltaTime);
     }

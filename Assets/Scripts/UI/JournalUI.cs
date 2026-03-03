@@ -23,6 +23,7 @@ public class JournalUI : MonoBehaviour
     private JournalCategory? activeFilter = null;
 
     private JournalEntry selectedEntry;
+    private Mission selectedMission;
 
     // Notification
     private TextMeshProUGUI notifText;
@@ -95,6 +96,7 @@ public class JournalUI : MonoBehaviour
         panelObj.SetActive(true);
         activeFilter = null;
         selectedEntry = null;
+        selectedMission = null;
         PopulateEntryList();
         ClearDetail();
         RefreshTabColors();
@@ -120,6 +122,12 @@ public class JournalUI : MonoBehaviour
     {
         foreach (Transform child in entryListContent.transform)
             Destroy(child.gameObject);
+
+        if (activeFilter == JournalCategory.Mission)
+        {
+            PopulateMissionList();
+            return;
+        }
 
         IReadOnlyList<JournalEntry> entries = journal.DiscoveredEntries;
         int count = 0;
@@ -186,6 +194,107 @@ public class JournalUI : MonoBehaviour
         ShowDetail(entry);
     }
 
+    // ─── Mission List ─────────────────────────────────────────
+
+    void PopulateMissionList()
+    {
+        if (MissionManager.Instance == null) return;
+
+        Mission[] missions = MissionManager.Instance.missions;
+        if (missions == null) return;
+
+        int currentIdx = MissionManager.Instance.CurrentMissionIndex;
+        int count = 0;
+
+        for (int i = 0; i < missions.Length; i++)
+        {
+            Mission m = missions[i];
+            if (m == null) continue;
+
+            bool isCompleted = m.isCompleted;
+            bool isCurrent   = i == currentIdx && !MissionManager.Instance.AllMissionsComplete;
+            bool isFuture    = !isCompleted && !isCurrent;
+
+            CreateMissionRow(m, count, isCompleted, isCurrent, isFuture);
+            count++;
+        }
+
+        entryContentRect.sizeDelta = new Vector2(0, count * 36 + 10);
+        entryScroll.verticalNormalizedPosition = 1f;
+    }
+
+    void CreateMissionRow(Mission m, int index, bool isCompleted, bool isCurrent, bool isFuture)
+    {
+        GameObject rowObj = new GameObject("Mission_" + m.missionName);
+        rowObj.transform.SetParent(entryListContent.transform, false);
+
+        Image rowBg = rowObj.AddComponent<Image>();
+        bool isSelected = selectedMission == m;
+        rowBg.color = isSelected  ? new Color(0.4f, 0.35f, 0.15f, 0.9f) :
+                      isCurrent   ? new Color(0.25f, 0.22f, 0.08f, 0.9f) :
+                                    new Color(0.2f, 0.2f, 0.2f, 0.9f);
+
+        RectTransform rowRect = rowObj.GetComponent<RectTransform>();
+        rowRect.anchorMin = new Vector2(0, 1);
+        rowRect.anchorMax = new Vector2(1, 1);
+        rowRect.pivot = new Vector2(0.5f, 1);
+        rowRect.anchoredPosition = new Vector2(0, -index * 36);
+        rowRect.sizeDelta = new Vector2(0, 32);
+
+        GameObject textObj = new GameObject("Text");
+        textObj.transform.SetParent(rowObj.transform, false);
+        TextMeshProUGUI text = textObj.AddComponent<TextMeshProUGUI>();
+        text.raycastTarget = false;
+        string prefix = isCompleted ? "<color=#88ff88>[✓]</color> " :
+                        isCurrent   ? "<color=#ffdd66>[>]</color> " :
+                                      "<color=#666666>[ ]</color> ";
+        text.text = prefix + m.missionName;
+        text.fontSize = 14;
+        text.color = isFuture ? new Color(0.5f, 0.5f, 0.5f) : Color.white;
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
+        RectTransform textRect = text.rectTransform;
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(8, 0);
+        textRect.offsetMax = new Vector2(-4, 0);
+
+        if (!isFuture)
+        {
+            Button btn = rowObj.AddComponent<Button>();
+            btn.targetGraphic = rowBg;
+            Mission captured = m;
+            btn.onClick.AddListener(() => SelectMission(captured));
+        }
+    }
+
+    void SelectMission(Mission m)
+    {
+        selectedMission = m;
+        PopulateMissionList();
+        ShowMissionDetail(m);
+    }
+
+    void ShowMissionDetail(Mission m)
+    {
+        detailTitle.text = m.missionName;
+
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        sb.AppendLine(m.description);
+        sb.AppendLine();
+        sb.AppendLine("<color=#aaaaaa>Objectives:</color>");
+        for (int i = 0; i < m.objectives.Length; i++)
+        {
+            MissionObjective obj = m.objectives[i];
+            string check = obj.IsCompleted
+                ? "<color=#88ff88>✓</color>"
+                : "<color=#888888>○</color>";
+            sb.AppendLine(check + " " + obj.GetProgressText());
+        }
+        detailBody.text = sb.ToString();
+        detailScroll.verticalNormalizedPosition = 1f;
+    }
+
     // ─── Detail Panel ────────────────────────────────────────
 
     void ClearDetail()
@@ -207,6 +316,7 @@ public class JournalUI : MonoBehaviour
     {
         activeFilter = filter;
         selectedEntry = null;
+        selectedMission = null;
         PopulateEntryList();
         ClearDetail();
         RefreshTabColors();

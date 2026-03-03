@@ -92,7 +92,6 @@ public class TorchLight : MonoBehaviour
         // Fire particles
         CreateFireParticles();
 
-        Debug.Log("Torch lit!");
     }
 
     void DisableTorch()
@@ -105,7 +104,6 @@ public class TorchLight : MonoBehaviour
         torchLight = null;
         fireParticles = null;
 
-        Debug.Log("Torch extinguished.");
     }
 
     void CreateFireParticles()

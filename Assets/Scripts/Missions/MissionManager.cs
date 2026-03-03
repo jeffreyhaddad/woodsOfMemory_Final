@@ -292,8 +292,7 @@ public class MissionManager : MonoBehaviour
             "Someone else has been in these woods. Find the second cabin.",
             new MissionObjective[]
             {
-                MakeObjective("Find the hidden key in the wooden box", ObjectiveType.ReachLocation, "", "", 1),
-                MakeObjective("Collect the key inside the wooden box",ObjectiveType.CollectItem,"Rusted Key","",1),
+                MakeObjective("Collect the key inside the wooden box", ObjectiveType.CollectItem, "Rusted Key", "", 1),
                 MakeObjective("Open the door of the cabin_area", ObjectiveType.ReachLocation, "", "", 1)
             }));
 

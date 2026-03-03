@@ -152,6 +152,12 @@ public class InventoryUI : MonoBehaviour
 
                 slotImages[i].color = isHovered ? baseColor * 1.35f : baseColor;
 
+                // If icon isn't set yet, let ItemRegistry try to load it now.
+                // Covers items that bypass the normal Register() flow (e.g. inspector-assigned
+                // ItemData on PickupItem components placed directly in the scene).
+                if (slot.item.icon == null)
+                    ItemRegistry.Register(slot.item);
+
                 if (slot.item.icon != null)
                 {
                     iconImages[i].enabled = true;

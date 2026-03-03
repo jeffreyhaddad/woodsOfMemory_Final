@@ -61,8 +61,6 @@ public class CabinDoorInteractable : Interactable
             if (rustedKey != null && inventory != null && inventory.HasItem(rustedKey))
             {
                 isUnlocked = true;
-                //inventory.RemoveItem(rustedKey, 1);
-                Debug.Log("Door unlocked with Rusted Key");
             }
             else
             {

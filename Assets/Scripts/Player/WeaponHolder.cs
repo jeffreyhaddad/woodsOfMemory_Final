@@ -70,12 +70,22 @@ public class WeaponHolder : MonoBehaviour
         }
         foreach (Transform t in GetComponentsInChildren<Transform>(true))
         {
-            string lower = t.name.ToLowerInvariant();
-            if ((lower.Contains("righthand") || lower.Contains("right_hand") || lower.Contains("r_hand"))
-                && !lower.Contains("index") && !lower.Contains("middle")
-                && !lower.Contains("ring")  && !lower.Contains("pinky")
-                && !lower.Contains("thumb") && !lower.Contains("finger"))
-                return t;
+            string n = t.name;
+            // Use OrdinalIgnoreCase to avoid allocating a lowercased string per bone
+            bool isRightHand =
+                n.IndexOf("righthand", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                n.IndexOf("right_hand", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                n.IndexOf("r_hand",     System.StringComparison.OrdinalIgnoreCase) >= 0;
+            if (!isRightHand) continue;
+
+            bool isFinger =
+                n.IndexOf("index",  System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                n.IndexOf("middle", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                n.IndexOf("ring",   System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                n.IndexOf("pinky",  System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                n.IndexOf("thumb",  System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                n.IndexOf("finger", System.StringComparison.OrdinalIgnoreCase) >= 0;
+            if (!isFinger) return t;
         }
         return null;
     }

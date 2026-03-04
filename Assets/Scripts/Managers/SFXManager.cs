@@ -42,6 +42,9 @@ public class SFXManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(this); return; }
         Instance = this;
 
+        if (SettingsManager.Instance != null)
+            masterVolume = SettingsManager.Instance.SFXVolume;
+
         sfxSource = gameObject.AddComponent<AudioSource>();
         sfxSource.playOnAwake = false;
         sfxSource.spatialBlend = 0f; // 2D sound

@@ -68,7 +68,7 @@ public class InventoryUI : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Tab))
+        if (Input.GetKeyDown(SettingsManager.GetKey(GameAction.Inventory)))
         {
             if (isOpen) CloseInventory();
             else OpenInventory();

@@ -79,7 +79,7 @@ public class PlayerMovement : MonoBehaviour
 
         // Jump — works from any state (idle, walk, run, crouch)
         bool canJump = vitals == null || vitals.CanJump;
-        if (Input.GetKeyDown(KeyCode.Space) && grounded && canJump)
+        if (Input.GetKeyDown(SettingsManager.GetKey(GameAction.Jump)) && grounded && canJump)
         {
             if (vitals != null) vitals.UseStaminaForJump();
             verticalVelocity = jumpForce;
@@ -113,7 +113,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // Crouch toggle — only when grounded and not jumping
-        if (Input.GetKeyDown(KeyCode.LeftControl) && grounded)
+        if (Input.GetKeyDown(SettingsManager.GetKey(GameAction.Crouch)) && grounded)
         {
             isCrouching = !isCrouching;
             animator.SetBool("isCrouching", isCrouching);
@@ -142,7 +142,7 @@ public class PlayerMovement : MonoBehaviour
             move.Normalize();
 
         // Determine speed — no running while crouched or out of stamina
-        bool wantsToRun = Input.GetKey(KeyCode.LeftShift) && !isCrouching;
+        bool wantsToRun = Input.GetKey(SettingsManager.GetKey(GameAction.Sprint)) && !isCrouching;
         bool isRunning = wantsToRun && (vitals == null || vitals.CanRun);
         float speed;
         if (isCrouching)

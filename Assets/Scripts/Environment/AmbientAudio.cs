@@ -7,6 +7,13 @@ using UnityEngine;
 /// </summary>
 public class AmbientAudio : MonoBehaviour
 {
+    public static AmbientAudio Instance { get; private set; }
+
+    void Awake()
+    {
+        Instance = this;
+    }
+
     [Header("Base Ambience")]
     [Tooltip("Drag the forest ambience AudioClip here, or leave empty to auto-load")]
     public AudioClip ambienceClip;
@@ -35,6 +42,13 @@ public class AmbientAudio : MonoBehaviour
     void Start()
     {
         dayNight = FindAnyObjectByType<DayNightCycle>();
+
+        if (SettingsManager.Instance != null)
+        {
+            float v = SettingsManager.Instance.AmbientVolume;
+            dayVolume   = v * 0.6f;
+            nightVolume = v;
+        }
 
         // Auto-load the audio clip if not assigned
         if (ambienceClip == null)

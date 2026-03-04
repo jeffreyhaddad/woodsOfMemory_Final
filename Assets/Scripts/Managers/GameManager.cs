@@ -72,6 +72,13 @@ public class GameManager : MonoBehaviour
             gameObject.AddComponent<MapSystem>();
         if (FindAnyObjectByType<CookingProgressUI>() == null)
             gameObject.AddComponent<CookingProgressUI>();
+        if (SettingsManager.Instance == null)
+        {
+            var smGo = new GameObject("SettingsManager");
+            smGo.AddComponent<SettingsManager>();
+        }
+        if (FindAnyObjectByType<SettingsUI>() == null)
+            gameObject.AddComponent<SettingsUI>();
 
         // Torch light on the player (listens to EquipmentManager)
         if (PlayerVitals != null && PlayerVitals.GetComponent<TorchLight>() == null)

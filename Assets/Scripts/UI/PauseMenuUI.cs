@@ -13,6 +13,7 @@ public class PauseMenuUI : MonoBehaviour
     private TextMeshProUGUI feedbackText;
     private float feedbackTimer;
     private bool isOpen = false;
+    private SettingsUI settingsUI;
 
     // Are we picking a slot for save or load?
     private enum SlotMode { None, Save, Load }
@@ -22,6 +23,7 @@ public class PauseMenuUI : MonoBehaviour
     {
         BuildUI();
         panelObj.SetActive(false);
+        settingsUI = FindAnyObjectByType<SettingsUI>();
     }
 
     void Update()
@@ -103,6 +105,16 @@ public class PauseMenuUI : MonoBehaviour
     void QuitGame()
     {
         Application.Quit();
+    }
+
+    void OpenSettings()
+    {
+        if (settingsUI == null)
+            settingsUI = FindAnyObjectByType<SettingsUI>();
+        if (settingsUI == null) return;
+
+        mainMenu.SetActive(false);
+        settingsUI.Open(ShowMainMenu);
     }
 
     // ─── Slot Selection ───────────────────────────────────────
@@ -222,14 +234,15 @@ public class PauseMenuUI : MonoBehaviour
         mainRect.anchorMin = new Vector2(0.5f, 0.5f);
         mainRect.anchorMax = new Vector2(0.5f, 0.5f);
         mainRect.pivot = new Vector2(0.5f, 0.5f);
-        mainRect.sizeDelta = new Vector2(320, 380);
+        mainRect.sizeDelta = new Vector2(320, 440);
 
-        CreateText(mainMenu.transform, "PAUSED", 32, new Vector2(0, 140), new Vector2(280, 40));
-        CreateButton(mainMenu.transform, "Resume", new Vector2(0, 70), Resume);
-        CreateButton(mainMenu.transform, "Save Game", new Vector2(0, 15), OpenSaveSlots);
-        CreateButton(mainMenu.transform, "Load Game", new Vector2(0, -40), OpenLoadSlots);
-        CreateButton(mainMenu.transform, "Quit to Menu", new Vector2(0, -95), QuitToMenu);
-        CreateButton(mainMenu.transform, "Quit Game", new Vector2(0, -150), QuitGame);
+        CreateText(mainMenu.transform, "PAUSED", 32, new Vector2(0, 170), new Vector2(280, 40));
+        CreateButton(mainMenu.transform, "Resume",     new Vector2(0,  100), Resume);
+        CreateButton(mainMenu.transform, "Save Game",  new Vector2(0,   45), OpenSaveSlots);
+        CreateButton(mainMenu.transform, "Load Game",  new Vector2(0,  -10), OpenLoadSlots);
+        CreateButton(mainMenu.transform, "Settings",   new Vector2(0,  -65), OpenSettings);
+        CreateButton(mainMenu.transform, "Quit to Menu", new Vector2(0, -120), QuitToMenu);
+        CreateButton(mainMenu.transform, "Quit Game",  new Vector2(0, -175), QuitGame);
 
         // ── Slot Selection Panel ──────────────────────────────
         slotPanel = new GameObject("SlotPanel");

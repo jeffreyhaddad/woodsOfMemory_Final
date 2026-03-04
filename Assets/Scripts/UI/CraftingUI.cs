@@ -76,7 +76,7 @@ public class CraftingUI : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.C))
+        if (Input.GetKeyDown(SettingsManager.GetKey(GameAction.Crafting)))
         {
             if (isOpen) CloseCrafting();
             else OpenCrafting();

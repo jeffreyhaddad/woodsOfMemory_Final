@@ -19,6 +19,7 @@ public class CameraFollow : MonoBehaviour
     [Header("Mouse Sensitivity")]
     public float sensitivityX = 2.5f;
     public float sensitivityY = 1.5f;
+    public bool invertY = false;
 
     [Header("Vertical Limits")]
     public float minPitch = -40f;
@@ -54,6 +55,9 @@ public class CameraFollow : MonoBehaviour
         if (cam != null)
             cam.fieldOfView = fieldOfView;
 
+        if (SettingsManager.Instance != null)
+            SettingsManager.Instance.ApplyAll();
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
@@ -88,7 +92,7 @@ public class CameraFollow : MonoBehaviour
         {
             // ── Mouse Input (no smoothing = responsive) ──
             yaw += Input.GetAxis("Mouse X") * sensitivityX;
-            pitch -= Input.GetAxis("Mouse Y") * sensitivityY;
+            pitch -= Input.GetAxis("Mouse Y") * sensitivityY * (invertY ? -1f : 1f);
             pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
 
             // ── Rotate Player Body to Match Camera Yaw ──

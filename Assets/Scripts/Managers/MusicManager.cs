@@ -47,6 +47,9 @@ public class MusicManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+
+        if (SettingsManager.Instance != null)
+            masterVolume = SettingsManager.Instance.MusicVolume;
     }
 
     void Start()

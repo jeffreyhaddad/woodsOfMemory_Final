@@ -148,9 +148,10 @@ public class WorldSetup : MonoBehaviour
 
     void CreateMissionTriggers()
     {
-        // Cabin 1: place trigger at actual player spawn (they start inside the cabin).
-        // Falls back to the inspector value only if no player was found.
-        Vector3 c1 = spawnCenter != Vector3.zero ? spawnCenter : cabin1Position;
+        // Cabin 1: center on the Cabin GameObject so the trigger is inside it.
+        // Falls back to inspector value if no Cabin found in scene.
+        GameObject cabinObj = GameObject.Find("Cabin");
+        Vector3 c1 = cabinObj != null ? cabinObj.transform.position : cabin1Position;
         CreateTrigger("CabinTrigger1", c1, cabinTriggerSize, "start_cabin");
         //CreateTrigger("CabinTrigger2", cabin2Position, cabinTriggerSize, "cabin_area");
         CreateTrigger("ForestExit", exitPosition, exitTriggerSize, "exit");
@@ -158,7 +159,7 @@ public class WorldSetup : MonoBehaviour
         // Register compass POIs.
         // Main cabin is auto-discovered — player starts here.
         // Second cabin and forest exit are hidden until the player explores to them.
-        CompassUI.RegisterPOI("Main Cabin", c1,
+        CompassUI.RegisterPOI("Main Cabin", cabinObj != null ? cabinObj.transform.position : c1,
             startDiscovered: true,
             discoveryRadius: 30f,
             new Color(0.9f, 0.78f, 0.5f),

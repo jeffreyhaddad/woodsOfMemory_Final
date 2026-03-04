@@ -270,12 +270,13 @@ public class MissionManager : MonoBehaviour
 
         // Mission 1: Survival Basics
         list.Add(MakeMission("Survival Basics",
-            "Gather basic resources, light the campfire  to survive your first night in the woods.",
+            "Gather basic resources, light the campfire, and hunt for food to survive your first night.",
             new MissionObjective[]
             {
-                MakeObjective("Collect Wood", ObjectiveType.CollectItem, "Wood", "", 5),
-                MakeObjective("Collect Stone", ObjectiveType.CollectItem, "Stone", "", 3),
-                MakeObjective("Light a campfire",ObjectiveType.ReachLocation,"campfire","",1)
+                MakeObjective("Collect Wood",         ObjectiveType.CollectItem,   "Wood",  "",     5),
+                MakeObjective("Collect Stone",        ObjectiveType.CollectItem,   "Stone", "",     3),
+                MakeObjective("Light a campfire",     ObjectiveType.ReachLocation, "campfire", "", 1),
+                MakeObjective("Hunt a Deer",          ObjectiveType.KillCreature,  "",      "Deer", 1),
             }));
 
         // Mission 2: Crafting Tools
@@ -284,44 +285,44 @@ public class MissionManager : MonoBehaviour
             new MissionObjective[]
             {
                 MakeObjective("Craft a Stone Axe", ObjectiveType.CraftItem, "Stone Axe", "", 1),
-                MakeObjective("Craft a Torch", ObjectiveType.CraftItem, "Torch", "", 1)
+                MakeObjective("Craft a Torch",     ObjectiveType.CraftItem, "Torch",     "", 1),
             }));
 
         // Mission 3: Exploration
         list.Add(MakeMission("Exploration",
-            "Someone else has been in these woods. Find the second cabin.",
+            "Someone else has been in these woods. Find the second cabin and discover what they left behind.",
             new MissionObjective[]
             {
-                MakeObjective("Collect the key inside the wooden box", ObjectiveType.CollectItem, "Rusted Key", "", 1),
-                MakeObjective("Open the door of the cabin_area", ObjectiveType.ReachLocation, "", "", 1)
+                MakeObjective("Collect the key inside the wooden box", ObjectiveType.CollectItem,   "Rusted Key",       "", 1),
+                MakeObjective("Open the door of the cabin_area",        ObjectiveType.ReachLocation, "cabin_area",       "", 1),
+                MakeObjective("Collect water from the well",           ObjectiveType.CollectItem,   "Water from well",  "", 1),
             }));
 
-        /// Mission 4 : Stew Cooking inside the pot 
-        list.Add(MakeMission("Stew Cooking", "Get some fresh water from the well and cook the deer meat", new MissionObjective[]
-        {
-            MakeObjective("Kill deer", ObjectiveType.KillCreature, "", "Deer", 1),
-           MakeObjective("Extract some water from the well",ObjectiveType.CollectItem,"Water from well","",1),
-           MakeObjective("Light boneFire with pot", ObjectiveType.ReachLocation,"","",1),
-           MakeObjective("Pour Water inside the pot", ObjectiveType.CraftItem,"Pot Water","",1),
-           MakeObjective("Put vension inside the pot with water",ObjectiveType.CraftItem,"Stew vension","",1),
-           MakeObjective("Eat the cooked vension stew",ObjectiveType.CollectItem,"Vension Stew","",1)
-        }));
-        
-        // Mission 6: Forest Threats
+        // Mission 4: Shadow Harvest
+        list.Add(MakeMission("Shadow Harvest",
+            "Dark creatures roam these woods after nightfall. Hunt them down and collect their essence.",
+            new MissionObjective[]
+            {
+                MakeObjective("Survive a full night",          ObjectiveType.SurviveNight,  "",                 "",                1),
+                MakeObjective("Kill shadow creatures",         ObjectiveType.KillCreature,  "",                 "Shadow Creature", 3),
+                MakeObjective("Collect their Shadow Essence",  ObjectiveType.CollectItem,   "Shadow Essence",   "",                3),
+            }));
+
+        // Mission 5: Forest Threats
         list.Add(MakeMission("Forest Threats",
-            "The shadow creatures emerge at night. Survive and fight back.",
+            "The creatures grow bolder. Survive another night and push them back.",
             new MissionObjective[]
             {
-                MakeObjective("Survive a full night", ObjectiveType.SurviveNight, "", "", 1),
-                MakeObjective("Kill shadow creatures", ObjectiveType.KillCreature, "", "Shadow Creature", 3)
+                MakeObjective("Survive a full night",     ObjectiveType.SurviveNight, "", "",                1),
+                MakeObjective("Kill shadow creatures",    ObjectiveType.KillCreature, "", "Shadow Creature", 3),
             }));
 
-        // Mission 7: The Escape
+        // Mission 6: The Escape
         list.Add(MakeMission("The Escape",
-            "You've gathered enough knowledge. Find the way out of the woods.",
+            "You've survived long enough. Find the way out of these woods.",
             new MissionObjective[]
             {
-                MakeObjective("Find the forest exit", ObjectiveType.ReachLocation, "", "", 1)
+                MakeObjective("Find the forest exit", ObjectiveType.ReachLocation, "", "", 1),
             }));
 
         missions = list.ToArray();

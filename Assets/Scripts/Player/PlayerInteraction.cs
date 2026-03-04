@@ -37,7 +37,7 @@ public class PlayerInteraction : MonoBehaviour
         if (++checkCounter % 5 == 0)
             CheckForInteractable();
 
-        if (currentTarget != null && Input.GetKeyDown(KeyCode.E))
+        if (currentTarget != null && Input.GetKeyDown(SettingsManager.GetKey(GameAction.Interact)))
         {
             currentTarget.OnInteract();
             HidePrompt();

@@ -26,6 +26,7 @@ public class CreatureAI : MonoBehaviour
     public float CurrentHealth => currentHealth;
     public CreatureState State => currentState;
     public event Action<CreatureAI> OnCreatureDeath;
+    protected void RaiseCreatureDeath() => OnCreatureDeath?.Invoke(this);
 
     protected virtual void Start()
     {
@@ -63,19 +64,7 @@ public class CreatureAI : MonoBehaviour
     {
         if (currentState == CreatureState.Dead)
         {
-            // Death animation: tip over and sink
-            deathTimer += Time.deltaTime;
-
-            // Tip over during first second
-            if (deathTimer < 1f)
-            {
-                transform.Rotate(deathTiltAxis, 90f * Time.deltaTime, Space.World);
-            }
-            // Sink into ground after tipping
-            else
-            {
-                transform.position += Vector3.down * 0.5f * Time.deltaTime;
-            }
+            OnDeadUpdate();
             return;
         }
 
@@ -89,6 +78,20 @@ public class CreatureAI : MonoBehaviour
     protected virtual void UpdateBehavior(float distToPlayer)
     {
         // Override in subclasses
+    }
+
+    /// <summary>
+    /// Called every frame while the creature is in the Dead state.
+    /// Default: tips over and sinks (for non-humanoid creatures).
+    /// Override to suppress this (e.g. when a real death animation is playing).
+    /// </summary>
+    protected virtual void OnDeadUpdate()
+    {
+        deathTimer += Time.deltaTime;
+        if (deathTimer < 1f)
+            transform.Rotate(deathTiltAxis, 90f * Time.deltaTime, Space.World);
+        else
+            transform.position += Vector3.down * 0.5f * Time.deltaTime;
     }
 
     public void TakeDamage(float amount)

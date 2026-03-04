@@ -56,7 +56,7 @@ public class JournalUI : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.J))
+        if (Input.GetKeyDown(SettingsManager.GetKey(GameAction.Journal)))
         {
             if (isOpen) CloseJournal();
             else OpenJournal();

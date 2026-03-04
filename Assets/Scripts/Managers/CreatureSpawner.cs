@@ -42,7 +42,7 @@ public class CreatureSpawner : MonoBehaviour
     {
 #if UNITY_EDITOR
         var deer = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Creatures/DeerPrefab.prefab");
-        var shadow = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Creatures/ShadowCreaturePrefab.prefab");
+        var shadow = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Creatures/ZombieCreaturePrefab.prefab");
 
         if (deer != null && (wildlifePrefabs == null || wildlifePrefabs.Length == 0))
         {

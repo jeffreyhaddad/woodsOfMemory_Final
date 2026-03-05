@@ -42,6 +42,14 @@ public class ShadowCreatureAI : CreatureAI
         cachedPlayerVitals = playerTransform != null
             ? playerTransform.GetComponent<PlayerVitals>() : null;
 
+        // Disable root motion so the Animator doesn't fight the NavMeshAgent (causes jitter)
+        if (animator != null)
+            animator.applyRootMotion = false;
+
+        // Prevent SkinnedMeshRenderer from being incorrectly culled when its bounds go stale
+        foreach (SkinnedMeshRenderer smr in GetComponentsInChildren<SkinnedMeshRenderer>())
+            smr.updateWhenOffscreen = true;
+
         currentState = CreatureState.Patrol;
         PickNewPatrolTarget();
         PlayAnimation(AnimWalk);

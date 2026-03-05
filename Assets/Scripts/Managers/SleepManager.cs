@@ -32,42 +32,37 @@ public class SleepManager : MonoBehaviour
         GUI.color = Color.white;
     }
 
-    public void StartSleep(Transform sleepAnchor)
+    public bool IsNightTime()
     {
-        if (isSleeping) return;
-        StartCoroutine(SleepRoutine(sleepAnchor));
+        float t = GameManager.Instance.DayNight.TimeOfDay;
+        return t > 0.75f || t < 0.17f;
     }
 
-    IEnumerator SleepRoutine(Transform sleepAnchor)
+    // wakeSidePosition: XZ position beside the bed (Y is ignored — we use the player's standing Y)
+    public void StartSleep(Vector3 wakeSidePosition, Quaternion wakeRotation)
+    {
+        if (isSleeping) return;
+        if (!IsNightTime()) return;
+        StartCoroutine(SleepRoutine(wakeSidePosition, wakeRotation));
+    }
+
+    IEnumerator SleepRoutine(Vector3 wakeSidePosition, Quaternion wakeRotation)
     {
         isSleeping = true;
         GameManager.Instance.SetState(GameState.Cutscene);
 
-        // Get player components
         PlayerVitals vitals = GameManager.Instance.PlayerVitals;
         Animator anim = vitals.GetComponentInChildren<Animator>();
         CharacterController cc = vitals.GetComponent<CharacterController>();
 
-        // Disable CharacterController so we can reposition the player freely
-        if (cc != null) cc.enabled = false;
+        // Save the player's standing Y so we can restore ground level on wake
+        float standingY = vitals.transform.position.y;
 
-        // Snap player to the bed anchor position and rotation
-        if (sleepAnchor != null)
-        {
-            vitals.transform.position = sleepAnchor.position;
-            vitals.transform.rotation = sleepAnchor.rotation;
-        }
-
-        // Re-enable CharacterController
-        if (cc != null) cc.enabled = true;
-
-        // Trigger lay down animation (5.733s to complete)
+        // Play lay down animation in place — no teleport, player is already at the bed
         if (anim != null)
             anim.SetBool("isSleeping", true);
 
         yield return new WaitForSeconds(5.733f);
-
-        // Hold briefly in sleep idle so player sees them lying on the bed
         yield return new WaitForSeconds(0.5f);
 
         // Fade to black
@@ -80,10 +75,9 @@ public class SleepManager : MonoBehaviour
         }
         blackAlpha = 1f;
 
-        // Advance time to dawn
+        // Advance time to dawn and restore vitals while screen is black
         GameManager.Instance.DayNight.TimeOfDay = 0.25f;
 
-        // Restore vitals
         if (vitals != null)
         {
             vitals.Health  = vitals.maxHealth;
@@ -93,11 +87,23 @@ public class SleepManager : MonoBehaviour
 
         yield return new WaitForSeconds(holdDuration);
 
-        // Trigger get up — starts while screen is still black
+        // Teleport player to beside the bed, keeping original standing Y
+        if (cc != null) cc.enabled = false;
+
+        Vector3 wakePos = new Vector3(wakeSidePosition.x, standingY, wakeSidePosition.z);
+        vitals.transform.position = wakePos;
+        vitals.transform.rotation = wakeRotation;
+
+        yield return null;
+        yield return null;
+
+        if (cc != null) cc.enabled = true;
+
+        // Trigger get up animation
         if (anim != null)
             anim.SetBool("isSleeping", false);
 
-        // Fade back in — player visibly gets up from the bed
+        // Fade back in
         t = 0f;
         while (t < fadeInDuration)
         {
@@ -107,7 +113,6 @@ public class SleepManager : MonoBehaviour
         }
         blackAlpha = 0f;
 
-        // Wait for the remainder of the get up animation (2.7 - 1.5 = 1.2s)
         yield return new WaitForSeconds(2.7f - fadeInDuration);
 
         GameManager.Instance.SetState(GameState.Playing);

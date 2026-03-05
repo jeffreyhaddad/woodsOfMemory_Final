@@ -72,6 +72,8 @@ public class GameManager : MonoBehaviour
             gameObject.AddComponent<MapSystem>();
         if (FindAnyObjectByType<CookingProgressUI>() == null)
             gameObject.AddComponent<CookingProgressUI>();
+        if (SleepManager.Instance == null)
+            gameObject.AddComponent<SleepManager>();
         if (SettingsManager.Instance == null)
         {
             var smGo = new GameObject("SettingsManager");

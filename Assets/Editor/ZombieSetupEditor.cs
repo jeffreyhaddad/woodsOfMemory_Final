@@ -108,8 +108,8 @@ public static class ZombieSetupEditor
         GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(modelAsset);
         instance.name = "ZombieCreaturePrefab";
 
-        // At scale=2 zombie reaches player waist (~0.9 m) → scale=4 gives ~1.8 m
-        instance.transform.localScale = Vector3.one * 4f;
+        // scale=2 → waist height; scale=2.5 → slightly taller than player, feels threatening
+        instance.transform.localScale = Vector3.one * 2.5f;
 
         // Animator — already on the model root; just assign the controller
         Animator anim = instance.GetComponent<Animator>();

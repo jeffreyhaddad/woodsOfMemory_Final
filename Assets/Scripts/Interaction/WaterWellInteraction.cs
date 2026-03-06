@@ -47,6 +47,10 @@ public class WaterWellInteraction : Interactable
         item.isStackable = true;
         item.maxStack    = 5;
         item.useAction   = ItemUseAction.None;
+
+        Sprite icon = Resources.Load<Sprite>("Icons/water_bucket");
+        if (icon != null) item.icon = icon;
+
         ItemRegistry.Register(item);
         return item;
     }

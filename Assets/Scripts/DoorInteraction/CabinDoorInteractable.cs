@@ -22,6 +22,7 @@ public class CabinDoorInteractable : Interactable
     private bool isUnlocked = false;
     private bool hasReportedObjective = false;
     private Inventory inventory;
+    private float lockedMessageTimer;
 
     private Quaternion closedRotation;
     private Quaternion openRotation;
@@ -39,6 +40,8 @@ public class CabinDoorInteractable : Interactable
 
     void Update()
     {
+        if (lockedMessageTimer > 0f) lockedMessageTimer -= Time.deltaTime;
+
         if (!isMoving) return;
 
         transform.localRotation = Quaternion.Lerp(
@@ -54,17 +57,34 @@ public class CabinDoorInteractable : Interactable
         }
     }
 
+    void OnGUI()
+    {
+        if (lockedMessageTimer <= 0f) return;
+        GUIStyle style = new GUIStyle(GUI.skin.label);
+        style.fontSize = 18;
+        style.normal.textColor = new Color(1f, 0.85f, 0.3f);
+        style.alignment = TextAnchor.MiddleCenter;
+        GUI.Label(new Rect(Screen.width / 2 - 200, Screen.height - 130, 400, 30),
+            "This door is locked. You need a Rusted Key.", style);
+    }
+
     public override void OnInteract()
     {
         if (!isUnlocked)
         {
+            // rustedKey may be null if not assigned in the Inspector (item is runtime-created),
+            // so fall back to a name lookup via ItemRegistry.
+            if (rustedKey == null)
+                rustedKey = ItemRegistry.Get("Rusted Key");
+
             if (rustedKey != null && inventory != null && inventory.HasItem(rustedKey))
             {
                 isUnlocked = true;
+                inventory.RemoveItem(rustedKey, 1); // consume the key
             }
             else
             {
-                Debug.Log("This door is locked. You need a rusted key.");
+                lockedMessageTimer = 2.5f;
                 return;
             }
         }

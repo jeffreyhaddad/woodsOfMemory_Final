@@ -341,8 +341,8 @@ public class CraftingUI : MonoBehaviour
         items["Iron Ore"]  = MakeItem("Iron Ore",  ItemCategory.Resource, true, 10);
 
         // --- Crafted items (with equip stats) ---
-        items["Stone Axe"]      = MakeItem("Stone Axe",      ItemCategory.Tool,   false, 1, equipSlot: EquipSlot.Tool,   maxDurability: 60);
-        items["Stone Pickaxe"]  = MakeItem("Stone Pickaxe",  ItemCategory.Tool,   false, 1, equipSlot: EquipSlot.Tool,   maxDurability: 50);
+        items["Stone Axe"]      = MakeItem("Stone Axe",      ItemCategory.Tool,   false, 1, equipSlot: EquipSlot.Tool,   damageBonus: 20f, maxDurability: 60);
+        items["Stone Pickaxe"]  = MakeItem("Stone Pickaxe",  ItemCategory.Tool,   false, 1, equipSlot: EquipSlot.Tool,   damageBonus: 10f, maxDurability: 50);
         items["Torch"]          = MakeItem("Torch",          ItemCategory.Tool,   true,  5, equipSlot: EquipSlot.Tool);
         items["Fishing Rod"]    = MakeItem("Fishing Rod",    ItemCategory.Tool,   false, 1, equipSlot: EquipSlot.Tool);
         items["Rope"]           = MakeItem("Rope",           ItemCategory.Tool,   true,  5);

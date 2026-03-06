@@ -16,6 +16,9 @@ public class EquipmentManager : MonoBehaviour
     /// <summary>Total bonus damage from equipped weapon.</summary>
     public float WeaponDamageBonus => equippedWeapon != null ? equippedWeapon.damageBonus : 0f;
 
+    /// <summary>Bonus damage from an equipped tool (axe/pickaxe).</summary>
+    public float ToolDamageBonus => equippedTool != null ? equippedTool.damageBonus : 0f;
+
     /// <summary>Flat damage reduction from equipped armor.</summary>
     public float ArmorDefenseBonus => equippedArmor != null ? equippedArmor.defenseBonus : 0f;
 

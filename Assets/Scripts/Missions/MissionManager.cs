@@ -300,12 +300,11 @@ public class MissionManager : MonoBehaviour
 
         // Mission 4: Shadow Harvest
         list.Add(MakeMission("Shadow Harvest",
-            "Dark creatures roam these woods after nightfall. Hunt them down and collect their essence.",
+            "Dark creatures stalk these woods at night. Hunt down five of them and collect their essence.",
             new MissionObjective[]
             {
-                MakeObjective("Survive a full night",          ObjectiveType.SurviveNight,  "",                 "",                1),
-                MakeObjective("Kill shadow creatures",         ObjectiveType.KillCreature,  "",                 "Shadow Creature", 3),
-                MakeObjective("Collect their Shadow Essence",  ObjectiveType.CollectItem,   "Shadow Essence",   "",                3),
+                MakeObjective("Kill shadow creatures (0/5)",        ObjectiveType.KillCreature, "",               "Shadow Creature", 5),
+                MakeObjective("Collect Shadow Essence (0/5)",       ObjectiveType.CollectItem,  "Shadow Essence", "",                5),
             }));
 
         // Mission 5: Forest Threats

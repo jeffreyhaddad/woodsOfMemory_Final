@@ -20,6 +20,9 @@ public class WildlifeAI : CreatureAI
     private float fleePathTimer;
     private CreatureState lastState;
 
+    [Header("Movement Tuning")]
+    public float turnSpeed = 180f;
+
     protected override void Start()
     {
         base.Start();
@@ -27,6 +30,12 @@ public class WildlifeAI : CreatureAI
         currentState = CreatureState.Idle;
         PlayAnimation(idleAnim);
         lastState = currentState;
+
+        if (agent != null && agent.isOnNavMesh)
+        {
+            agent.updateRotation = false;
+            agent.acceleration   = 8f;
+        }
     }
 
     protected override void UpdateBehavior(float distToPlayer)
@@ -59,10 +68,16 @@ public class WildlifeAI : CreatureAI
                     currentState = CreatureState.Flee;
                     if (agent != null && agent.enabled) agent.speed = data.runSpeed;
                 }
+                // Smooth rotation while walking
+                if (agent != null && agent.velocity.sqrMagnitude > 0.1f)
+                    SmoothRotateTowards(transform.position + agent.velocity);
                 break;
 
             case CreatureState.Flee:
                 FleeFromPlayer();
+                // Smooth rotation while fleeing
+                if (agent != null && agent.velocity.sqrMagnitude > 0.1f)
+                    SmoothRotateTowards(transform.position + agent.velocity);
                 if (distToPlayer > data.fleeRange)
                 {
                     currentState = CreatureState.Patrol;
@@ -102,6 +117,15 @@ public class WildlifeAI : CreatureAI
         if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
         if (TryGetRandomNavMeshPoint(spawnPoint, patrolRadius, out Vector3 point))
             agent.SetDestination(point);
+    }
+
+    private void SmoothRotateTowards(Vector3 worldTarget)
+    {
+        Vector3 dir = worldTarget - transform.position;
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 0.01f) return;
+        Quaternion target = Quaternion.LookRotation(dir);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, target, turnSpeed * Time.deltaTime);
     }
 
     private void FleeFromPlayer()

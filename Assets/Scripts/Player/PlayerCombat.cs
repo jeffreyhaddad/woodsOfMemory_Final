@@ -74,7 +74,8 @@ public class PlayerCombat : MonoBehaviour
 
         float totalDamage = attackDamage;
         if (EquipmentManager.Instance != null)
-            totalDamage += EquipmentManager.Instance.WeaponDamageBonus;
+            totalDamage += EquipmentManager.Instance.WeaponDamageBonus
+                         + EquipmentManager.Instance.ToolDamageBonus;
 
         int hitCount = Physics.OverlapSphereNonAlloc(center, attackRadius, hitBuffer);
         for (int i = 0; i < hitCount; i++)

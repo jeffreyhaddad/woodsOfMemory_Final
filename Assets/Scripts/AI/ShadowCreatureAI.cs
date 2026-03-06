@@ -25,8 +25,13 @@ public class ShadowCreatureAI : CreatureAI
     private float pathUpdateTimer;
     private Vector3 lastChaseDestination;
 
-    // Animation state tracking (avoids calling CrossFade every frame)
+    // Animation state tracking
     private CreatureState lastAnimState = (CreatureState)(-1);
+    private float animForceRefreshTimer; // periodically re-send CrossFade to fight exitTime auto-transitions
+
+    [Header("Movement Tuning")]
+    [Tooltip("Degrees per second the creature rotates to face its target")]
+    public float turnSpeed = 200f;
 
     // ── Animator state names (must match ZombieAnimController states) ──
     private const string AnimIdle   = "Idle";
@@ -45,6 +50,16 @@ public class ShadowCreatureAI : CreatureAI
         // Disable root motion so the Animator doesn't fight the NavMeshAgent (causes jitter)
         if (animator != null)
             animator.applyRootMotion = false;
+
+        // Let us control rotation manually for smooth turning; NavMeshAgent snaps by default.
+        // stoppingDistance = attackRange means the agent decelerates naturally and arrives just
+        // outside attack range — no overshoot, no need to ever call agent.isStopped.
+        if (agent != null && agent.isOnNavMesh)
+        {
+            agent.updateRotation  = false;
+            agent.acceleration    = 10f;
+            agent.stoppingDistance = data != null ? data.attackRange : 2f;
+        }
 
         // Prevent SkinnedMeshRenderer from being incorrectly culled when its bounds go stale
         foreach (SkinnedMeshRenderer smr in GetComponentsInChildren<SkinnedMeshRenderer>())
@@ -82,8 +97,13 @@ public class ShadowCreatureAI : CreatureAI
         switch (currentState)
         {
             case CreatureState.Patrol:
-                if (!agent.pathPending && agent.remainingDistance < 1.5f)
+                if (agent.enabled && agent.isOnNavMesh &&
+                    !agent.pathPending && agent.remainingDistance < 1.5f)
                     PickNewPatrolTarget();
+
+                // Smooth rotation towards direction of travel
+                if (agent.velocity.sqrMagnitude > 0.1f)
+                    SmoothRotateTowards(transform.position + agent.velocity);
 
                 if (hDist < data.detectionRange)
                 {
@@ -101,15 +121,25 @@ public class ShadowCreatureAI : CreatureAI
                     {
                         agent.SetDestination(playerTransform.position);
                         lastChaseDestination = playerTransform.position;
-                        pathUpdateTimer = 0.25f;
+                        pathUpdateTimer = 0.2f;
                     }
                 }
 
-                if (hDist <= data.attackRange)
+                // While moving fast, rotate in the direction of travel.
+                // When slowing down near the player, face the player directly.
+                if (agent.velocity.sqrMagnitude > 2f)
+                    SmoothRotateTowards(transform.position + agent.velocity);
+                else if (playerTransform != null)
+                    SmoothRotateTowards(playerTransform.position);
+
+                // agent.stoppingDistance = attackRange, so the agent decelerates and arrives
+                // just outside attack range without overshooting.  We enter Attack once the
+                // agent has actually slowed down close to the player.
+                if (hDist <= data.attackRange * 1.2f && agent.velocity.sqrMagnitude < 2f)
                 {
                     currentState = CreatureState.Attack;
                     attackTimer  = 0f;
-                    agent.speed  = data.moveSpeed * 0.3f;
+                    agent.speed  = data.moveSpeed * 0.3f; // slow creep to hold position
                 }
                 else if (hDist > data.detectionRange * 1.5f)
                 {
@@ -120,13 +150,17 @@ public class ShadowCreatureAI : CreatureAI
                 break;
 
             case CreatureState.Attack:
+                // Refresh destination at a low rate so the agent micro-adjusts to keep pace
+                // with a moving player without charging through them.
                 if (playerTransform != null)
                 {
-                    agent.SetDestination(playerTransform.position);
-                    Vector3 lookDir = (playerTransform.position - transform.position).normalized;
-                    lookDir.y = 0;
-                    if (lookDir.sqrMagnitude > 0.001f)
-                        transform.rotation = Quaternion.LookRotation(lookDir);
+                    pathUpdateTimer -= Time.deltaTime;
+                    if (pathUpdateTimer <= 0f)
+                    {
+                        agent.SetDestination(playerTransform.position);
+                        pathUpdateTimer = 0.35f;
+                    }
+                    SmoothRotateTowards(playerTransform.position);
                 }
 
                 attackTimer -= Time.deltaTime;
@@ -139,10 +173,16 @@ public class ShadowCreatureAI : CreatureAI
                     attackTimer = attackInterval;
                 }
 
-                if (hDist > data.attackRange * 2f)
+                if (hDist > data.attackRange * 2.5f)
                 {
                     currentState = CreatureState.Chase;
                     agent.speed  = data.runSpeed;
+                    if (playerTransform != null)
+                    {
+                        agent.SetDestination(playerTransform.position);
+                        lastChaseDestination = playerTransform.position;
+                        pathUpdateTimer = 0f;
+                    }
                 }
                 break;
         }
@@ -163,7 +203,16 @@ public class ShadowCreatureAI : CreatureAI
 
     void TryUpdateAnimation()
     {
-        if (currentState == lastAnimState) return;
+        bool stateChanged = currentState != lastAnimState;
+
+        // The ZombieAnimController Attack state has an exitTime=0.9 auto-transition back to
+        // Idle, which fires even while we're still logically in Attack/Chase/Patrol.
+        // We re-send the CrossFade every second to overrule it.
+        animForceRefreshTimer -= Time.deltaTime;
+        bool forceRefresh = animForceRefreshTimer <= 0f;
+        if (forceRefresh) animForceRefreshTimer = 1f;
+
+        if (!stateChanged && !forceRefresh) return;
         lastAnimState = currentState;
 
         switch (currentState)
@@ -245,6 +294,15 @@ public class ShadowCreatureAI : CreatureAI
     }
 
     // ── Helpers ───────────────────────────────────────────────
+
+    private void SmoothRotateTowards(Vector3 worldTarget)
+    {
+        Vector3 dir = worldTarget - transform.position;
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 0.01f) return;
+        Quaternion target = Quaternion.LookRotation(dir);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, target, turnSpeed * Time.deltaTime);
+    }
 
     private void PickNewPatrolTarget()
     {

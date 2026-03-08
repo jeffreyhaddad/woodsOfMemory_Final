@@ -160,7 +160,11 @@ public class WorldSetup : MonoBehaviour
         Vector3 c1 = cabinObj != null ? cabinObj.transform.position : cabin1Position;
         CreateTrigger("CabinTrigger1", c1, cabinTriggerSize, "start_cabin");
         //CreateTrigger("CabinTrigger2", cabin2Position, cabinTriggerSize, "cabin_area");
-        CreateTrigger("DarkClearing", darkClearingPosition, darkClearingTriggerSize, "dark_clearing");
+        // Dark Clearing — oneShot=false so DarkClearingEvent's coroutine isn't cut short
+        GameObject clearingObj = CreateTrigger("DarkClearing", darkClearingPosition, darkClearingTriggerSize, "dark_clearing", oneShot: false);
+        if (clearingObj != null)
+            clearingObj.AddComponent<DarkClearingEvent>();
+
         CreateTrigger("ForestExit", exitPosition, exitTriggerSize, "exit");
 
         // Register compass POIs.
@@ -193,7 +197,7 @@ public class WorldSetup : MonoBehaviour
         Debug.Log("WorldSetup: Created 4 mission triggers + compass POIs.");
     }
 
-    void CreateTrigger(string name, Vector3 position, float size, string locationName)
+    GameObject CreateTrigger(string name, Vector3 position, float size, string locationName, bool oneShot = true)
     {
         // Snap to terrain height
         position.y = GetTerrainHeight(position) + 1f;
@@ -207,6 +211,7 @@ public class WorldSetup : MonoBehaviour
 
         MissionTrigger trigger = obj.AddComponent<MissionTrigger>();
         trigger.locationName = locationName;
+        trigger.oneShot = oneShot;
 
         // Visual marker (semi-transparent pillar) for debugging — remove for release
         GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -228,6 +233,8 @@ public class WorldSetup : MonoBehaviour
             sharedTransparentMarkerMat.renderQueue = 3000;
         }
         rend.sharedMaterial = sharedTransparentMarkerMat;
+
+        return obj;
     }
 
     // ─── Resource Spawning ───────────────────────────────────

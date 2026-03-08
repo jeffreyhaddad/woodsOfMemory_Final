@@ -312,9 +312,9 @@ public class MissionManager : MonoBehaviour
             "The notes speak of a place where the shadows gather. The essence you collected won't protect you — but shaped into a ward, it might slow them down. Find the clearing. Survive the night.",
             new MissionObjective[]
             {
-                MakeObjective("Craft a Shadow Ward",    ObjectiveType.CraftItem,     "Shadow Ward",   "", 1),
-                MakeObjective("Find the Dark Clearing", ObjectiveType.ReachLocation, "dark_clearing", "", 1),
-                MakeObjective("Survive the night",      ObjectiveType.SurviveNight,  "",              "", 1),
+                MakeObjective("Craft a Shadow Ward",          ObjectiveType.CraftItem,    "Shadow Ward",   "",                1),
+                MakeObjective("Find the Dark Clearing",       ObjectiveType.ReachLocation, "dark_clearing", "",               1),
+                MakeObjective("Survive the shadow assault",   ObjectiveType.KillCreature,  "",             "Shadow Creature", 8),
             }));
 
         // Mission 6: The Escape

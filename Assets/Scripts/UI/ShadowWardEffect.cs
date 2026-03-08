@@ -29,10 +29,12 @@ public class ShadowWardEffect : MonoBehaviour
     private TextMeshProUGUI dirLabel;
 
     // ── State ──────────────────────────────────────────────────
-    private bool  isActive   = false;
-    private float timeLeft   = 0f;
+    private bool      isActive   = false;
+    private float     timeLeft   = 0f;
     private Transform playerTransform;
     private Coroutine activeCoroutine;
+    private Camera    cachedCamera;
+    private Vector3?  cachedClearingPos;
 
     void Awake()
     {
@@ -57,7 +59,13 @@ public class ShadowWardEffect : MonoBehaviour
     /// <summary>Activate (or refresh) the Shadow Ward vision effect.</summary>
     public void Activate()
     {
-        playerTransform = FindAnyObjectByType<PlayerVitals>()?.transform;
+        if (playerTransform == null)
+            playerTransform = FindAnyObjectByType<PlayerVitals>()?.transform;
+        if (cachedCamera == null)
+            cachedCamera = Camera.main;
+        // Cache the clearing world position once — it never moves
+        if (cachedClearingPos == null)
+            cachedClearingPos = CompassUI.GetPOIPosition("Dark Clearing");
 
         if (activeCoroutine != null)
         {
@@ -112,13 +120,11 @@ public class ShadowWardEffect : MonoBehaviour
 
     void UpdateDirectionIndicator()
     {
-        if (Camera.main == null || playerTransform == null) return;
-
-        Vector3? clearingPos = CompassUI.GetPOIPosition("Dark Clearing");
-        if (clearingPos == null) return;
+        if (cachedCamera == null || playerTransform == null) return;
+        if (cachedClearingPos == null) return;
 
         // Project world position to screen space
-        Vector3 screenPos = Camera.main.WorldToScreenPoint(clearingPos.Value);
+        Vector3 screenPos = cachedCamera.WorldToScreenPoint(cachedClearingPos.Value);
 
         // If behind camera, flip so the indicator still points the right way
         bool behindCamera = screenPos.z < 0f;

@@ -133,6 +133,41 @@ public class CreatureSpawner : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Spawns <paramref name="count"/> shadow creatures evenly distributed
+    /// in a ring around <paramref name="center"/> at the given radius.
+    /// Called by DarkClearingEvent for the Mission 5 assault wave.
+    /// </summary>
+    public void SpawnShadowWaveAt(Vector3 center, int count, float radius)
+    {
+        if (shadowPrefab == null) return;
+
+        for (int i = 0; i < count; i++)
+        {
+            float angle = (360f / count) * i * Mathf.Deg2Rad;
+            Vector3 candidate = center + new Vector3(Mathf.Sin(angle) * radius, 0f, Mathf.Cos(angle) * radius);
+
+            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 10f, NavMesh.AllAreas))
+                candidate = hit.position;
+            else
+            {
+                Terrain terrain = Terrain.activeTerrain;
+                if (terrain != null)
+                    candidate.y = terrain.SampleHeight(candidate) + terrain.transform.position.y;
+            }
+
+            GameObject go = Instantiate(shadowPrefab, candidate, Quaternion.Euler(0, Random.Range(0f, 360f), 0));
+            CreatureAI ai = go.GetComponent<CreatureAI>();
+            if (ai != null)
+            {
+                ai.OnCreatureDeath += c => activeShadows.Remove(c);
+                activeShadows.Add(ai);
+            }
+        }
+
+        Debug.Log($"[CreatureSpawner] Spawned assault wave of {count} shadows at {center}");
+    }
+
     bool TryGetSpawnPoint(float radius, out Vector3 result)
     {
         // First try NavMesh-based spawn

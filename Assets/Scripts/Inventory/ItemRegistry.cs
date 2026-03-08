@@ -27,6 +27,8 @@ public static class ItemRegistry
         // Special / quest items
         { "Rusted Key",     "rusted_key" },
         { "Lantern",        "lantern" },
+        { "Shadow Essence", "shadow_essence" },
+        { "Shadow Ward",    "shadow_ward" },
         // Tools
         { "Stone Axe",      "stone_axe" },
         { "Stone Pickaxe",  "stone_pickaxe" },

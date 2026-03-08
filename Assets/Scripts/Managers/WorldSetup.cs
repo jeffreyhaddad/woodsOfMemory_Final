@@ -14,6 +14,11 @@ public class WorldSetup : MonoBehaviour
     public Vector3 cabin2Position = new Vector3(-60, 0, 180);
     public float cabinTriggerSize = 12f;
 
+    [Header("Dark Clearing (Mission 5)")]
+    [Tooltip("World position of the corrupted clearing for Mission 5 — Into the Dark.")]
+    public Vector3 darkClearingPosition = new Vector3(110, 0, 155);
+    public float darkClearingTriggerSize = 15f;
+
     [Header("Forest Exit")]
     [Tooltip("World position of the forest exit for Mission 6.")]
     public Vector3 exitPosition = new Vector3(200, 0, 250);
@@ -47,6 +52,7 @@ public class WorldSetup : MonoBehaviour
     public Vector3 note8Position  = new Vector3(160,  0.5f, 210);   // Almost Out           — approaching exit
     public Vector3 note9Position  = new Vector3(180,  0.5f, 235);   // Memories Returning   — near exit
     public Vector3 note10Position = new Vector3(195,  0.5f, 245);   // The Truth            — at exit
+    public Vector3 note11Position = new Vector3(108,  0.5f, 153);   // Why I Came           — at Dark Clearing
 
     // Cached ItemData instances
     private ItemData woodItem;
@@ -154,6 +160,7 @@ public class WorldSetup : MonoBehaviour
         Vector3 c1 = cabinObj != null ? cabinObj.transform.position : cabin1Position;
         CreateTrigger("CabinTrigger1", c1, cabinTriggerSize, "start_cabin");
         //CreateTrigger("CabinTrigger2", cabin2Position, cabinTriggerSize, "cabin_area");
+        CreateTrigger("DarkClearing", darkClearingPosition, darkClearingTriggerSize, "dark_clearing");
         CreateTrigger("ForestExit", exitPosition, exitTriggerSize, "exit");
 
         // Register compass POIs.
@@ -171,13 +178,19 @@ public class WorldSetup : MonoBehaviour
             new Color(1f, 0.85f, 0.4f),
             CompassUI.POIType.Location);
 
+        CompassUI.RegisterPOI("Dark Clearing", darkClearingPosition,
+            startDiscovered: false,
+            discoveryRadius: 30f,
+            new Color(0.5f, 0.3f, 0.8f),
+            CompassUI.POIType.Location);
+
         CompassUI.RegisterPOI("Forest Exit", exitPosition,
             startDiscovered: false,
             discoveryRadius: 30f,
             new Color(0.45f, 1f, 0.5f),
             CompassUI.POIType.Exit);
 
-        Debug.Log("WorldSetup: Created 3 mission triggers + compass POIs.");
+        Debug.Log("WorldSetup: Created 4 mission triggers + compass POIs.");
     }
 
     void CreateTrigger(string name, Vector3 position, float size, string locationName)
@@ -305,7 +318,8 @@ public class WorldSetup : MonoBehaviour
         // (index 0 is "Awakening" which auto-adds on start / via IntroSequenceManager)
         Vector3[] notePositions = {
             note1Position, note2Position, note3Position, note4Position, note5Position,
-            note6Position, note7Position, note8Position, note9Position, note10Position
+            note6Position, note7Position, note8Position, note9Position, note10Position,
+            note11Position  // "Note: Why I Came" — at the Dark Clearing
         };
 
         int placed = 0;

@@ -15,7 +15,8 @@ public enum ItemUseAction
     EatFood,
     UseBandage,
     PlaceCampfire,
-    EquipTorch
+    EquipTorch,
+    UseShadowWard
 }
 
 public enum EquipSlot

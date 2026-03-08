@@ -307,13 +307,14 @@ public class MissionManager : MonoBehaviour
                 MakeObjective("Collect Shadow Essence (0/5)",       ObjectiveType.CollectItem,  "Shadow Essence", "",                5),
             }));
 
-        // Mission 5: Forest Threats
-        list.Add(MakeMission("Forest Threats",
-            "The creatures grow bolder. Survive another night and push them back.",
+        // Mission 5: Into the Dark
+        list.Add(MakeMission("Into the Dark",
+            "The notes speak of a place where the shadows gather. The essence you collected won't protect you — but shaped into a ward, it might slow them down. Find the clearing. Survive the night.",
             new MissionObjective[]
             {
-                MakeObjective("Survive a full night",     ObjectiveType.SurviveNight, "", "",                1),
-                MakeObjective("Kill shadow creatures",    ObjectiveType.KillCreature, "", "Shadow Creature", 3),
+                MakeObjective("Craft a Shadow Ward",    ObjectiveType.CraftItem,     "Shadow Ward",   "", 1),
+                MakeObjective("Find the Dark Clearing", ObjectiveType.ReachLocation, "dark_clearing", "", 1),
+                MakeObjective("Survive the night",      ObjectiveType.SurviveNight,  "",              "", 1),
             }));
 
         // Mission 6: The Escape

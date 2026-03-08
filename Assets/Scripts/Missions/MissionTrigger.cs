@@ -34,10 +34,11 @@ public class MissionTrigger : MonoBehaviour
         // even if the player somehow bypassed the proximity radius check.
         string poiLabel = locationName switch
         {
-            "start_cabin" => "Main Cabin",
-            "cabin_area"  => "Second Cabin",
-            "exit"        => "Forest Exit",
-            _             => null
+            "start_cabin"    => "Main Cabin",
+            "cabin_area"     => "Second Cabin",
+            "dark_clearing"  => "Dark Clearing",
+            "exit"           => "Forest Exit",
+            _                => null
         };
         if (poiLabel != null)
             CompassUI.DiscoverPOI(poiLabel);

@@ -338,7 +338,13 @@ public class CraftingUI : MonoBehaviour
         items["Herbs"]     = MakeItem("Herbs",     ItemCategory.Resource, true, 15);
         items["Bone"]      = MakeItem("Bone",      ItemCategory.Resource, true, 10);
         items["Feather"]   = MakeItem("Feather",   ItemCategory.Resource, true, 20);
-        items["Iron Ore"]  = MakeItem("Iron Ore",  ItemCategory.Resource, true, 10);
+        items["Iron Ore"]      = MakeItem("Iron Ore",      ItemCategory.Resource, true, 10);
+        // Shadow Essence — also registered lazily by ShadowCreatureAI on first kill.
+        // Registering here first so the recipe ingredient resolves before any creature dies.
+        // ItemRegistry uses "first registration wins", so ShadowCreatureAI.Get() will find this instance.
+        items["Shadow Essence"] = MakeItem("Shadow Essence", ItemCategory.Resource, true,  20);
+        items["Shadow Ward"]    = MakeItem("Shadow Ward",    ItemCategory.Tool,     true,  5,
+                                           useAction: ItemUseAction.UseShadowWard);
 
         // --- Crafted items (with equip stats) ---
         items["Stone Axe"]      = MakeItem("Stone Axe",      ItemCategory.Tool,   false, 1, equipSlot: EquipSlot.Tool,   damageBonus: 20f, maxDurability: 60);
@@ -421,6 +427,11 @@ public class CraftingUI : MonoBehaviour
         list.Add(MakeRecipe("Herbal Tea", ItemCategory.Food,
             new Ingredient[] { Ing(items["Herbs"], 2), Ing(items["Berries"], 1) },
             items["Herbal Tea"], 1));
+
+        // Quest / Special (1)
+        list.Add(MakeRecipe("Shadow Ward", ItemCategory.Tool,
+            new Ingredient[] { Ing(items["Shadow Essence"], 3), Ing(items["Wood"], 1), Ing(items["Fiber"], 1) },
+            items["Shadow Ward"], 1));
 
         // Survival / Resource (4)
         list.Add(MakeRecipe("Bandage", ItemCategory.Resource,

@@ -76,6 +76,16 @@ public class CompassUI : MonoBehaviour
     }
 
     /// <summary>
+    /// Returns the world position of a registered POI, or null if not found.
+    /// </summary>
+    public static Vector3? GetPOIPosition(string label)
+    {
+        for (int i = 0; i < _pois.Count; i++)
+            if (_pois[i].label == label) return _pois[i].worldPos;
+        return null;
+    }
+
+    /// <summary>
     /// Remove a POI by exact label match. Use when the world object no longer exists
     /// (e.g. the wooden box has been opened and destroyed).
     /// </summary>

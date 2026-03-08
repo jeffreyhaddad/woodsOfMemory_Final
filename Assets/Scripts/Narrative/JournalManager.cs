@@ -128,12 +128,17 @@ public class JournalManager : MonoBehaviour
                     JournalCategory.Story);
                 break;
 
-            case "Forest Threats":
+            case "Into the Dark":
                 entry = MakeEntry("Erosion",
                     "I can't remember my mother's face.\n\n" +
                     "I know she exists. I know I love her — I can feel the shape of that, " +
                     "like a word I know the meaning of but can't pronounce. " +
                     "But her face is gone. Just a blur where something important used to be.\n\n" +
+                    "I stood in that clearing and finally understood it. " +
+                    "The shadows don't attack you — they feed. They're drawn to grief the way " +
+                    "insects are drawn to light. I came here carrying something unbearable, " +
+                    "and they've been eating it ever since. The problem is they don't stop " +
+                    "at the part that hurts.\n\n" +
                     "I'm writing this down so I don't forget that I forgot.\n\n" +
                     "I have to get out. Not tomorrow. Now.",
                     JournalCategory.Story);
@@ -295,6 +300,27 @@ public class JournalManager : MonoBehaviour
             "Walk through. Don't look back. Don't let the pull stop you this time.\n\n" +
             "You are closer than you have ever been.\n\n" +
             "— You",
+            JournalCategory.Story));
+
+        // Note 11 — at the Dark Clearing. Placed by WorldSetup at darkClearingNotePosition.
+        // The truth about why the player came to these woods.
+        entries.Add(MakeEntry("Note: Why I Came",
+            "I came here voluntarily. I need to write that before I forget it too.\n\n" +
+            "There was a loss. Someone. The kind that doesn't leave room for anything else — " +
+            "it fills up every hour of the day and every hour of the night and " +
+            "you stop being able to remember what you were like before it.\n\n" +
+            "I found references. Forums. Threads where desperate people talk in careful language " +
+            "about this place, these woods. Go deep enough, stay long enough, " +
+            "and the dark things will take what you give them. You can choose what you lose.\n\n" +
+            "I chose wrong. I said 'the grief.' But grief doesn't come clean — " +
+            "it's tangled into everything. Every good memory has loss woven through it. " +
+            "The forest took them all. It took her face. It took her name. " +
+            "It took the sound of her voice and the specific weight of her in a room.\n\n" +
+            "I'm standing in the clearing now. This is where it happens — " +
+            "where they gather the most, where the taking is strongest. " +
+            "I thought if I asked clearly enough, it would give something back.\n\n" +
+            "It doesn't give things back.\n\n" +
+            "Run.",
             JournalCategory.Story));
 
         startingEntries = entries.ToArray();

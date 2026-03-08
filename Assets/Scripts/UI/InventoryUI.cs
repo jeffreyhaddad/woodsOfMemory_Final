@@ -619,6 +619,16 @@ public class InventoryUI : MonoBehaviour
                 ShowFeedback("Placed campfire");
                 break;
 
+            case ItemUseAction.UseShadowWard:
+                if (ShadowWardEffect.Instance == null)
+                {
+                    GameObject wardObj = new GameObject("ShadowWardEffect");
+                    wardObj.AddComponent<ShadowWardEffect>();
+                }
+                ShadowWardEffect.Instance.Activate();
+                ShowFeedback("The darkness speaks...");
+                break;
+
             default:
                 ShowFeedback("Can't use that here");
                 return;

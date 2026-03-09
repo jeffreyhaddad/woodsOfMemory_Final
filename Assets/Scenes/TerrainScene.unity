@@ -332,6 +332,8 @@ MonoBehaviour:
   cabin1Position: {x: 80, y: 0, z: 120}
   cabin2Position: {x: -60, y: 0, z: 180}
   cabinTriggerSize: 12
+  darkClearingPosition: {x: 110, y: 0, z: 155}
+  darkClearingTriggerSize: 15
   exitPosition: {x: 200, y: 0, z: 250}
   exitTriggerSize: 10
   resourceSpawnRadius: 100
@@ -352,6 +354,7 @@ MonoBehaviour:
   note8Position: {x: 160, y: 0.5, z: 210}
   note9Position: {x: 180, y: 0.5, z: 235}
   note10Position: {x: 195, y: 0.5, z: 245}
+  note11Position: {x: 108, y: 0.5, z: 153}
 --- !u!114 &42602818
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -846,7 +849,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   enableStars: 1
-  timeOfDay: 1
+  timeOfDay: 0
 --- !u!4 &70947675
 Transform:
   m_ObjectHideFlags: 0
@@ -16718,7 +16721,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BedTrigger
   promptText: Interact
-  sleepAnchor: {fileID: 1757577429}
+  sleepAnchor: {fileID: 0}
+  wakeDistance: 1.5
 --- !u!1001 &1079997990
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -22991,7 +22995,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BedTrigger
   promptText: Interact
-  sleepAnchor: {fileID: 2044867603}
+  sleepAnchor: {fileID: 0}
+  wakeDistance: 1.5
 --- !u!1001 &1560810659
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -23735,7 +23740,7 @@ Transform:
   m_GameObject: {fileID: 1757577428}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0.658, y: 0.677, z: -0.629}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -23959,7 +23964,7 @@ Transform:
   m_GameObject: {fileID: 2044867602}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0, y: 0.454, z: 0.826}
+  m_LocalPosition: {x: -0, y: 0.57, z: 0.826}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

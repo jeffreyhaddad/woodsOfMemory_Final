@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class BedInteractable : Interactable
 {
+    [Tooltip("Transform placed on the bed where the player lies during the sleep animation.")]
+    [SerializeField] private Transform sleepAnchor;
+
     [Tooltip("Distance from the bed centre to stand when waking up.")]
     [SerializeField] private float wakeDistance = 1.5f;
 
@@ -17,13 +20,16 @@ public class BedInteractable : Interactable
         if (SleepManager.Instance == null) return;
         if (!SleepManager.Instance.IsNightTime()) return;
 
-        PlayerVitals vitals = GameManager.Instance.PlayerVitals;
-        float standingY = vitals.transform.position.y;
+        Vector3 sleepPos = sleepAnchor != null ? sleepAnchor.position : transform.position;
+        // Face forward during lay-down animation
+        Quaternion sleepRot = sleepAnchor != null ? sleepAnchor.rotation : transform.rotation;
+        // Rotate 90° once the idle-sleeping state begins
+        Quaternion sleepIdleRot = sleepRot * Quaternion.Euler(0f, 90f, 0f);
 
-        Vector3 wakePos = FindClearWakePosition(standingY);
-        Quaternion wakeRot = Quaternion.LookRotation(transform.position - wakePos, Vector3.up);
+        Vector3 wakePos = sleepPos;
+        Quaternion wakeRot = sleepRot;
 
-        SleepManager.Instance.StartSleep(wakePos, wakeRot);
+        SleepManager.Instance.StartSleep(sleepPos, sleepRot, sleepIdleRot, wakePos, wakeRot);
     }
 
     // Try each side of the bed in order; return the first spot that isn't inside geometry.

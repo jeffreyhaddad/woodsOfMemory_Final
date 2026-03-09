@@ -38,15 +38,16 @@ public class SleepManager : MonoBehaviour
         return t > 0.75f || t < 0.17f;
     }
 
-    // wakeSidePosition: XZ position beside the bed (Y is ignored — we use the player's standing Y)
-    public void StartSleep(Vector3 wakeSidePosition, Quaternion wakeRotation)
+    // sleepPosition/sleepRotation: where the player is placed on the bed for the animation.
+    // wakePosition/wakeRotation: where the player is placed after waking up.
+    public void StartSleep(Vector3 sleepPosition, Quaternion sleepRotation, Quaternion sleepIdleRotation, Vector3 wakePosition, Quaternion wakeRotation)
     {
         if (isSleeping) return;
         if (!IsNightTime()) return;
-        StartCoroutine(SleepRoutine(wakeSidePosition, wakeRotation));
+        StartCoroutine(SleepRoutine(sleepPosition, sleepRotation, sleepIdleRotation, wakePosition, wakeRotation));
     }
 
-    IEnumerator SleepRoutine(Vector3 wakeSidePosition, Quaternion wakeRotation)
+    IEnumerator SleepRoutine(Vector3 sleepPosition, Quaternion sleepRotation, Quaternion sleepIdleRotation, Vector3 wakePosition, Quaternion wakeRotation)
     {
         isSleeping = true;
         GameManager.Instance.SetState(GameState.Cutscene);
@@ -55,14 +56,20 @@ public class SleepManager : MonoBehaviour
         Animator anim = vitals.GetComponentInChildren<Animator>();
         CharacterController cc = vitals.GetComponent<CharacterController>();
 
-        // Save the player's standing Y so we can restore ground level on wake
-        float standingY = vitals.transform.position.y;
+        // Disable CC and move player to the sleep anchor on the bed
+        if (cc != null) cc.enabled = false;
+        if (anim != null) anim.applyRootMotion = false;
+        vitals.transform.position = sleepPosition;
+        vitals.transform.rotation = sleepRotation;
+        yield return null; // let the transform settle before playing animation
 
-        // Play lay down animation in place — no teleport, player is already at the bed
+        // Play lay down animation
         if (anim != null)
             anim.SetBool("isSleeping", true);
 
+        // Wait for lay-down animation to finish, then snap to horizontal idle orientation
         yield return new WaitForSeconds(5.733f);
+        vitals.transform.rotation = sleepIdleRotation;
         yield return new WaitForSeconds(0.5f);
 
         // Fade to black
@@ -87,17 +94,15 @@ public class SleepManager : MonoBehaviour
 
         yield return new WaitForSeconds(holdDuration);
 
-        // Teleport player to beside the bed, keeping original standing Y
-        if (cc != null) cc.enabled = false;
-
-        Vector3 wakePos = new Vector3(wakeSidePosition.x, standingY, wakeSidePosition.z);
-        vitals.transform.position = wakePos;
+        // Teleport player to the wake position beside the bed
+        vitals.transform.position = wakePosition;
         vitals.transform.rotation = wakeRotation;
 
         yield return null;
         yield return null;
 
         if (cc != null) cc.enabled = true;
+        if (anim != null) anim.applyRootMotion = true;
 
         // Trigger get up animation
         if (anim != null)

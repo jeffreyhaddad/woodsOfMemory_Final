@@ -31,7 +31,10 @@ public class MissionObjective
 
     public string GetProgressText()
     {
-        if (objectiveType == ObjectiveType.SurviveNight)
+        // Binary objectives — no counter needed, just done or not
+        if (objectiveType == ObjectiveType.SurviveNight ||
+            objectiveType == ObjectiveType.ReachLocation ||
+            targetCount == 1)
             return IsCompleted ? $"{description} (Done)" : description;
 
         return $"{description} ({currentCount}/{targetCount})";

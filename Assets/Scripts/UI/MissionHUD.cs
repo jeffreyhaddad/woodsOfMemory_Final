@@ -15,6 +15,14 @@ public class MissionHUD : MonoBehaviour
     private Image bannerBg;
     private float bannerTimer;
 
+    public static MissionHUD Instance { get; private set; }
+
+    void Awake()
+    {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+    }
+
     void Start()
     {
         missionManager = FindAnyObjectByType<MissionManager>();
@@ -39,6 +47,7 @@ public class MissionHUD : MonoBehaviour
 
     void OnDestroy()
     {
+        if (Instance == this) Instance = null;
         if (missionManager != null)
         {
             missionManager.OnMissionStarted -= OnMissionStarted;
@@ -114,8 +123,9 @@ public class MissionHUD : MonoBehaviour
         objectiveText.text = sb.ToString();
     }
 
-    void ShowBanner(string text)
+    public void ShowBanner(string text)
     {
+        if (bannerBg == null) return; // UI not yet built (called before Start)
         bannerBg.gameObject.SetActive(true);
         bannerBg.color = new Color(0, 0, 0, 0.6f);
         bannerText.text = text;

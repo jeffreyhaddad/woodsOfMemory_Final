@@ -51,6 +51,7 @@ public static class ItemRegistry
         { "Leather Armor",  "leather_armor" },
         { "Shelter Kit",    "shelter_kit" },
         { "Fur Bedroll",    "fur_bedroll" },
+        { "Water from well","water_bucket" },
     };
 
     private static Dictionary<string, Sprite> spriteCache = new Dictionary<string, Sprite>();

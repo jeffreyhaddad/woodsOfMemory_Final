@@ -142,19 +142,16 @@ public class CreatureSpawner : MonoBehaviour
     {
         if (shadowPrefab == null) return;
 
+        Terrain terrain = Terrain.activeTerrain; // cache once outside loop
         for (int i = 0; i < count; i++)
         {
             float angle = (360f / count) * i * Mathf.Deg2Rad;
             Vector3 candidate = center + new Vector3(Mathf.Sin(angle) * radius, 0f, Mathf.Cos(angle) * radius);
 
-            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 10f, NavMesh.AllAreas))
+            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 20f, NavMesh.AllAreas))
                 candidate = hit.position;
-            else
-            {
-                Terrain terrain = Terrain.activeTerrain;
-                if (terrain != null)
-                    candidate.y = terrain.SampleHeight(candidate) + terrain.transform.position.y;
-            }
+
+            candidate = ClampToTerrainSurface(candidate, terrain);
 
             GameObject go = Instantiate(shadowPrefab, candidate, Quaternion.Euler(0, Random.Range(0f, 360f), 0));
             CreatureAI ai = go.GetComponent<CreatureAI>();
@@ -170,6 +167,8 @@ public class CreatureSpawner : MonoBehaviour
 
     bool TryGetSpawnPoint(float radius, out Vector3 result)
     {
+        Terrain terrain = Terrain.activeTerrain; // cache once outside loop
+
         // First try NavMesh-based spawn
         for (int i = 0; i < 10; i++)
         {
@@ -178,19 +177,17 @@ public class CreatureSpawner : MonoBehaviour
 
             if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 5f, NavMesh.AllAreas))
             {
-                result = hit.position;
+                result = ClampToTerrainSurface(hit.position, terrain);
                 return true;
             }
         }
 
         // Fallback: use terrain height if NavMesh isn't baked
-        Terrain terrain = Terrain.activeTerrain;
         if (terrain != null)
         {
             Vector2 rnd = Random.insideUnitCircle.normalized * Random.Range(minSpawnDistance, radius);
             Vector3 candidate = playerTransform.position + new Vector3(rnd.x, 0, rnd.y);
-            float terrainY = terrain.SampleHeight(candidate) + terrain.transform.position.y;
-            candidate.y = terrainY;
+            candidate.y = terrain.SampleHeight(candidate) + terrain.transform.position.y;
             result = candidate;
             return true;
         }
@@ -198,5 +195,15 @@ public class CreatureSpawner : MonoBehaviour
         Debug.LogWarning("[CreatureSpawner] Could not find spawn point! Is NavMesh baked or Terrain present?");
         result = Vector3.zero;
         return false;
+    }
+
+    /// Pins a position's Y to the terrain surface if the terrain is higher,
+    /// preventing creatures from spawning underground on uneven terrain.
+    static Vector3 ClampToTerrainSurface(Vector3 pos, Terrain terrain)
+    {
+        if (terrain == null) return pos;
+        float groundY = terrain.SampleHeight(pos) + terrain.transform.position.y;
+        pos.y = Mathf.Max(pos.y, groundY);
+        return pos;
     }
 }

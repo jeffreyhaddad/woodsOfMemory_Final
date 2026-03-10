@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -33,6 +34,11 @@ public class ShadowCreatureAI : CreatureAI
     [Tooltip("Degrees per second the creature rotates to face its target")]
     public float turnSpeed = 200f;
 
+    [Header("Attack Timing")]
+    [Tooltip("Seconds after swing starts before damage lands — tune to match the animation hit frame")]
+    public float attackHitDelay = 0.55f;
+    private bool swingInProgress = false;
+
     // ── Animator state names (must match ZombieAnimController states) ──
     private const string AnimIdle   = "Idle";
     private const string AnimWalk   = "Walk";
@@ -64,6 +70,25 @@ public class ShadowCreatureAI : CreatureAI
         // Prevent SkinnedMeshRenderer from being incorrectly culled when its bounds go stale
         foreach (SkinnedMeshRenderer smr in GetComponentsInChildren<SkinnedMeshRenderer>())
             smr.updateWhenOffscreen = true;
+
+        // Ensure a collider exists so PlayerCombat's OverlapSphere can detect this creature
+        if (GetComponent<Collider>() == null)
+        {
+            CapsuleCollider col = gameObject.AddComponent<CapsuleCollider>();
+            col.center = new Vector3(0f, 1f, 0f);
+            col.radius = 0.5f;
+            col.height = 2f;
+        }
+
+        // Kinematic Rigidbody so the CharacterController treats this as a moving obstacle.
+        // Interpolate so NavMeshAgent movement (Update) stays smooth at any frame rate.
+        if (GetComponent<Rigidbody>() == null)
+        {
+            Rigidbody rb = gameObject.AddComponent<Rigidbody>();
+            rb.isKinematic  = true;
+            rb.useGravity   = false;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+        }
 
         currentState = CreatureState.Patrol;
         PickNewPatrolTarget();
@@ -138,8 +163,8 @@ public class ShadowCreatureAI : CreatureAI
                 if (hDist <= data.attackRange * 1.2f && agent.velocity.sqrMagnitude < 2f)
                 {
                     currentState = CreatureState.Attack;
-                    attackTimer  = 0f;
-                    agent.speed  = data.moveSpeed * 0.3f; // slow creep to hold position
+                    attackTimer  = attackInterval; // wait a full interval so first swing isn't instant
+                    agent.speed  = data.moveSpeed * 0.3f;
                 }
                 else if (hDist > data.detectionRange * 1.5f)
                 {
@@ -164,13 +189,10 @@ public class ShadowCreatureAI : CreatureAI
                 }
 
                 attackTimer -= Time.deltaTime;
-                if (attackTimer <= 0f)
+                if (attackTimer <= 0f && !swingInProgress)
                 {
-                    if (cachedPlayerVitals == null && playerTransform != null)
-                        cachedPlayerVitals = playerTransform.GetComponent<PlayerVitals>();
-                    if (cachedPlayerVitals != null)
-                        cachedPlayerVitals.TakeDamage(data.damage);
                     attackTimer = attackInterval;
+                    StartCoroutine(SwingAttack());
                 }
 
                 if (hDist > data.attackRange * 2.5f)
@@ -212,6 +234,9 @@ public class ShadowCreatureAI : CreatureAI
         bool forceRefresh = animForceRefreshTimer <= 0f;
         if (forceRefresh) animForceRefreshTimer = 1f;
 
+        // Don't interrupt a swing mid-animation
+        if (currentState == CreatureState.Attack && swingInProgress) return;
+
         if (!stateChanged && !forceRefresh) return;
         lastAnimState = currentState;
 
@@ -223,6 +248,27 @@ public class ShadowCreatureAI : CreatureAI
         }
     }
 
+    IEnumerator SwingAttack()
+    {
+        swingInProgress = true;
+        PlayAnimation(AnimAttack);
+
+        yield return new WaitForSeconds(attackHitDelay);
+
+        if (currentState == CreatureState.Attack && playerTransform != null)
+        {
+            float dist = Vector3.Distance(transform.position, playerTransform.position);
+            if (dist <= data.attackRange * 1.8f)
+            {
+                if (cachedPlayerVitals == null)
+                    cachedPlayerVitals = playerTransform.GetComponent<PlayerVitals>();
+                cachedPlayerVitals?.TakeDamage(data.damage);
+            }
+        }
+
+        swingInProgress = false;
+    }
+
     /// <summary>Suppress the base tip-over effect — the Animator death clip handles it.</summary>
     protected override void OnDeadUpdate() { }
 
@@ -230,9 +276,9 @@ public class ShadowCreatureAI : CreatureAI
 
     protected override void Die()
     {
-        // Handle death manually so we can play the animator death clip
-        // and skip the base class tip-over behaviour.
-        currentState = CreatureState.Dead;
+        currentState    = CreatureState.Dead;
+        swingInProgress = false;
+        StopAllCoroutines();
         if (agent != null) agent.enabled = false;
 
         PlayAnimation(AnimDeath);

@@ -22,6 +22,8 @@ public class DarkClearingEvent : MonoBehaviour
     [Tooltip("Pause before wave 1 so the player sees the clearing first")]
     public float initialDelay = 2.5f;
 
+    const string Mission5Name = "Into the Dark";
+
     private bool triggered = false;
 
     void OnTriggerEnter(Collider other)
@@ -32,9 +34,10 @@ public class DarkClearingEvent : MonoBehaviour
 
         // Only fire during Mission 5
         if (MissionManager.Instance == null ||
-            MissionManager.Instance.CurrentMission?.missionName != "Into the Dark") return;
+            MissionManager.Instance.CurrentMission?.missionName != Mission5Name) return;
 
         triggered = true;
+        MissionHUD.Instance?.ShowBanner("You've entered the Dark Clearing...");
         StartCoroutine(WaveSequence());
     }
 
@@ -56,7 +59,7 @@ public class DarkClearingEvent : MonoBehaviour
 
         // Wave 2 — only if mission is still active
         if (MissionManager.Instance != null &&
-            MissionManager.Instance.CurrentMission?.missionName == "Into the Dark")
+            MissionManager.Instance.CurrentMission?.missionName == Mission5Name)
         {
             spawner.SpawnShadowWaveAt(center, wave2Count, spawnRadius);
             Debug.Log("[DarkClearingEvent] Wave 2 triggered.");

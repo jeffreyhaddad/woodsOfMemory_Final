@@ -36,6 +36,14 @@ public class WildlifeAI : CreatureAI
             agent.updateRotation = false;
             agent.acceleration   = 8f;
         }
+
+        // Kinematic Rigidbody so the CharacterController treats this as a moving obstacle
+        if (GetComponent<Rigidbody>() == null)
+        {
+            Rigidbody rb = gameObject.AddComponent<Rigidbody>();
+            rb.isKinematic = true;
+            rb.useGravity  = false;
+        }
     }
 
     protected override void UpdateBehavior(float distToPlayer)

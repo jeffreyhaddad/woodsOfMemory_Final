@@ -133,30 +133,35 @@ public class GameManager : MonoBehaviour
                 Time.timeScale = 1f;
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
-                PlayerMovement.inputBlocked = false;
+                PlayerMovement.inputBlocked    = false;
+                PlayerMovement.movementBlocked = false;
                 break;
 
             case GameState.Paused:
                 Time.timeScale = 0f;
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
-                PlayerMovement.inputBlocked = true;
+                PlayerMovement.inputBlocked    = true;
+                PlayerMovement.movementBlocked = true;
                 break;
 
             case GameState.Dead:
                 Time.timeScale = 0f;
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
-                PlayerMovement.inputBlocked = true;
+                PlayerMovement.inputBlocked    = true;
+                PlayerMovement.movementBlocked = true;
                 break;
 
             case GameState.Inventory:
                 // Inventory/Crafting UI handles cursor + input themselves
+                // movementBlocked stays false so player can still walk
                 break;
 
             case GameState.Cutscene:
                 Time.timeScale = 1f;
-                PlayerMovement.inputBlocked = true;
+                PlayerMovement.inputBlocked    = true;
+                PlayerMovement.movementBlocked = true;
                 break;
         }
 

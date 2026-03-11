@@ -114,7 +114,8 @@ public class MissionTransitionUI : MonoBehaviour
         Time.timeScale = 0f;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-        PlayerMovement.inputBlocked = true;
+        PlayerMovement.inputBlocked    = true;
+        PlayerMovement.movementBlocked = true;
 
         phase = TransitionPhase.FadeIn;
         phaseTimer = fadeInDuration;
@@ -247,7 +248,8 @@ public class MissionTransitionUI : MonoBehaviour
         Time.timeScale = 1f;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-        PlayerMovement.inputBlocked = false;
+        PlayerMovement.inputBlocked    = false;
+        PlayerMovement.movementBlocked = false;
 
         if (GameManager.Instance != null)
             GameManager.Instance.SetState(GameState.Playing);

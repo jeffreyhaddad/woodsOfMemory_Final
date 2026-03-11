@@ -20,6 +20,13 @@ public class VitalsHUD : MonoBehaviour
     private TextMeshProUGUI healthText;
     private TextMeshProUGUI hungerText;
     private TextMeshProUGUI staminaText;
+    private TextMeshProUGUI hungerLabel;
+    private TextMeshProUGUI staminaLabel;
+
+    private static readonly Color hungerNormal   = new Color(0.9f, 0.55f, 0.1f);
+    private static readonly Color hungerCritical = new Color(1f,   0.15f, 0.05f);
+    private static readonly Color staminaNormal   = new Color(0.2f, 0.75f, 0.2f);
+    private static readonly Color staminaExhausted = new Color(0.85f, 0.15f, 0.05f);
 
     void Start()
     {
@@ -42,6 +49,54 @@ public class VitalsHUD : MonoBehaviour
     {
         if (vitals != null)
             vitals.OnVitalsChanged -= RefreshBars;
+    }
+
+    void Update()
+    {
+        if (vitals == null || hungerFill == null) return;
+
+        float hungerPct = vitals.Hunger / vitals.maxHunger;
+        if (hungerPct < 0.20f)
+        {
+            // Pulse rate increases as hunger approaches zero
+            float severity = 1f - hungerPct / 0.20f;
+            float rate     = 1.8f + severity * 3.5f;
+            float pulse    = 0.5f + 0.5f * Mathf.Sin(Time.time * rate * Mathf.PI * 2f);
+
+            Color barColor   = Color.Lerp(hungerNormal, hungerCritical, pulse);
+            Color labelColor = Color.Lerp(Color.white,  hungerCritical, pulse * 0.8f);
+
+            hungerFill.color = barColor;
+            if (hungerLabel != null) hungerLabel.color = labelColor;
+        }
+        else
+        {
+            hungerFill.color = hungerNormal;
+            if (hungerLabel != null) hungerLabel.color = Color.white;
+        }
+
+        // Stamina exhaustion pulse — bar and label shift green → red and pulse
+        if (staminaFill != null)
+        {
+            float staminaPct = vitals.Stamina / vitals.maxStamina;
+            if (vitals.IsExhausted || staminaPct < 0.15f)
+            {
+                float severity = vitals.IsExhausted ? 1f : 1f - staminaPct / 0.15f;
+                float rate     = 2f + severity * 3f;
+                float pulse    = 0.5f + 0.5f * Mathf.Sin(Time.time * rate * Mathf.PI * 2f);
+
+                Color barColor   = Color.Lerp(staminaNormal, staminaExhausted, pulse);
+                Color labelColor = Color.Lerp(Color.white,   staminaExhausted, pulse * 0.8f);
+
+                staminaFill.color = barColor;
+                if (staminaLabel != null) staminaLabel.color = labelColor;
+            }
+            else
+            {
+                staminaFill.color = staminaNormal;
+                if (staminaLabel != null) staminaLabel.color = Color.white;
+            }
+        }
     }
 
     void RefreshBars()
@@ -81,24 +136,25 @@ public class VitalsHUD : MonoBehaviour
 
         // Health bar (red)
         CreateBar(container.transform, "Health", new Color(0.8f, 0.15f, 0.15f), ref yOffset,
-            out healthFill, out healthText);
+            out healthFill, out healthText, out _);
 
         // Hunger bar (orange)
-        CreateBar(container.transform, "Hunger", new Color(0.9f, 0.55f, 0.1f), ref yOffset,
-            out hungerFill, out hungerText);
+        CreateBar(container.transform, "Hunger", hungerNormal, ref yOffset,
+            out hungerFill, out hungerText, out hungerLabel);
 
         // Stamina bar (green)
         CreateBar(container.transform, "Stamina", new Color(0.2f, 0.75f, 0.2f), ref yOffset,
-            out staminaFill, out staminaText);
+            out staminaFill, out staminaText, out staminaLabel);
     }
 
     void CreateBar(Transform parent, string label, Color fillColor, ref float yOffset,
-        out Image fillImage, out TextMeshProUGUI valueText)
+        out Image fillImage, out TextMeshProUGUI valueText, out TextMeshProUGUI labelOut)
     {
         // Label
         GameObject labelObj = new GameObject(label + "Label");
         labelObj.transform.SetParent(parent, false);
         TextMeshProUGUI labelTMP = labelObj.AddComponent<TextMeshProUGUI>();
+        labelOut = labelTMP;
         labelTMP.text = label;
         labelTMP.fontSize = 14;
         labelTMP.color = Color.white;

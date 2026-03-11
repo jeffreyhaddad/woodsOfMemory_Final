@@ -36,6 +36,7 @@ public class SFXManager : MonoBehaviour
     private AudioClip menuClickClip;
     private AudioClip heartbeatClip;
     private AudioClip burnClip;
+    private AudioClip zombieGrowlClip;
 
     void Awake()
     {
@@ -123,6 +124,11 @@ public class SFXManager : MonoBehaviour
     public static void PlayBurn()
     {
         if (Instance != null) Instance.Play(Instance.burnClip, 0.65f);
+    }
+
+    public static void PlayZombieGrowl()
+    {
+        if (Instance != null) Instance.Play(Instance.zombieGrowlClip, 0.75f);
     }
 
     public static void StartHeartbeat()
@@ -269,6 +275,39 @@ public class SFXManager : MonoBehaviour
             float noise = (Random.value * 2f - 1f);
             float crackle = Mathf.Sin(2f * Mathf.PI * 80f * t) * Mathf.Exp(-t * 20f) * 0.25f;
             return (noise * 0.8f + crackle) * env;
+        });
+
+        // Zombie growl — deep dark snarl when it spots the player.
+        // Sub-bass rumble + mid growl + raspy noise layer, no high frequencies.
+        zombieGrowlClip = CreateClip("ZombieGrowl", sampleRate, 1.1f, (i, len) =>
+        {
+            float t = (float)i / len;
+
+            // Envelope: slow build-in (0.15s), hold, long tail
+            float env = t < 0.15f
+                ? t / 0.15f
+                : Mathf.Pow(1f - (t - 0.15f) / 0.85f, 1.4f);
+
+            // Sub-bass thump layer (40 Hz) — felt more than heard
+            float sub = Mathf.Sin(2f * Mathf.PI * 40f * t) * 0.55f;
+
+            // Mid growl (85 Hz) with slow pitch drop for menace
+            float pitchDrop = 85f - t * 20f;
+            float mid = Mathf.Sin(2f * Mathf.PI * pitchDrop * t) * 0.6f;
+
+            // Upper growl harmonic (170 Hz) — adds body
+            float upper = Mathf.Sin(2f * Mathf.PI * 170f * t) * 0.25f;
+
+            // Low-pass-style noise: multiply broadband noise by a low-freq sine
+            // to get only the low-frequency noise content (raspy breath)
+            float noise = (Random.value * 2f - 1f)
+                        * Mathf.Abs(Mathf.Sin(2f * Mathf.PI * 60f * t))
+                        * 0.3f;
+
+            // Slow amplitude wobble (2.5 Hz) for organic chest-rattle feel
+            float wobble = 0.82f + 0.18f * Mathf.Sin(2f * Mathf.PI * 2.5f * t);
+
+            return (sub + mid + upper + noise) * env * wobble;
         });
     }
 

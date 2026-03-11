@@ -67,7 +67,8 @@ public class PauseMenuUI : MonoBehaviour
             Time.timeScale = 0f;
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-            PlayerMovement.inputBlocked = true;
+            PlayerMovement.inputBlocked    = true;
+            PlayerMovement.movementBlocked = true;
         }
     }
 
@@ -84,7 +85,8 @@ public class PauseMenuUI : MonoBehaviour
             Time.timeScale = 1f;
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-            PlayerMovement.inputBlocked = false;
+            PlayerMovement.inputBlocked    = false;
+            PlayerMovement.movementBlocked = false;
         }
     }
 

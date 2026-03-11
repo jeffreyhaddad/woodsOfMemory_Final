@@ -35,7 +35,8 @@ public class DeathScreenUI : MonoBehaviour
     void ShowDeathScreen()
     {
         // Block input immediately but keep time running so the animation plays
-        PlayerMovement.inputBlocked = true;
+        PlayerMovement.inputBlocked    = true;
+        PlayerMovement.movementBlocked = true;
 
         // Zero locomotion params so death anim isn't fighting blend tree
         Animator anim = vitals.GetComponentInChildren<Animator>();
@@ -88,7 +89,8 @@ public class DeathScreenUI : MonoBehaviour
             Time.timeScale = 1f;
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-            PlayerMovement.inputBlocked = false;
+            PlayerMovement.inputBlocked    = false;
+            PlayerMovement.movementBlocked = false;
         }
     }
 

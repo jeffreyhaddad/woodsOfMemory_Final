@@ -15,8 +15,6 @@ public class PlayerCombat : MonoBehaviour
     private float hitFlashTimer;
     private static readonly Color impactColor = new Color(1f, 1f, 0.85f); // warm white
 
-    // Pre-allocated buffer — avoids a heap allocation on every attack swing
-    private static readonly Collider[] hitBuffer = new Collider[16];
 
     void Start()
     {
@@ -66,28 +64,37 @@ public class PlayerCombat : MonoBehaviour
             }
         }
 
-        // Overlap sphere in front of + at chest height — hits anything in range
-        // regardless of exact facing angle, far more reliable than SphereCast
-        Vector3 center = transform.position
-                       + transform.forward * (attackRange * 0.6f)
-                       + Vector3.up * 1.2f;
-
         float totalDamage = attackDamage;
         if (EquipmentManager.Instance != null)
             totalDamage += EquipmentManager.Instance.WeaponDamageBonus
                          + EquipmentManager.Instance.ToolDamageBonus;
 
-        int hitCount = Physics.OverlapSphereNonAlloc(center, attackRadius, hitBuffer);
-        for (int i = 0; i < hitCount; i++)
+        // Small shake on every swing so unarmed attacks have tactile feel
+        CameraFollow.Shake(0.08f, 0.03f);
+
+        // Direct distance check against all living creatures.
+        // Uses CreatureAI.All (fast) with a FindObjectsByType fallback in case
+        // Unity cleared the static list during a hot-reload.
+        Vector3 attackCenter = transform.position
+                             + transform.forward * (attackRange * 0.6f)
+                             + Vector3.up * 1.5f;
+
+        var creatures = CreatureAI.All.Count > 0
+            ? (System.Collections.Generic.IEnumerable<CreatureAI>)CreatureAI.All
+            : FindObjectsByType<CreatureAI>(FindObjectsSortMode.None);
+
+        foreach (CreatureAI creature in creatures)
         {
-            Collider col = hitBuffer[i];
-            CreatureAI creature = col.GetComponentInParent<CreatureAI>();
-            if (creature != null)
+            if (creature == null || creature.State == CreatureState.Dead) continue;
+            float dist = Vector3.Distance(attackCenter,
+                             creature.transform.position + Vector3.up * 1.5f);
+            if (dist <= attackRadius + 1f)
             {
                 creature.TakeDamage(totalDamage);
                 hitFlashTimer = 0.15f;
+                CameraFollow.Shake(0.15f, 0.07f);
                 SFXManager.PlayHit();
-                break; // one creature per swing
+                break;
             }
         }
     }

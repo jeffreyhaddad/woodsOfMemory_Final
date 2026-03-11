@@ -88,9 +88,12 @@ public class PlayerVitals : MonoBehaviour
         // Starvation: lose health when hunger is 0
         if (hunger <= 0f)
             health = Mathf.Max(0f, health - starvationDamage * Time.deltaTime);
-        // Health regen when well-fed
+        // Health regen when well-fed — scales 1× at 50 hunger up to 3× at max hunger
         else if (hunger > 50f && health < maxHealth)
-            health = Mathf.Min(maxHealth, health + healthRegenRate * Time.deltaTime);
+        {
+            float regenMult = Mathf.Lerp(1f, 3f, (hunger - 50f) / (maxHunger - 50f));
+            health = Mathf.Min(maxHealth, health + healthRegenRate * regenMult * Time.deltaTime);
+        }
 
         // Stop heartbeat once health regens above 25%
         if (health > maxHealth * 0.25f)
@@ -113,7 +116,7 @@ public class PlayerVitals : MonoBehaviour
     public void DrainStamina(float amount)
     {
         stamina = Mathf.Max(0f, stamina - amount);
-        if (stamina <= 0f)
+        if (stamina <= 0f && !isExhausted)
             isExhausted = true;
     }
 
@@ -166,11 +169,36 @@ public class PlayerVitals : MonoBehaviour
 
     void OnGUI()
     {
-        if (damageFlashTimer <= 0f) return;
-        damageFlashTimer -= Time.deltaTime;
-        float alpha = (damageFlashTimer / 0.4f) * 0.5f;
-        GUI.color = new Color(1f, 0f, 0f, alpha);
-        GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
-        GUI.color = Color.white;
+        Rect full = new Rect(0, 0, Screen.width, Screen.height);
+
+        // Damage flash — sharp red full-screen
+        if (damageFlashTimer > 0f)
+        {
+            damageFlashTimer -= Time.deltaTime;
+            float alpha = (damageFlashTimer / 0.4f) * 0.5f;
+            GUI.color = new Color(1f, 0f, 0f, alpha);
+            GUI.DrawTexture(full, Texture2D.whiteTexture);
+            GUI.color = Color.white;
+        }
+
+        // Low health vignette — pulsing red edges, gets worse below 30%
+        float healthPct = maxHealth > 0f ? health / maxHealth : 0f;
+        if (healthPct < 0.30f)
+        {
+            float severity = 1f - healthPct / 0.30f;              // 0 at 30%, 1 at 0%
+            float rate     = 2.5f + severity * 3f;                 // pulse faster when critical
+            float pulse    = 0.55f + 0.45f * Mathf.Sin(Time.time * rate);
+            float alpha    = severity * 0.55f * pulse;
+            GUI.color = new Color(0.75f, 0f, 0f, alpha);
+            // Draw four edge strips to fake a vignette without a shader
+            int w = Screen.width, h = Screen.height;
+            int thickness = Mathf.RoundToInt(Mathf.Lerp(40f, 120f, severity));
+            GUI.DrawTexture(new Rect(0,         0,          w,         thickness), Texture2D.whiteTexture); // top
+            GUI.DrawTexture(new Rect(0,         h-thickness, w,        thickness), Texture2D.whiteTexture); // bottom
+            GUI.DrawTexture(new Rect(0,         0,          thickness, h),         Texture2D.whiteTexture); // left
+            GUI.DrawTexture(new Rect(w-thickness, 0,        thickness, h),         Texture2D.whiteTexture); // right
+            GUI.color = Color.white;
+        }
+
     }
 }

@@ -21,6 +21,7 @@ public class ShadowCreatureAI : CreatureAI
     private float attackTimer;
     private DayNightCycle dayNight;
     private PlayerVitals cachedPlayerVitals;
+    private ZombieAlertIndicator alertIndicator;
 
     // Path recalculation throttle
     private float pathUpdateTimer;
@@ -90,6 +91,11 @@ public class ShadowCreatureAI : CreatureAI
             rb.interpolation = RigidbodyInterpolation.Interpolate;
         }
 
+        // Health bar and spotted indicator above head
+        ZombieHealthBar hb = gameObject.AddComponent<ZombieHealthBar>();
+        hb.Init(this);
+        alertIndicator = gameObject.AddComponent<ZombieAlertIndicator>();
+
         currentState = CreatureState.Patrol;
         PickNewPatrolTarget();
         PlayAnimation(AnimWalk);
@@ -134,6 +140,8 @@ public class ShadowCreatureAI : CreatureAI
                 {
                     currentState = CreatureState.Chase;
                     agent.speed  = data.runSpeed;
+                    alertIndicator?.ShowAlert();
+                    SFXManager.PlayZombieGrowl();
                 }
                 break;
 
@@ -218,6 +226,8 @@ public class ShadowCreatureAI : CreatureAI
         {
             currentState = CreatureState.Chase;
             agent.speed  = data.runSpeed;
+            alertIndicator?.ShowAlert();
+            SFXManager.PlayZombieGrowl();
         }
     }
 
@@ -276,20 +286,14 @@ public class ShadowCreatureAI : CreatureAI
 
     protected override void Die()
     {
-        currentState    = CreatureState.Dead;
         swingInProgress = false;
         StopAllCoroutines();
-        if (agent != null) agent.enabled = false;
+
+        // base.Die() sets state=Dead, removes from CreatureAI.All, disables agent
+        base.Die();
 
         PlayAnimation(AnimDeath);
         SpawnShadowEssence();
-        DropLoot();
-        RaiseCreatureDeath();
-
-        if (MissionManager.Instance != null && data != null)
-            MissionManager.Instance.ReportCreatureKill(data.creatureName);
-
-        Destroy(gameObject, 4f);
     }
 
     // ── Shadow Essence Drop ───────────────────────────────────

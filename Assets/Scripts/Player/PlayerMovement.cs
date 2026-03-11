@@ -2,8 +2,12 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    /// <summary>Set to true to block all player input (e.g. when inventory is open).</summary>
+    /// <summary>Set to true to block all player input (camera, attacks, actions).</summary>
     public static bool inputBlocked = false;
+
+    /// <summary>Set to true to also freeze movement (pause, death, cutscenes).
+    /// Inventory/journal/crafting only set inputBlocked, not this.</summary>
+    public static bool movementBlocked = false;
 
     [Header("Movement Speeds")]
     public float walkSpeed = 2f;
@@ -55,7 +59,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        if (inputBlocked)
+        if (movementBlocked)
         {
             // Zero out animator so player stops walking/running visually
             animator.SetFloat("Speed", 0f);

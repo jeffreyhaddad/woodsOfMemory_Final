@@ -14,6 +14,10 @@ public enum CreatureState
 
 public class CreatureAI : MonoBehaviour
 {
+    /// <summary>All living creatures in the scene. Used by PlayerCombat for reliable hit detection.</summary>
+    public static readonly System.Collections.Generic.List<CreatureAI> All =
+        new System.Collections.Generic.List<CreatureAI>();
+
     [Header("Creature Setup")]
     public CreatureData data;
 
@@ -23,9 +27,11 @@ public class CreatureAI : MonoBehaviour
     protected Transform playerTransform;
     protected float currentHealth;
 
-    public float CurrentHealth => currentHealth;
-    public CreatureState State => currentState;
+    public float CurrentHealth  => currentHealth;
+    public float HealthPercent  => data != null && data.maxHealth > 0f ? currentHealth / data.maxHealth : 0f;
+    public CreatureState State  => currentState;
     public event Action<CreatureAI> OnCreatureDeath;
+    public event Action<float> OnHealthChanged;   // fires with new 0-1 percent
     protected void RaiseCreatureDeath() => OnCreatureDeath?.Invoke(this);
 
     protected virtual void Start()
@@ -33,6 +39,7 @@ public class CreatureAI : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponentInChildren<Animator>();
         currentHealth = data.maxHealth;
+        All.Add(this);
 
         PlayerVitals playerVitals = FindAnyObjectByType<PlayerVitals>();
         if (playerVitals != null)
@@ -99,6 +106,10 @@ public class CreatureAI : MonoBehaviour
         if (currentState == CreatureState.Dead) return;
 
         currentHealth -= amount;
+        OnHealthChanged?.Invoke(HealthPercent);
+
+        // Floating damage number above torso
+        DamageNumber.Spawn(amount, transform.position + Vector3.up * 2.5f);
 
         if (currentHealth <= 0f)
             Die();
@@ -111,6 +122,7 @@ public class CreatureAI : MonoBehaviour
     protected virtual void Die()
     {
         currentState = CreatureState.Dead;
+        All.Remove(this);
         agent.enabled = false;
         deathTimer = 0f;
         // Random tilt direction so they don't all fall the same way

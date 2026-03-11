@@ -37,7 +37,8 @@ public class GameCompleteUI : MonoBehaviour
         Time.timeScale = 0f;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-        PlayerMovement.inputBlocked = true;
+        PlayerMovement.inputBlocked    = true;
+        PlayerMovement.movementBlocked = true;
     }
 
     void ReturnToMenu()

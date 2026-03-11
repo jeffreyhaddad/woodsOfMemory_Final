@@ -39,7 +39,8 @@ public class IntroSequenceManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(this); return; }
         Instance = this;
 
-        PlayerMovement.inputBlocked = true;
+        PlayerMovement.inputBlocked    = true;
+        PlayerMovement.movementBlocked = true;
 
         // 1×1 black texture — used by OnGUI every frame until the fade ends.
         // This is the only approach that is guaranteed to cover the screen on
@@ -340,8 +341,9 @@ public class IntroSequenceManager : MonoBehaviour
         if (overlayCanvas != null)
             Destroy(overlayCanvas.gameObject);
 
-        PlayerMovement.inputBlocked = false;
-        Cursor.lockState            = CursorLockMode.Locked;
+        PlayerMovement.inputBlocked    = false;
+        PlayerMovement.movementBlocked = false;
+        Cursor.lockState               = CursorLockMode.Locked;
         Cursor.visible              = false;
 
         JournalManager jm = JournalManager.Instance;

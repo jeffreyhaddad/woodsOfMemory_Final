@@ -23,6 +23,7 @@ public class CabinDoorInteractable : Interactable
     private bool hasReportedObjective = false;
     private Inventory inventory;
     private float lockedMessageTimer;
+    private Animator playerAnimator;
 
     private Quaternion closedRotation;
     private Quaternion openRotation;
@@ -34,6 +35,10 @@ public class CabinDoorInteractable : Interactable
         openRotation = closedRotation * Quaternion.Euler(0f, openAngle, 0f);
         targetRotation = closedRotation;
         inventory = FindAnyObjectByType<Inventory>();
+
+        GameObject player = GameObject.FindWithTag("Player");
+        if (player != null)
+            playerAnimator = player.GetComponentInChildren<Animator>();
 
         promptText = "Open Door";
     }
@@ -93,6 +98,9 @@ public class CabinDoorInteractable : Interactable
         targetRotation = isOpen ? openRotation : closedRotation;
         isMoving = true;
         promptText = isOpen ? "Close Door" : "Open Door";
+
+        if (isOpen)
+            playerAnimator?.SetTrigger("DoorOpen");
 
         if (isOpen && !hasReportedObjective)
         {

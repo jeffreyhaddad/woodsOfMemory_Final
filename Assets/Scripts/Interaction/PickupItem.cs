@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -12,6 +13,7 @@ public class PickupItem : Interactable
     public int quantity = 1;
 
     private Inventory inventory;
+    private Animator playerAnimator;
 
     // Shared across all pickup instances — FindAnyObjectByType is only called once
     // regardless of how many pickups exist in the scene.
@@ -28,6 +30,10 @@ public class PickupItem : Interactable
         if (sharedInventory == null)
             sharedInventory = FindAnyObjectByType<Inventory>();
         inventory = sharedInventory;
+
+        GameObject player = GameObject.FindWithTag("Player");
+        if (player != null)
+            playerAnimator = player.GetComponentInChildren<Animator>();
     }
 
     public override void OnInteract()
@@ -44,15 +50,24 @@ public class PickupItem : Interactable
             return;
         }
 
-        if (inventory.AddItem(itemData, quantity))
-        {
-            Debug.Log("Picked up " + quantity + "x " + itemData.itemName);
-            SFXManager.PlayPickup();
-            Destroy(gameObject);
-        }
-        else
+        if (!inventory.AddItem(itemData, quantity))
         {
             Debug.Log("Inventory full!");
+            return;
         }
+
+        PlayerMovement.inputBlocked = true;
+        playerAnimator?.SetTrigger("PickupItem");
+        StartCoroutine(FinishPickup());
+    }
+
+    private IEnumerator FinishPickup()
+    {
+        // Match this value to your pickup animation clip length
+        yield return new WaitForSeconds(1.5f);
+        PlayerMovement.inputBlocked = false;
+        Debug.Log("Picked up " + quantity + "x " + itemData.itemName);
+        SFXManager.PlayPickup();
+        Destroy(gameObject);
     }
 }

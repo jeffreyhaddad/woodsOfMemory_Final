@@ -72,6 +72,10 @@ public class GameManager : MonoBehaviour
             gameObject.AddComponent<MapSystem>();
         if (FindAnyObjectByType<CookingProgressUI>() == null)
             gameObject.AddComponent<CookingProgressUI>();
+        if (FindAnyObjectByType<HotbarUI>() == null)
+            gameObject.AddComponent<HotbarUI>();
+        if (FindAnyObjectByType<PickupNotificationUI>() == null)
+            gameObject.AddComponent<PickupNotificationUI>();
         if (SleepManager.Instance == null)
             gameObject.AddComponent<SleepManager>();
         if (SettingsManager.Instance == null)

@@ -62,7 +62,7 @@ public class SFXManager : MonoBehaviour
 
     public static void PlayHit()
     {
-        if (Instance != null) Instance.Play(Instance.hitClip, 0.6f);
+        if (Instance != null) Instance.Play(Instance.hitClip, 0.4f);
     }
 
     public static void PlaySwing()
@@ -87,7 +87,7 @@ public class SFXManager : MonoBehaviour
 
     public static void PlayHurt()
     {
-        if (Instance != null) Instance.Play(Instance.hurtClip, 0.5f);
+        if (Instance != null) Instance.Play(Instance.hurtClip, 0.35f);
     }
 
     public static void PlayFootstep()
@@ -161,10 +161,11 @@ public class SFXManager : MonoBehaviour
         hitClip = CreateClip("Hit", sampleRate, 0.15f, (i, len) =>
         {
             float t = (float)i / len;
+            float attack = Mathf.Min(1f, i / 88f); // ~2ms ramp — prevents speaker-punching transient
             float noise = (Random.value * 2f - 1f);
-            float env = Mathf.Exp(-t * 20f);
-            float thud = Mathf.Sin(2f * Mathf.PI * 120f * t) * Mathf.Exp(-t * 30f);
-            return (noise * 0.6f + thud * 0.4f) * env;
+            float env = Mathf.Exp(-t * 20f) * attack;
+            float thud = Mathf.Sin(2f * Mathf.PI * 220f * t) * Mathf.Exp(-t * 30f); // raised from 120Hz, less bass-heavy
+            return (noise * 0.45f + thud * 0.3f) * env;
         });
 
         swingClip = CreateClip("Swing", sampleRate, 0.18f, (i, len) =>
@@ -205,51 +206,54 @@ public class SFXManager : MonoBehaviour
         hurtClip = CreateClip("Hurt", sampleRate, 0.2f, (i, len) =>
         {
             float t = (float)i / len;
-            float env = Mathf.Exp(-t * 10f);
-            float noise = (Random.value * 2f - 1f) * 0.5f;
-            float tone = Mathf.Sin(2f * Mathf.PI * 180f * t);
+            float attack = Mathf.Min(1f, i / 88f); // ~2ms ramp — prevents speaker-punching transient
+            float env = Mathf.Exp(-t * 10f) * attack;
+            float noise = (Random.value * 2f - 1f) * 0.4f;
+            float tone = Mathf.Sin(2f * Mathf.PI * 220f * t) * 0.5f;
             return (noise + tone) * env;
         });
 
+        // Default/dirt footstep: soft mid-frequency thud, no sub-bass
         footstepClip = CreateClip("Footstep", sampleRate, 0.08f, (i, len) =>
         {
             float t = (float)i / len;
-            float env = Mathf.Exp(-t * 30f);
-            float noise = (Random.value * 2f - 1f);
-            float thump = Mathf.Sin(2f * Mathf.PI * 80f * t);
-            return (noise * 0.4f + thump * 0.6f) * env;
+            float attack = Mathf.Min(1f, i / 44f);           // 1ms ramp
+            float env    = Mathf.Exp(-t * 35f) * attack;
+            float noise  = (Random.value * 2f - 1f);
+            float step   = Mathf.Sin(2f * Mathf.PI * 220f * t) * Mathf.Exp(-t * 60f); // 220Hz, not 80Hz
+            return (noise * 0.45f + step * 0.45f) * env;
         });
 
-        // Grass: soft rustling, higher frequency noise, lighter
+        // Grass: brief high-frequency rustle, very soft
         footstepGrassClip = CreateClip("FootstepGrass", sampleRate, 0.1f, (i, len) =>
         {
-            float t = (float)i / len;
-            float env = Mathf.Exp(-t * 20f);
-            float noise = (Random.value * 2f - 1f);
-            float rustle = Mathf.Sin(2f * Mathf.PI * 2000f * t) * 0.1f;
-            return (noise * 0.7f + rustle) * env * 0.6f;
+            float t      = (float)i / len;
+            float attack = Mathf.Min(1f, i / 44f);
+            float env    = Mathf.Exp(-t * 22f) * attack;
+            float noise  = (Random.value * 2f - 1f);
+            return noise * env * 0.4f;
         });
 
-        // Wood: hollow thud, mid-frequency resonance
+        // Wood: hollow knock, mid-frequency only
         footstepWoodClip = CreateClip("FootstepWood", sampleRate, 0.1f, (i, len) =>
         {
-            float t = (float)i / len;
-            float env = Mathf.Exp(-t * 25f);
-            float thud = Mathf.Sin(2f * Mathf.PI * 150f * t);
-            float knock = Mathf.Sin(2f * Mathf.PI * 400f * t) * Mathf.Exp(-t * 40f);
-            float noise = (Random.value * 2f - 1f) * 0.15f;
-            return (thud * 0.5f + knock * 0.35f + noise) * env;
+            float t      = (float)i / len;
+            float attack = Mathf.Min(1f, i / 44f);
+            float env    = Mathf.Exp(-t * 28f) * attack;
+            float knock  = Mathf.Sin(2f * Mathf.PI * 280f * t) * Mathf.Exp(-t * 40f); // 280Hz, not 150Hz
+            float noise  = (Random.value * 2f - 1f) * 0.15f;
+            return (knock * 0.85f + noise) * env;
         });
 
-        // Stone: sharp clack, high attack, less bass
+        // Stone: sharp dry tap
         footstepStoneClip = CreateClip("FootstepStone", sampleRate, 0.06f, (i, len) =>
         {
-            float t = (float)i / len;
-            float env = Mathf.Exp(-t * 40f);
-            float click = Mathf.Sin(2f * Mathf.PI * 600f * t) * Mathf.Exp(-t * 50f);
-            float scrape = (Random.value * 2f - 1f) * 0.3f * Mathf.Exp(-t * 35f);
-            float tap = Mathf.Sin(2f * Mathf.PI * 250f * t) * 0.4f;
-            return (click + scrape + tap) * env;
+            float t      = (float)i / len;
+            float attack = Mathf.Min(1f, i / 44f);
+            float env    = Mathf.Exp(-t * 45f) * attack;
+            float click  = Mathf.Sin(2f * Mathf.PI * 700f * t) * Mathf.Exp(-t * 65f);
+            float tap    = Mathf.Sin(2f * Mathf.PI * 380f * t) * 0.45f;
+            return (click + tap) * env;
         });
 
         menuClickClip = CreateClip("Click", sampleRate, 0.05f, (i, len) =>
@@ -262,19 +266,21 @@ public class SFXManager : MonoBehaviour
         {
             float t = (float)i / len;
             // Two thumps per beat (lub-dub)
-            float beat1 = Mathf.Sin(2f * Mathf.PI * 50f * t) * Mathf.Exp(-Mathf.Pow((t - 0.1f) * 20f, 2f));
-            float beat2 = Mathf.Sin(2f * Mathf.PI * 40f * t) * Mathf.Exp(-Mathf.Pow((t - 0.25f) * 20f, 2f)) * 0.7f;
+            // Raised from 40/50 Hz — those frequencies physically stress speakers
+            float beat1 = Mathf.Sin(2f * Mathf.PI * 90f * t) * Mathf.Exp(-Mathf.Pow((t - 0.1f) * 20f, 2f)) * 0.6f;
+            float beat2 = Mathf.Sin(2f * Mathf.PI * 72f * t) * Mathf.Exp(-Mathf.Pow((t - 0.25f) * 20f, 2f)) * 0.45f;
             return (beat1 + beat2);
         });
 
         // Sizzle/crackle when standing in fire
         burnClip = CreateClip("Burn", sampleRate, 0.4f, (i, len) =>
         {
-            float t = (float)i / len;
-            float env = Mathf.Exp(-t * 5f) * 0.85f + Mathf.Exp(-t * 1.2f) * 0.15f;
-            float noise = (Random.value * 2f - 1f);
-            float crackle = Mathf.Sin(2f * Mathf.PI * 80f * t) * Mathf.Exp(-t * 20f) * 0.25f;
-            return (noise * 0.8f + crackle) * env;
+            float t      = (float)i / len;
+            float attack = Mathf.Min(1f, i / 441f);          // 10ms ramp (looping clip)
+            float env    = (Mathf.Exp(-t * 5f) * 0.8f + Mathf.Exp(-t * 1.2f) * 0.2f) * attack;
+            float noise  = (Random.value * 2f - 1f);
+            float crackle = Mathf.Sin(2f * Mathf.PI * 300f * t) * Mathf.Exp(-t * 20f) * 0.15f; // raised from 80Hz
+            return (noise * 0.7f + crackle) * env;
         });
 
         // Zombie growl — deep dark snarl when it spots the player.
@@ -288,15 +294,13 @@ public class SFXManager : MonoBehaviour
                 ? t / 0.15f
                 : Mathf.Pow(1f - (t - 0.15f) / 0.85f, 1.4f);
 
-            // Sub-bass thump layer (40 Hz) — felt more than heard
-            float sub = Mathf.Sin(2f * Mathf.PI * 40f * t) * 0.55f;
+            // Raised from 40/85/170 Hz — those frequencies stress speakers
+            float sub = Mathf.Sin(2f * Mathf.PI * 90f * t) * 0.4f;
 
-            // Mid growl (85 Hz) with slow pitch drop for menace
-            float pitchDrop = 85f - t * 20f;
-            float mid = Mathf.Sin(2f * Mathf.PI * pitchDrop * t) * 0.6f;
+            float pitchDrop = 130f - t * 25f;
+            float mid = Mathf.Sin(2f * Mathf.PI * pitchDrop * t) * 0.5f;
 
-            // Upper growl harmonic (170 Hz) — adds body
-            float upper = Mathf.Sin(2f * Mathf.PI * 170f * t) * 0.25f;
+            float upper = Mathf.Sin(2f * Mathf.PI * 260f * t) * 0.2f;
 
             // Low-pass-style noise: multiply broadband noise by a low-freq sine
             // to get only the low-frequency noise content (raspy breath)

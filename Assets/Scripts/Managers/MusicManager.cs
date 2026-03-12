@@ -246,9 +246,9 @@ public class MusicManager : MonoBehaviour
             float t = (float)i / sampleRate;
             float tNorm = (float)i / length;
 
-            // Deep bass drone: C2 with minor third
-            float bass = Mathf.Sin(2f * Mathf.PI * 65.41f * t) * 0.18f;
-            float minor3 = Mathf.Sin(2f * Mathf.PI * 77.78f * t) * 0.08f; // Eb2
+            // Bass drone: raised from C2/Eb2 (65/78Hz) to C3/Eb3 range
+            float bass = Mathf.Sin(2f * Mathf.PI * 130.81f * t) * 0.12f;
+            float minor3 = Mathf.Sin(2f * Mathf.PI * 155.56f * t) * 0.06f;
 
             // Slowly detuning dissonant tone — creates unease
             float detune = Mathf.Sin(2f * Mathf.PI * 0.03f * t) * 2f; // +/- 2Hz wobble
@@ -302,13 +302,14 @@ public class MusicManager : MonoBehaviour
 
             float beatPos = (t % beatLen) / beatLen; // 0-1 within each beat
 
-            // Pounding kick drum on every beat
-            float kickEnv = Mathf.Exp(-beatPos * 20f);
-            float kickFreq = Mathf.Lerp(150f, 50f, beatPos); // pitch drop
-            float kick = Mathf.Sin(2f * Mathf.PI * kickFreq * t) * kickEnv * 0.3f;
+            // Kick drum — 3% attack ramp (~14ms at 130BPM) for soft onset
+            float kickAttack = Mathf.Min(1f, beatPos / 0.03f);
+            float kickEnv = Mathf.Exp(-beatPos * 18f) * kickAttack;
+            float kickFreq = Mathf.Lerp(260f, 110f, beatPos);
+            float kick = Mathf.Sin(2f * Mathf.PI * kickFreq * t) * kickEnv * 0.15f; // reduced amplitude
 
-            // Sub bass following the kick
-            float subBass = Mathf.Sin(2f * Mathf.PI * 55f * t) * 0.12f
+            // Mid bass — raised from 55Hz (sub-bass) to 110Hz
+            float subBass = Mathf.Sin(2f * Mathf.PI * 110f * t) * 0.09f
                 * (0.6f + 0.4f * kickEnv);
 
             // Aggressive saw-ish tone on offbeats
@@ -361,16 +362,17 @@ public class MusicManager : MonoBehaviour
             float t = (float)i / sampleRate;
             float tNorm = (float)i / length;
 
-            // Heartbeat rhythm: lub-dub every ~0.8 seconds
+            // Heartbeat rhythm — lub/dub centers moved away from cycle boundary (was 0.05/0.20)
+            // to prevent the envelope jump at beatCycle=0 from creating a click transient
             float beatCycle = t % 0.85f;
-            float lub = Mathf.Sin(2f * Mathf.PI * 45f * t)
-                * Mathf.Exp(-Mathf.Pow((beatCycle - 0.05f) * 15f, 2f)) * 0.25f;
-            float dub = Mathf.Sin(2f * Mathf.PI * 38f * t)
-                * Mathf.Exp(-Mathf.Pow((beatCycle - 0.2f) * 15f, 2f)) * 0.18f;
+            float lub = Mathf.Sin(2f * Mathf.PI * 90f * t)
+                * Mathf.Exp(-Mathf.Pow((beatCycle - 0.25f) * 15f, 2f)) * 0.18f;
+            float dub = Mathf.Sin(2f * Mathf.PI * 75f * t)
+                * Mathf.Exp(-Mathf.Pow((beatCycle - 0.40f) * 15f, 2f)) * 0.13f;
 
-            // Oppressive low drone
-            float drone = Mathf.Sin(2f * Mathf.PI * 55f * t) * 0.1f;
-            drone += Mathf.Sin(2f * Mathf.PI * 58f * t) * 0.06f; // slight detune for discomfort
+            // Oppressive drone — raised from 55Hz to 110Hz
+            float drone = Mathf.Sin(2f * Mathf.PI * 110f * t) * 0.08f;
+            drone += Mathf.Sin(2f * Mathf.PI * 116f * t) * 0.05f; // slight detune for discomfort
 
             // Breathing texture
             float breathRate = 0.4f; // slow breath

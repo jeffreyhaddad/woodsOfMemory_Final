@@ -13,6 +13,7 @@ public class PlayerInteraction : MonoBehaviour
 
     private Camera cam;
     private Interactable currentTarget;
+    private GameObject promptContainer;
 
     /// <summary>Public read-only access to the current interaction target.</summary>
     public Interactable CurrentTarget => currentTarget;
@@ -28,7 +29,7 @@ public class PlayerInteraction : MonoBehaviour
         if (promptUI == null)
             CreatePromptUI();
 
-        promptUI.gameObject.SetActive(false);
+        promptContainer.SetActive(false);
     }
 
     void Update()
@@ -95,42 +96,50 @@ public class PlayerInteraction : MonoBehaviour
 
     void ShowPrompt(string text)
     {
-        promptUI.text = "[E] " + text;
-        promptUI.gameObject.SetActive(true);
+        promptUI.text = "<color=#ffe680>[E]</color>  " + text;
+        promptContainer.SetActive(true);
     }
 
     void HidePrompt()
     {
         currentTarget = null;
-        promptUI.gameObject.SetActive(false);
+        promptContainer.SetActive(false);
     }
 
     void CreatePromptUI()
     {
-        // Create a screen-space canvas for the prompt
         GameObject canvasObj = new GameObject("InteractionPromptCanvas");
         Canvas canvas = canvasObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 100;
-        canvasObj.AddComponent<UnityEngine.UI.CanvasScaler>().uiScaleMode =
-            UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        var scaler = canvasObj.AddComponent<UnityEngine.UI.CanvasScaler>();
+        scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
 
-        // Create the text element
+        // Small dark pill background — less jarring than bare white text
+        promptContainer = new GameObject("PromptBG");
+        promptContainer.transform.SetParent(canvasObj.transform, false);
+        var bg = promptContainer.AddComponent<UnityEngine.UI.Image>();
+        bg.color = new Color(0f, 0f, 0f, 0.48f);
+        RectTransform bgRect = promptContainer.GetComponent<RectTransform>();
+        bgRect.anchorMin = new Vector2(0.5f, 0.09f);
+        bgRect.anchorMax = new Vector2(0.5f, 0.09f);
+        bgRect.pivot     = new Vector2(0.5f, 0.5f);
+        bgRect.sizeDelta = new Vector2(160f, 20f);
+
+        // Text inside the pill
         GameObject textObj = new GameObject("PromptText");
-        textObj.transform.SetParent(canvasObj.transform, false);
-
+        textObj.transform.SetParent(promptContainer.transform, false);
         promptUI = textObj.AddComponent<TextMeshProUGUI>();
-        promptUI.text = "[E] Interact";
-        promptUI.fontSize = 15;
+        promptUI.fontSize  = 11;
         promptUI.alignment = TextAlignmentOptions.Center;
-        promptUI.color = Color.white;
+        promptUI.color     = new Color(0.88f, 0.88f, 0.88f);
         promptUI.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
-
-        // Position at bottom-center of screen
+        promptUI.raycastTarget    = false;
         RectTransform rect = promptUI.rectTransform;
-        rect.anchorMin = new Vector2(0.5f, 0.15f);
-        rect.anchorMax = new Vector2(0.5f, 0.15f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(300f, 30f);
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = new Vector2(6f, 1f);
+        rect.offsetMax = new Vector2(-6f, -1f);
     }
 }

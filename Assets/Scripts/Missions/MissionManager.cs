@@ -303,8 +303,8 @@ public class MissionManager : MonoBehaviour
             "Dark creatures stalk these woods at night. Hunt down five of them and collect their essence.",
             new MissionObjective[]
             {
-                MakeObjective("Kill shadow creatures (0/5)",        ObjectiveType.KillCreature, "",               "Shadow Creature", 5),
-                MakeObjective("Collect Shadow Essence (0/5)",       ObjectiveType.CollectItem,  "Shadow Essence", "",                5),
+                MakeObjective("Kill shadow creatures",        ObjectiveType.KillCreature, "",               "Shadow Creature", 5),
+                MakeObjective("Collect Shadow Essence",       ObjectiveType.CollectItem,  "Shadow Essence", "",                5),
             }));
 
         // Mission 5: Into the Dark

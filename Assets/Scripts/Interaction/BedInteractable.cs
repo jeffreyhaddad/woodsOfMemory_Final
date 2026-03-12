@@ -26,8 +26,13 @@ public class BedInteractable : Interactable
         // Rotate 90° once the idle-sleeping state begins
         Quaternion sleepIdleRot = sleepRot * Quaternion.Euler(0f, 90f, 0f);
 
-        Vector3 wakePos = sleepPos;
-        Quaternion wakeRot = sleepRot;
+        float groundY  = sleepPos.y;
+        if (Physics.Raycast(sleepPos + Vector3.up * 2f, Vector3.down, out RaycastHit hit, 5f))
+            groundY = hit.point.y;
+
+        Vector3    wakePos = FindClearWakePosition(groundY);
+        Quaternion wakeRot = Quaternion.LookRotation(wakePos - transform.position);
+        wakeRot = Quaternion.Euler(0f, wakeRot.eulerAngles.y, 0f);
 
         SleepManager.Instance.StartSleep(sleepPos, sleepRot, sleepIdleRot, wakePos, wakeRot);
     }

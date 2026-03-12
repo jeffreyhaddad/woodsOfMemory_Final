@@ -565,6 +565,29 @@ public class InventoryUI : MonoBehaviour
         }
     }
 
+    // ─── Public accessors (used by HotbarUI) ──────────────────────────────────
+
+    public bool IsInventoryOpen => isOpen;
+    public int HoveredSlot => hoveredSlotIndex;
+    public ItemData GetHoveredItem()
+    {
+        if (hoveredSlotIndex < 0 || hoveredSlotIndex >= inventory.slots.Length) return null;
+        return inventory.slots[hoveredSlotIndex].item;
+    }
+
+    /// <summary>Used by HotbarUI to trigger item use by ItemData reference.</summary>
+    public void TryUseItem(ItemData item)
+    {
+        for (int i = 0; i < inventory.slots.Length; i++)
+        {
+            if (!inventory.slots[i].IsEmpty && SameItem(inventory.slots[i].item, item))
+            {
+                UseItem(i);
+                return;
+            }
+        }
+    }
+
     // ─── Use item (click without drag) ────────────────────────────────────────
 
     void UseItem(int slotIndex)

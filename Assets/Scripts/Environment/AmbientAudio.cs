@@ -31,7 +31,7 @@ public class AmbientAudio : MonoBehaviour
     public float windNightVolume = 0.06f;
 
     [Header("Crickets")]
-    public float cricketNightVolume = 0.15f;
+    public float cricketNightVolume = 0.09f;
 
     private AudioSource baseSource;
     private AudioSource windSource;
@@ -164,7 +164,8 @@ public class AmbientAudio : MonoBehaviour
         int length = sampleRate * 4; // 4 second loop
         float[] samples = new float[length];
 
-        // Cricket chirps: short bursts of high-frequency oscillation
+        // Cricket chirps: rapid pulses of mixed-frequency noise — avoids the pure
+        // sine "whistle" by blending harmonics and a little white noise texture.
         float chirpTimer = 0f;
         float chirpDuration = 0f;
         float chirpFreq = 0f;
@@ -179,10 +180,9 @@ public class AmbientAudio : MonoBehaviour
                 chirpTimer -= 1f / sampleRate;
                 if (chirpTimer <= 0f)
                 {
-                    // Start a chirp burst
                     chirping = true;
-                    chirpDuration = Random.Range(0.05f, 0.12f);
-                    chirpFreq = Random.Range(3800f, 4500f);
+                    chirpDuration = Random.Range(0.04f, 0.09f);
+                    chirpFreq = Random.Range(3000f, 4000f); // lower = less whistle-y
                     chirpTimer = chirpDuration;
                 }
                 samples[i] = 0f;
@@ -190,14 +190,19 @@ public class AmbientAudio : MonoBehaviour
             else
             {
                 chirpTimer -= 1f / sampleRate;
-                // Rapid oscillation with envelope
-                float env = Mathf.Sin(Mathf.PI * (1f - chirpTimer / chirpDuration));
-                samples[i] = Mathf.Sin(t * chirpFreq * Mathf.PI * 2f) * env * 0.3f;
+                float progress = 1f - chirpTimer / chirpDuration;
+                // Amplitude envelope: sharp attack, fast decay
+                float env = Mathf.Sin(Mathf.PI * progress) * Mathf.Pow(1f - progress, 0.4f);
+                // Blend fundamental + 2nd harmonic + a touch of noise for a natural texture
+                float fundamental = Mathf.Sin(t * chirpFreq * Mathf.PI * 2f);
+                float harmonic    = Mathf.Sin(t * chirpFreq * Mathf.PI * 4f) * 0.35f;
+                float noise       = Random.Range(-1f, 1f) * 0.15f;
+                samples[i] = (fundamental + harmonic + noise) * env * 0.2f;
 
                 if (chirpTimer <= 0f)
                 {
                     chirping = false;
-                    chirpTimer = Random.Range(0.2f, 0.8f); // Pause between chirps
+                    chirpTimer = Random.Range(0.25f, 0.9f); // Pause between chirps
                 }
             }
         }

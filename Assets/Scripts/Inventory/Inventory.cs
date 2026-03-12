@@ -24,6 +24,9 @@ public class Inventory : MonoBehaviour
     /// <summary>Fired whenever the inventory contents change.</summary>
     public event Action OnInventoryChanged;
 
+    /// <summary>Fired when items are successfully added. Passes item name and quantity added.</summary>
+    public event Action<string, int> OnItemAdded;
+
     /// <summary>Manually notify listeners that inventory changed (e.g. after external slot modification).</summary>
     public void NotifyChanged() => OnInventoryChanged?.Invoke();
 
@@ -81,8 +84,12 @@ public class Inventory : MonoBehaviour
             }
         }
 
-        if (remaining < amount) // at least some items were added
+        int added = amount - remaining;
+        if (added > 0)
+        {
             OnInventoryChanged?.Invoke();
+            OnItemAdded?.Invoke(item.itemName, added);
+        }
 
         return remaining <= 0;
     }

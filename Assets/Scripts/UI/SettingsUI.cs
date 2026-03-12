@@ -16,12 +16,13 @@ public class SettingsUI : MonoBehaviour
     private GameObject panelObj;
     private Action onCloseCallback;
 
-    private enum Tab { Audio, Camera, Keybinds }
+    private enum Tab { Audio, Camera, Keybinds, Gameplay }
     private Tab activeTab = Tab.Audio;
 
     private GameObject audioTabContent;
     private GameObject cameraTabContent;
     private GameObject keybindsTabContent;
+    private GameObject gameplayTabContent;
 
     private Button[] tabBtns;
     private Image[]  tabBtnImages;
@@ -43,6 +44,12 @@ public class SettingsUI : MonoBehaviour
     private TextMeshProUGUI fovValueText;
     private Button invertYBtn;
     private TextMeshProUGUI invertYBtnText;
+
+    // ── Gameplay Tab ──────────────────────────────────────────
+    private Button pickupNotifBtn;
+    private TextMeshProUGUI pickupNotifBtnText;
+    private Button hotbarAutoBtn;
+    private TextMeshProUGUI hotbarAutoBtnText;
 
     // ── Keybinds Tab ──────────────────────────────────────────
     private Dictionary<GameAction, Button>          keybindButtons   = new Dictionary<GameAction, Button>();
@@ -137,12 +144,13 @@ public class SettingsUI : MonoBehaviour
         audioTabContent.SetActive(tab == Tab.Audio);
         cameraTabContent.SetActive(tab == Tab.Camera);
         keybindsTabContent.SetActive(tab == Tab.Keybinds);
+        gameplayTabContent.SetActive(tab == Tab.Gameplay);
         RefreshTabColors();
     }
 
     void RefreshTabColors()
     {
-        Tab[] tabs = { Tab.Audio, Tab.Camera, Tab.Keybinds };
+        Tab[] tabs = { Tab.Audio, Tab.Camera, Tab.Keybinds, Tab.Gameplay };
         for (int i = 0; i < tabBtnImages.Length; i++)
             tabBtnImages[i].color = (tabs[i] == activeTab) ? TabActive : TabInact;
     }
@@ -177,6 +185,19 @@ public class SettingsUI : MonoBehaviour
 
         foreach (GameAction act in System.Enum.GetValues(typeof(GameAction)))
             RefreshKeybindButton(act);
+
+        if (pickupNotifBtnText != null)
+        {
+            bool pn = SettingsManager.Instance.ShowPickupNotifications;
+            pickupNotifBtnText.text = pn ? "ON" : "OFF";
+            pickupNotifBtn.GetComponent<Image>().color = pn ? GreenClr : BtnNormal;
+        }
+        if (hotbarAutoBtnText != null)
+        {
+            bool ha = SettingsManager.Instance.HotbarAutoPopulate;
+            hotbarAutoBtnText.text = ha ? "ON" : "OFF";
+            hotbarAutoBtn.GetComponent<Image>().color = ha ? GreenClr : BtnNormal;
+        }
     }
 
     void RefreshKeybindButton(GameAction act)
@@ -255,10 +276,12 @@ public class SettingsUI : MonoBehaviour
         audioTabContent    = MakeContentArea(card.transform, "AudioTab");
         cameraTabContent   = MakeContentArea(card.transform, "CameraTab");
         keybindsTabContent = MakeContentArea(card.transform, "KeybindsTab");
+        gameplayTabContent = MakeContentArea(card.transform, "GameplayTab");
 
         BuildAudioTab(audioTabContent.transform);
         BuildCameraTab(cameraTabContent.transform);
         BuildKeybindsTab(keybindsTabContent.transform);
+        BuildGameplayTab(gameplayTabContent.transform);
 
         // Bottom buttons
         BuildBottomRow(card.transform);
@@ -266,7 +289,7 @@ public class SettingsUI : MonoBehaviour
 
     void BuildTabRow(Transform parent)
     {
-        string[] names = { "AUDIO", "CAMERA", "KEYBINDS" };
+        string[] names = { "AUDIO", "CAMERA", "KEYBINDS", "GAMEPLAY" };
         tabBtns      = new Button[names.Length];
         tabBtnImages = new Image[names.Length];
 
@@ -317,7 +340,7 @@ public class SettingsUI : MonoBehaviour
         RectTransform r = go.AddComponent<RectTransform>();
         r.anchorMin = r.anchorMax = new Vector2(0.5f, 0.5f);
         r.pivot     = new Vector2(0.5f, 0.5f);
-        r.anchoredPosition = new Vector2(0, 30f);
+        r.anchoredPosition = new Vector2(0, 10f);  // shifted down to clear tab row
         r.sizeDelta = new Vector2(480f, 280f);
         return go;
     }
@@ -326,7 +349,7 @@ public class SettingsUI : MonoBehaviour
 
     void BuildAudioTab(Transform parent)
     {
-        float startY = 110f;
+        float startY = 70f;   // centered: 3 items × step 70 → span ±70 around y=0
         float step   = 70f;
 
         (sfxSlider,   sfxValueText)   = MakeSliderRow(parent, "SFX Volume",     0f, 1f, startY,         v =>
@@ -350,7 +373,7 @@ public class SettingsUI : MonoBehaviour
 
     void BuildCameraTab(Transform parent)
     {
-        float startY = 110f;
+        float startY = 90f;   // centered: 4 items × step 60 → span ±90 around y=0
         float step   = 60f;
 
         (sensXSlider, sensXValueText) = MakeSliderRow(parent, "Sensitivity X", 0.5f, 5f, startY, v =>
@@ -413,7 +436,7 @@ public class SettingsUI : MonoBehaviour
     void BuildKeybindsTab(Transform parent)
     {
         GameAction[] actions = (GameAction[])System.Enum.GetValues(typeof(GameAction));
-        float startY = 120f;
+        float startY = 114f;  // centered: 7 items × step 38 → span ±114 around y=0
         float step   = 38f;
 
         for (int i = 0; i < actions.Length; i++)
@@ -469,8 +492,70 @@ public class SettingsUI : MonoBehaviour
         RectTransform wr = conflictWarning.rectTransform;
         wr.anchorMin = wr.anchorMax = new Vector2(0.5f, 0.5f);
         wr.pivot = new Vector2(0.5f, 0.5f);
-        wr.anchoredPosition = new Vector2(0, startY - actions.Length * step - 12f);
+        wr.anchoredPosition = new Vector2(0, -115f); // fixed below last keybind, within content area
         wr.sizeDelta = new Vector2(440f, 24f);
+    }
+
+    // ── Gameplay Tab ──────────────────────────────────────────
+
+    void BuildGameplayTab(Transform parent)
+    {
+        float startY = 30f;   // centered: 2 items × step 60 → span ±30 around y=0
+        float step   = 60f;
+
+        // Pickup Notifications
+        MakeLabel(parent, "Pickup Notifications", 16, new Vector2(-70f, startY), new Vector2(230f, 30f), Color.white);
+        pickupNotifBtn = MakeToggleButton(parent, new Vector2(160f, startY), out pickupNotifBtnText, () =>
+        {
+            if (SettingsManager.Instance == null) return;
+            bool newVal = !SettingsManager.Instance.ShowPickupNotifications;
+            SettingsManager.Instance.SetShowPickupNotifications(newVal);
+            pickupNotifBtnText.text = newVal ? "ON" : "OFF";
+            pickupNotifBtn.GetComponent<Image>().color = newVal ? GreenClr : BtnNormal;
+        });
+
+        // Hotbar Auto-Fill
+        MakeLabel(parent, "Hotbar Auto-Fill", 16, new Vector2(-70f, startY - step), new Vector2(230f, 30f), Color.white);
+        hotbarAutoBtn = MakeToggleButton(parent, new Vector2(160f, startY - step), out hotbarAutoBtnText, () =>
+        {
+            if (SettingsManager.Instance == null) return;
+            bool newVal = !SettingsManager.Instance.HotbarAutoPopulate;
+            SettingsManager.Instance.SetHotbarAutoPopulate(newVal);
+            hotbarAutoBtnText.text = newVal ? "ON" : "OFF";
+            hotbarAutoBtn.GetComponent<Image>().color = newVal ? GreenClr : BtnNormal;
+        });
+    }
+
+    Button MakeToggleButton(Transform parent, Vector2 pos, out TextMeshProUGUI labelOut, System.Action onClick)
+    {
+        GameObject btnObj = new GameObject("ToggleBtn");
+        btnObj.transform.SetParent(parent, false);
+        Image img = btnObj.AddComponent<Image>();
+        img.color = BtnNormal;
+        RectTransform br = btnObj.GetComponent<RectTransform>();
+        br.anchorMin = br.anchorMax = new Vector2(0.5f, 0.5f);
+        br.pivot     = new Vector2(0.5f, 0.5f);
+        br.anchoredPosition = pos;
+        br.sizeDelta = new Vector2(80f, 30f);
+
+        GameObject txtObj = new GameObject("Text");
+        txtObj.transform.SetParent(btnObj.transform, false);
+        TextMeshProUGUI txt = txtObj.AddComponent<TextMeshProUGUI>();
+        txt.text = "ON";
+        txt.fontSize = 15;
+        txt.alignment = TextAlignmentOptions.Center;
+        txt.color = Color.white;
+        txt.raycastTarget = false;
+        RectTransform tr = txt.rectTransform;
+        tr.anchorMin = Vector2.zero;
+        tr.anchorMax = Vector2.one;
+        tr.offsetMin = tr.offsetMax = Vector2.zero;
+
+        Button btn = btnObj.AddComponent<Button>();
+        btn.targetGraphic = img;
+        btn.onClick.AddListener(() => onClick());
+        labelOut = txt;
+        return btn;
     }
 
     void StartListening(GameAction act)

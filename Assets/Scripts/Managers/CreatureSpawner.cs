@@ -148,7 +148,7 @@ public class CreatureSpawner : MonoBehaviour
             float angle = (360f / count) * i * Mathf.Deg2Rad;
             Vector3 candidate = center + new Vector3(Mathf.Sin(angle) * radius, 0f, Mathf.Cos(angle) * radius);
 
-            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 20f, NavMesh.AllAreas))
+            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 5f, NavMesh.AllAreas))
                 candidate = hit.position;
 
             candidate = ClampToTerrainSurface(candidate, terrain);
@@ -201,9 +201,20 @@ public class CreatureSpawner : MonoBehaviour
     /// preventing creatures from spawning underground on uneven terrain.
     static Vector3 ClampToTerrainSurface(Vector3 pos, Terrain terrain)
     {
-        if (terrain == null) return pos;
-        float groundY = terrain.SampleHeight(pos) + terrain.transform.position.y;
-        pos.y = Mathf.Max(pos.y, groundY);
+        float groundY;
+        if (terrain != null)
+        {
+            groundY = terrain.SampleHeight(pos) + terrain.transform.position.y;
+        }
+        else if (Physics.Raycast(pos + Vector3.up * 200f, Vector3.down, out RaycastHit hit, 400f))
+        {
+            groundY = hit.point.y;
+        }
+        else
+        {
+            return pos;
+        }
+        pos.y = Mathf.Max(pos.y, groundY + 0.05f);
         return pos;
     }
 }

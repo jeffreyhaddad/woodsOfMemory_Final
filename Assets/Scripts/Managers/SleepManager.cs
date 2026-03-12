@@ -102,7 +102,7 @@ public class SleepManager : MonoBehaviour
         yield return null;
 
         if (cc != null) cc.enabled = true;
-        if (anim != null) anim.applyRootMotion = true;
+        // Keep applyRootMotion = false — PlayerMovement controls the CharacterController directly
 
         // Trigger get up animation
         if (anim != null)

@@ -75,6 +75,7 @@ public class CabinDoorInteractable : Interactable
 
     public override void OnInteract()
     {
+        Debug.Log($"[Door] OnInteract called. isUnlocked={isUnlocked}, hasKey={inventory?.HasItem(rustedKey)}");
         if (!isUnlocked)
         {
             // rustedKey may be null if not assigned in the Inspector (item is runtime-created),
@@ -100,7 +101,11 @@ public class CabinDoorInteractable : Interactable
         promptText = isOpen ? "Close Door" : "Open Door";
 
         if (isOpen)
+        {
+            Debug.Log($"[Door] playerAnimator={(playerAnimator != null ? playerAnimator.gameObject.name : "NULL")}, state={playerAnimator?.GetCurrentAnimatorStateInfo(0).shortNameHash}");
             playerAnimator?.SetTrigger("DoorOpen");
+            Debug.Log("[Door] DoorOpen trigger set");
+        }
 
         if (isOpen && !hasReportedObjective)
         {

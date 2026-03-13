@@ -83,7 +83,7 @@ public class PlayerMovement : MonoBehaviour
 
         // Jump — works from any state (idle, walk, run, crouch)
         bool canJump = vitals == null || vitals.CanJump;
-        if (Input.GetKeyDown(SettingsManager.GetKey(GameAction.Jump)) && grounded && canJump)
+        if (Input.GetKeyDown(SettingsManager.GetKey(GameAction.Jump)) && grounded && canJump && !inputBlocked)
         {
             if (vitals != null) vitals.UseStaminaForJump();
             verticalVelocity = jumpForce;
@@ -117,7 +117,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // Crouch toggle — only when grounded and not jumping
-        if (Input.GetKeyDown(SettingsManager.GetKey(GameAction.Crouch)) && grounded)
+        if (Input.GetKeyDown(SettingsManager.GetKey(GameAction.Crouch)) && grounded && !inputBlocked)
         {
             isCrouching = !isCrouching;
             animator.SetBool("isCrouching", isCrouching);
@@ -135,8 +135,8 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // Get WASD input
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
+        float horizontal = inputBlocked ? 0f : Input.GetAxis("Horizontal");
+        float vertical   = inputBlocked ? 0f : Input.GetAxis("Vertical");
 
         // Create movement direction
         Vector3 move = transform.right * horizontal + transform.forward * vertical;

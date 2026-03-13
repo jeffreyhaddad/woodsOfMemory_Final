@@ -15,6 +15,7 @@ public class DoorInteraction : MonoBehaviour
     private bool isOpen = false;
     private bool isPlayerNear = false;
     private bool isMoving = false;
+    private Animator playerAnimator;
 
     private Quaternion closedRotation;
     private Quaternion openRotation;
@@ -25,6 +26,10 @@ public class DoorInteraction : MonoBehaviour
         closedRotation = transform.localRotation;
         openRotation = closedRotation * Quaternion.Euler(0f, openAngle, 0f);
         targetRotation = closedRotation;
+
+        GameObject player = GameObject.FindWithTag("Player");
+        if (player != null)
+            playerAnimator = player.GetComponentInChildren<Animator>();
     }
 
     void Update()
@@ -38,8 +43,9 @@ public class DoorInteraction : MonoBehaviour
                 transform.localRotation,
                 targetRotation,
                 Time.deltaTime * rotationSpeed
-            );
 
+            );
+            
             if (Quaternion.Angle(transform.localRotation, targetRotation) < 0.5f)
             {
                 transform.localRotation = targetRotation;
@@ -53,6 +59,9 @@ public class DoorInteraction : MonoBehaviour
         isOpen = !isOpen;
         targetRotation = isOpen ? openRotation : closedRotation;
         isMoving = true;
+
+        if (isOpen)
+            playerAnimator?.SetTrigger("DoorOpen");
     }
 
     void OnTriggerEnter(Collider other)

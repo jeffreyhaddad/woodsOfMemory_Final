@@ -25,6 +25,11 @@ public class JournalUI : MonoBehaviour
     private JournalEntry selectedEntry;
     private Mission selectedMission;
 
+    // Player notes
+    private TMP_InputField playerNotesField;
+    private bool isNotesTabActive = false;
+    private const string PlayerNotesKey = "PlayerJournalNotes";
+
     // Notification
     private TextMeshProUGUI notifText;
     private Image notifBg;
@@ -45,6 +50,9 @@ public class JournalUI : MonoBehaviour
         BuildUI();
         panelObj.SetActive(false);
 
+        if (playerNotesField != null)
+            playerNotesField.text = PlayerPrefs.GetString(PlayerNotesKey, "");
+
         journal.OnEntryAdded += OnEntryAdded;
     }
 
@@ -56,7 +64,8 @@ public class JournalUI : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(SettingsManager.GetKey(GameAction.Journal)))
+        if (Input.GetKeyDown(SettingsManager.GetKey(GameAction.Journal))
+            && (playerNotesField == null || !playerNotesField.isFocused))
         {
             if (isOpen) CloseJournal();
             else OpenJournal();
@@ -110,6 +119,12 @@ public class JournalUI : MonoBehaviour
     {
         isOpen = false;
         panelObj.SetActive(false);
+
+        if (playerNotesField != null)
+        {
+            PlayerPrefs.SetString(PlayerNotesKey, playerNotesField.text);
+            PlayerPrefs.Save();
+        }
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -277,6 +292,8 @@ public class JournalUI : MonoBehaviour
 
     void ShowMissionDetail(Mission m)
     {
+        detailScroll.gameObject.SetActive(true);
+        playerNotesField.gameObject.SetActive(false);
         detailTitle.text = m.missionName;
 
         System.Text.StringBuilder sb = new System.Text.StringBuilder();
@@ -301,11 +318,15 @@ public class JournalUI : MonoBehaviour
     {
         detailTitle.text = "Select an entry";
         detailBody.text = "";
+        detailScroll.gameObject.SetActive(true);
+        playerNotesField.gameObject.SetActive(false);
     }
 
     void ShowDetail(JournalEntry entry)
     {
         detailTitle.text = entry.title;
+        detailScroll.gameObject.SetActive(true);
+        playerNotesField.gameObject.SetActive(false);
         detailBody.text = entry.body;
         detailScroll.verticalNormalizedPosition = 1f;
     }
@@ -314,6 +335,7 @@ public class JournalUI : MonoBehaviour
 
     void SetFilter(JournalCategory? filter)
     {
+        isNotesTabActive = false;
         activeFilter = filter;
         selectedEntry = null;
         selectedMission = null;
@@ -322,13 +344,34 @@ public class JournalUI : MonoBehaviour
         RefreshTabColors();
     }
 
+    void ShowNotesPanel()
+    {
+        isNotesTabActive = true;
+        activeFilter = null;
+        selectedEntry = null;
+        selectedMission = null;
+
+        foreach (Transform child in entryListContent.transform)
+            Destroy(child.gameObject);
+        entryContentRect.sizeDelta = new Vector2(0, 0);
+
+        detailTitle.text = "My Notes";
+        detailScroll.gameObject.SetActive(false);
+        playerNotesField.gameObject.SetActive(true);
+        playerNotesField.ActivateInputField();
+
+        RefreshTabColors();
+    }
+
     void RefreshTabColors()
     {
         JournalCategory?[] filters = { null, JournalCategory.Story, JournalCategory.Clue, JournalCategory.Mission };
-        for (int i = 0; i < tabButtons.Length && i < filters.Length; i++)
+        for (int i = 0; i < tabButtons.Length; i++)
         {
             Image img = tabButtons[i].GetComponent<Image>();
-            bool active = activeFilter == filters[i];
+            bool active = i < filters.Length
+                ? (!isNotesTabActive && activeFilter == filters[i])
+                : isNotesTabActive;
             img.color = active ? new Color(0.4f, 0.35f, 0.15f, 0.95f) : new Color(0.25f, 0.25f, 0.25f, 0.9f);
         }
     }
@@ -410,7 +453,7 @@ public class JournalUI : MonoBehaviour
         tabRowRect.anchoredPosition = new Vector2(0, -44);
         tabRowRect.sizeDelta = new Vector2(-20, 26);
 
-        string[] tabNames = { "All", "Story", "Clues", "Missions" };
+        string[] tabNames = { "All", "Story", "Clues", "Missions", "My Notes" };
         JournalCategory?[] filters = { null, JournalCategory.Story, JournalCategory.Clue, JournalCategory.Mission };
         tabButtons = new Button[tabNames.Length];
         float tabWidth = 1f / tabNames.Length;
@@ -444,8 +487,15 @@ public class JournalUI : MonoBehaviour
             Button btn = tabObj.AddComponent<Button>();
             btn.targetGraphic = tabBg;
             tabButtons[i] = btn;
-            JournalCategory? capturedFilter = filters[i];
-            btn.onClick.AddListener(() => SetFilter(capturedFilter));
+            if (i < filters.Length)
+            {
+                JournalCategory? capturedFilter = filters[i];
+                btn.onClick.AddListener(() => SetFilter(capturedFilter));
+            }
+            else
+            {
+                btn.onClick.AddListener(() => ShowNotesPanel());
+            }
         }
     }
 
@@ -555,6 +605,62 @@ public class JournalUI : MonoBehaviour
         detailScroll.content = bcRect;
         detailScroll.movementType = ScrollRect.MovementType.Clamped;
         detailScroll.scrollSensitivity = 20f;
+
+        // Player notes input field (hidden until Notes tab is active)
+        GameObject notesFieldObj = new GameObject("PlayerNotesInput");
+        notesFieldObj.transform.SetParent(rightPanel.transform, false);
+        Image notesBg = notesFieldObj.AddComponent<Image>();
+        notesBg.color = new Color(0.06f, 0.06f, 0.05f, 1f);
+        RectTransform nfRect = notesFieldObj.GetComponent<RectTransform>();
+        nfRect.anchorMin = new Vector2(0, 0);
+        nfRect.anchorMax = new Vector2(1, 1);
+        nfRect.offsetMin = new Vector2(10, 10);
+        nfRect.offsetMax = new Vector2(-10, -45);
+
+        playerNotesField = notesFieldObj.AddComponent<TMP_InputField>();
+        playerNotesField.lineType = TMP_InputField.LineType.MultiLineNewline;
+
+        GameObject textAreaObj = new GameObject("Text Area");
+        textAreaObj.transform.SetParent(notesFieldObj.transform, false);
+        RectTransform taRect = textAreaObj.AddComponent<RectTransform>();
+        taRect.anchorMin = Vector2.zero;
+        taRect.anchorMax = Vector2.one;
+        taRect.offsetMin = new Vector2(8, 8);
+        taRect.offsetMax = new Vector2(-8, -8);
+        textAreaObj.AddComponent<RectMask2D>();
+
+        GameObject placeholderObj = new GameObject("Placeholder");
+        placeholderObj.transform.SetParent(textAreaObj.transform, false);
+        TextMeshProUGUI placeholder = placeholderObj.AddComponent<TextMeshProUGUI>();
+        placeholder.text = "Write your notes here...";
+        placeholder.fontSize = 14;
+        placeholder.color = new Color(0.45f, 0.43f, 0.38f);
+        placeholder.alignment = TextAlignmentOptions.TopLeft;
+        placeholder.textWrappingMode = TMPro.TextWrappingModes.Normal;
+        RectTransform phRect = placeholder.rectTransform;
+        phRect.anchorMin = Vector2.zero;
+        phRect.anchorMax = Vector2.one;
+        phRect.offsetMin = Vector2.zero;
+        phRect.offsetMax = Vector2.zero;
+
+        GameObject inputTextObj = new GameObject("Text");
+        inputTextObj.transform.SetParent(textAreaObj.transform, false);
+        TextMeshProUGUI inputText = inputTextObj.AddComponent<TextMeshProUGUI>();
+        inputText.fontSize = 14;
+        inputText.color = new Color(0.85f, 0.82f, 0.75f);
+        inputText.alignment = TextAlignmentOptions.TopLeft;
+        inputText.textWrappingMode = TMPro.TextWrappingModes.Normal;
+        RectTransform itRect = inputText.rectTransform;
+        itRect.anchorMin = Vector2.zero;
+        itRect.anchorMax = Vector2.one;
+        itRect.offsetMin = Vector2.zero;
+        itRect.offsetMax = Vector2.zero;
+
+        playerNotesField.textViewport = taRect;
+        playerNotesField.textComponent = inputText;
+        playerNotesField.placeholder = placeholder;
+
+        notesFieldObj.SetActive(false);
     }
 
     void BuildNotification(Transform canvasTransform)

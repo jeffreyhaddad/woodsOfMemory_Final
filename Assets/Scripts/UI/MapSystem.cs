@@ -91,7 +91,7 @@ public class MapSystem : MonoBehaviour
             if (gs == GameState.Paused || gs == GameState.Dead) return;
         }
 
-        if (Input.GetKeyDown(KeyCode.M))
+        if (Input.GetKeyDown(KeyCode.M) && !PlayerMovement.inputBlocked)
             OpenFullMap(!fullRoot.activeSelf);
 
         fogTimer -= Time.deltaTime;

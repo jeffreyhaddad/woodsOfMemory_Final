@@ -159,7 +159,7 @@ Material:
     - _TransparentWritingMotionVec: 0
     - _TransparentZWrite: 0
     - _UseShadowThreshold: 0
-    - _WaveFrequency: 2.5
+    - _WaveFrequency: 1.5
     - _WaveScale: 0.05
     - _WaveSpeed: 1.5
     - _WorkflowMode: 1

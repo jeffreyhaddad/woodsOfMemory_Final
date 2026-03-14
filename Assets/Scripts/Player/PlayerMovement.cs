@@ -8,6 +8,8 @@ public class PlayerMovement : MonoBehaviour
     /// <summary>Set to true to also freeze movement (pause, death, cutscenes).
     /// Inventory/journal/crafting only set inputBlocked, not this.</summary>
     public static bool movementBlocked = false;
+    public bool isInwater = false;
+
 
     [Header("Movement Speeds")]
     public float walkSpeed = 2f;

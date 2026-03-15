@@ -72,16 +72,12 @@ public class PlayerCombat : MonoBehaviour
         // Small shake on every swing so unarmed attacks have tactile feel
         CameraFollow.Shake(0.08f, 0.03f);
 
-        // Direct distance check against all living creatures.
-        // Uses CreatureAI.All (fast) with a FindObjectsByType fallback in case
-        // Unity cleared the static list during a hot-reload.
+        // Direct distance check against all living creatures via the static registry.
         Vector3 attackCenter = transform.position
                              + transform.forward * (attackRange * 0.6f)
                              + Vector3.up * 1.5f;
 
-        var creatures = CreatureAI.All.Count > 0
-            ? (System.Collections.Generic.IEnumerable<CreatureAI>)CreatureAI.All
-            : FindObjectsByType<CreatureAI>(FindObjectsSortMode.None);
+        var creatures = CreatureAI.All;
 
         foreach (CreatureAI creature in creatures)
         {

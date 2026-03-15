@@ -39,6 +39,9 @@ public class InventoryUI : MonoBehaviour
     // Hover tracking (for Q-drop)
     private int hoveredSlotIndex = -1;
 
+    // Cached player reference — avoids FindAnyObjectByType on every item use/drop
+    private PlayerVitals cachedVitals;
+
     void Start()
     {
         if (inventory == null)
@@ -50,6 +53,8 @@ public class InventoryUI : MonoBehaviour
             enabled = false;
             return;
         }
+
+        cachedVitals = FindAnyObjectByType<PlayerVitals>();
 
         BuildUI();
         panelObj.SetActive(false);
@@ -175,9 +180,9 @@ public class InventoryUI : MonoBehaviour
                     string displayName = string.IsNullOrEmpty(slot.item.itemName)
                         ? slot.item.name
                         : slot.item.itemName;
-                    string equipped = isEquipped ? " [E]" : "";
-                    string qty = slot.quantity > 1 ? "\nx" + slot.quantity.ToString() : "";
-                    quantityTexts[i].text = string.Concat(displayName, equipped, qty);
+                    quantityTexts[i].text = displayName
+                        + (isEquipped ? " [E]" : "")
+                        + (slot.quantity > 1 ? "\nx" + slot.quantity : "");
                 }
             }
         }
@@ -529,7 +534,7 @@ public class InventoryUI : MonoBehaviour
 
     void SpawnDroppedItem(ItemData item, int quantity)
     {
-        PlayerVitals vitals = FindAnyObjectByType<PlayerVitals>();
+        PlayerVitals vitals = cachedVitals != null ? cachedVitals : FindAnyObjectByType<PlayerVitals>();
         Vector3 pos = vitals != null
             ? vitals.transform.position + vitals.transform.forward * 1.2f + Vector3.up * 0.5f
             : Vector3.zero;
@@ -620,7 +625,7 @@ public class InventoryUI : MonoBehaviour
             return;
         }
 
-        PlayerVitals vitals = FindAnyObjectByType<PlayerVitals>();
+        PlayerVitals vitals = cachedVitals != null ? cachedVitals : FindAnyObjectByType<PlayerVitals>();
         if (vitals == null) return;
 
         switch (item.useAction)

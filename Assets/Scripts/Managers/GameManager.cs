@@ -30,6 +30,7 @@ public class GameManager : MonoBehaviour
     public Transform respawnPoint;
     private Vector3 spawnPoint;
     private bool spawnCaptured;
+    private GameObject cachedCabin;
 
     void Awake()
     {
@@ -99,15 +100,15 @@ public class GameManager : MonoBehaviour
             PlayerVitals.gameObject.AddComponent<WeaponHolder>();
 
         // Determine respawn point — priority: inspector Transform > Cabin object > player start
+        cachedCabin = GameObject.Find("Cabin");
         if (respawnPoint != null)
         {
             spawnPoint = respawnPoint.position;
         }
         else
         {
-            GameObject cabin = GameObject.Find("Cabin");
-            if (cabin != null)
-                spawnPoint = cabin.transform.position - cabin.transform.right * 4f + Vector3.up * 1.2f;
+            if (cachedCabin != null)
+                spawnPoint = cachedCabin.transform.position - cachedCabin.transform.right * 4f + Vector3.up * 1.2f;
             else if (PlayerVitals != null)
                 spawnPoint = PlayerVitals.transform.position;
         }
@@ -201,9 +202,8 @@ public class GameManager : MonoBehaviour
         if (cc != null) cc.enabled = false;
         PlayerVitals.transform.position = spawnPoint;
         // Face toward the cabin door
-        GameObject cabin = GameObject.Find("Cabin");
-        if (cabin != null)
-            PlayerVitals.transform.rotation = Quaternion.LookRotation(cabin.transform.right, Vector3.up);
+        if (cachedCabin != null)
+            PlayerVitals.transform.rotation = Quaternion.LookRotation(cachedCabin.transform.right, Vector3.up);
         if (cc != null) cc.enabled = true;
 
         // Reset animator back to idle — clears the death pose

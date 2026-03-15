@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DayNightCycle : MonoBehaviour
 {
@@ -119,6 +120,10 @@ public class DayNightCycle : MonoBehaviour
     // Throttle counter for expensive updates
     private int updateCounter;
 
+    // Night atmosphere overlay
+    private Image nightOverlay;
+    private bool  wasNight;
+
     [Range(0f, 1f)]
     [Tooltip("Current time of day (0 = midnight, 0.5 = noon)")]
     [SerializeField]
@@ -169,6 +174,8 @@ public class DayNightCycle : MonoBehaviour
             SetupClouds();
         if (enableStars)
             SetupStarParticles();
+
+        SetupNightAtmosphere();
     }
 
     void Update()
@@ -189,6 +196,44 @@ public class DayNightCycle : MonoBehaviour
         if (enableMoon) UpdateMoon();
         if (enableClouds) UpdateClouds();
         if (enableStars) UpdateStars();
+
+        UpdateNightAtmosphere();
+    }
+
+    // ─── Night Atmosphere ────────────────────────────────────
+
+    void SetupNightAtmosphere()
+    {
+        GameObject canvasObj = new GameObject("NightAtmosphereCanvas");
+        Canvas canvas = canvasObj.AddComponent<Canvas>();
+        canvas.renderMode   = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 5; // behind all game UI
+        CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode         = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+
+        // Subtle dark-blue tint that fades in at night
+        GameObject overlayObj = new GameObject("NightOverlay");
+        overlayObj.transform.SetParent(canvasObj.transform, false);
+        nightOverlay = overlayObj.AddComponent<Image>();
+        nightOverlay.color = new Color(0.04f, 0.04f, 0.18f, 0f);
+        nightOverlay.raycastTarget = false;
+        RectTransform ort = nightOverlay.rectTransform;
+        ort.anchorMin = Vector2.zero;
+        ort.anchorMax = Vector2.one;
+        ort.offsetMin = ort.offsetMax = Vector2.zero;
+
+        wasNight = IsNight;
+    }
+
+    void UpdateNightAtmosphere()
+    {
+        if (nightOverlay == null) return;
+
+        // Dark-blue tint scales with how far into night we are
+        Color oc = nightOverlay.color;
+        oc.a = NightBlend() * 0.20f;
+        nightOverlay.color = oc;
     }
 
     void UpdateSun()

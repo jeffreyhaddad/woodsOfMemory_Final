@@ -7,25 +7,31 @@ using UnityEngine;
 public class ZombieHealthBar : MonoBehaviour
 {
     private CreatureAI creature;
+    private Camera cam;
 
-    private const float BarW       = 80f;
-    private const float BarH       = 7f;
-    private const float HeadOffset = 7f;   // world units above zombie root (2.5x scale ≈ 6.25 unit tall)
-    private const float MaxDist    = 45f;  // don't draw if farther than this
+    private const float BarW        = 80f;
+    private const float BarH        = 7f;
+    private const float HeadOffset  = 7f;   // world units above zombie root (2.5x scale ≈ 6.25 unit tall)
+    private const float MaxDist     = 45f;  // don't draw if farther than this
+    private const float MaxDistSqr  = MaxDist * MaxDist;
+
+    private static readonly Rect s_borderRect = new Rect(0, 0, BarW + 2, BarH + 2);
+    private static readonly Rect s_bgRect     = new Rect(0, 0, BarW, BarH);
+    private static readonly Rect s_fillRect   = new Rect(0, 0, 0, BarH);
 
     public void Init(CreatureAI ai)
     {
         creature = ai;
+        cam = Camera.main;
     }
 
     void OnGUI()
     {
         if (creature == null || creature.State == CreatureState.Dead) return;
 
-        Camera cam = Camera.main;
-        if (cam == null) return;
+        if (cam == null) { cam = Camera.main; if (cam == null) return; }
 
-        if (Vector3.Distance(cam.transform.position, creature.transform.position) > MaxDist)
+        if ((cam.transform.position - creature.transform.position).sqrMagnitude > MaxDistSqr)
             return;
 
         Vector3 worldTop = creature.transform.position + Vector3.up * HeadOffset;
@@ -40,20 +46,24 @@ public class ZombieHealthBar : MonoBehaviour
 
         float pct = Mathf.Clamp01(creature.HealthPercent);
 
+        Rect border = s_borderRect; border.x = x - 1; border.y = y - 1;
+        Rect bg     = s_bgRect;     bg.x = x;         bg.y = y;
+
         // Black border
         GUI.color = Color.black;
-        GUI.DrawTexture(new Rect(x - 1, y - 1, BarW + 2, BarH + 2), Texture2D.whiteTexture);
+        GUI.DrawTexture(border, Texture2D.whiteTexture);
 
         // Dark background
         GUI.color = new Color(0.06f, 0.02f, 0.12f, 0.92f);
-        GUI.DrawTexture(new Rect(x, y, BarW, BarH), Texture2D.whiteTexture);
+        GUI.DrawTexture(bg, Texture2D.whiteTexture);
 
         // Fill — purple at full health, shifts red when low
         if (pct > 0f)
         {
+            Rect fill = s_fillRect; fill.x = x; fill.y = y; fill.width = BarW * pct;
             GUI.color = Color.Lerp(new Color(0.95f, 0.1f, 0.1f),
                                    new Color(0.55f, 0.08f, 0.95f), pct);
-            GUI.DrawTexture(new Rect(x, y, BarW * pct, BarH), Texture2D.whiteTexture);
+            GUI.DrawTexture(fill, Texture2D.whiteTexture);
         }
 
         GUI.color = Color.white;

@@ -23,10 +23,14 @@ public class VitalsHUD : MonoBehaviour
     private TextMeshProUGUI hungerLabel;
     private TextMeshProUGUI staminaLabel;
 
-    private static readonly Color hungerNormal   = new Color(0.9f, 0.55f, 0.1f);
-    private static readonly Color hungerCritical = new Color(1f,   0.15f, 0.05f);
+    private static readonly Color hungerNormal    = new Color(0.9f,  0.55f, 0.1f);
+    private static readonly Color hungerCritical  = new Color(1f,   0.15f, 0.05f);
     private static readonly Color staminaNormal   = new Color(0.2f, 0.75f, 0.2f);
     private static readonly Color staminaExhausted = new Color(0.85f, 0.15f, 0.05f);
+
+    // Track pulse states so we don't write to Image.color every frame when nothing has changed
+    private bool lastHungerCritical  = false;
+    private bool lastStaminaCritical = false;
 
     void Start()
     {
@@ -55,46 +59,46 @@ public class VitalsHUD : MonoBehaviour
     {
         if (vitals == null || hungerFill == null) return;
 
-        float hungerPct = vitals.Hunger / vitals.maxHunger;
-        if (hungerPct < 0.20f)
+        float hungerPct         = vitals.Hunger / vitals.maxHunger;
+        bool  isHungerCritical  = hungerPct < 0.20f;
+        if (isHungerCritical)
         {
             // Pulse rate increases as hunger approaches zero
             float severity = 1f - hungerPct / 0.20f;
             float rate     = 1.8f + severity * 3.5f;
             float pulse    = 0.5f + 0.5f * Mathf.Sin(Time.time * rate * Mathf.PI * 2f);
 
-            Color barColor   = Color.Lerp(hungerNormal, hungerCritical, pulse);
-            Color labelColor = Color.Lerp(Color.white,  hungerCritical, pulse * 0.8f);
-
-            hungerFill.color = barColor;
-            if (hungerLabel != null) hungerLabel.color = labelColor;
+            hungerFill.color = Color.Lerp(hungerNormal, hungerCritical, pulse);
+            if (hungerLabel != null) hungerLabel.color = Color.Lerp(Color.white, hungerCritical, pulse * 0.8f);
+            lastHungerCritical = true;
         }
-        else
+        else if (lastHungerCritical)
         {
             hungerFill.color = hungerNormal;
             if (hungerLabel != null) hungerLabel.color = Color.white;
+            lastHungerCritical = false;
         }
 
         // Stamina exhaustion pulse — bar and label shift green → red and pulse
         if (staminaFill != null)
         {
-            float staminaPct = vitals.Stamina / vitals.maxStamina;
-            if (vitals.IsExhausted || staminaPct < 0.15f)
+            float staminaPct     = vitals.Stamina / vitals.maxStamina;
+            bool  staminaCritical = vitals.IsExhausted || staminaPct < 0.15f;
+            if (staminaCritical)
             {
                 float severity = vitals.IsExhausted ? 1f : 1f - staminaPct / 0.15f;
                 float rate     = 2f + severity * 3f;
                 float pulse    = 0.5f + 0.5f * Mathf.Sin(Time.time * rate * Mathf.PI * 2f);
 
-                Color barColor   = Color.Lerp(staminaNormal, staminaExhausted, pulse);
-                Color labelColor = Color.Lerp(Color.white,   staminaExhausted, pulse * 0.8f);
-
-                staminaFill.color = barColor;
-                if (staminaLabel != null) staminaLabel.color = labelColor;
+                staminaFill.color = Color.Lerp(staminaNormal, staminaExhausted, pulse);
+                if (staminaLabel != null) staminaLabel.color = Color.Lerp(Color.white, staminaExhausted, pulse * 0.8f);
+                lastStaminaCritical = true;
             }
-            else
+            else if (lastStaminaCritical)
             {
                 staminaFill.color = staminaNormal;
                 if (staminaLabel != null) staminaLabel.color = Color.white;
+                lastStaminaCritical = false;
             }
         }
     }

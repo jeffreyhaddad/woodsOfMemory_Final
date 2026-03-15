@@ -39,6 +39,7 @@ public class ShadowCreatureAI : CreatureAI
     [Tooltip("Seconds after swing starts before damage lands — tune to match the animation hit frame")]
     public float attackHitDelay = 0.55f;
     private bool swingInProgress = false;
+    private WaitForSeconds attackHitWait;
 
     // ── Animator state names (must match ZombieAnimController states) ──
     private const string AnimIdle   = "Idle";
@@ -95,6 +96,8 @@ public class ShadowCreatureAI : CreatureAI
         ZombieHealthBar hb = gameObject.AddComponent<ZombieHealthBar>();
         hb.Init(this);
         alertIndicator = gameObject.AddComponent<ZombieAlertIndicator>();
+
+        attackHitWait = new WaitForSeconds(attackHitDelay);
 
         currentState = CreatureState.Patrol;
         PickNewPatrolTarget();
@@ -263,7 +266,7 @@ public class ShadowCreatureAI : CreatureAI
         swingInProgress = true;
         PlayAnimation(AnimAttack);
 
-        yield return new WaitForSeconds(attackHitDelay);
+        yield return attackHitWait;
 
         if (currentState == CreatureState.Attack && playerTransform != null)
         {

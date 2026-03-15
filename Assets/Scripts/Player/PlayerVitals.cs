@@ -167,9 +167,23 @@ public class PlayerVitals : MonoBehaviour
         Hunger += hungerRestore;
     }
 
+    private Rect cachedFullRect;
+    private int  cachedScreenW, cachedScreenH;
+
+    Rect GetFullRect()
+    {
+        int w = Screen.width, h = Screen.height;
+        if (w != cachedScreenW || h != cachedScreenH)
+        {
+            cachedFullRect = new Rect(0, 0, w, h);
+            cachedScreenW = w; cachedScreenH = h;
+        }
+        return cachedFullRect;
+    }
+
     void OnGUI()
     {
-        Rect full = new Rect(0, 0, Screen.width, Screen.height);
+        Rect full = GetFullRect();
 
         // Damage flash — sharp red full-screen
         if (damageFlashTimer > 0f)

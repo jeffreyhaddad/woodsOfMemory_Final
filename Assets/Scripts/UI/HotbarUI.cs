@@ -29,8 +29,11 @@ public class HotbarUI : MonoBehaviour
     private TextMeshProUGUI[]  slotQtys  = new TextMeshProUGUI[SlotCount];
     private TextMeshProUGUI[]  slotNums  = new TextMeshProUGUI[SlotCount];
 
-    private int   flashSlot  = -1;
-    private float flashTimer = 0f;
+    private int   flashSlot    = -1;
+    private float flashTimer   = 0f;
+    private int   selectedSlot = -1;
+
+    private Image[] slotInners = new Image[SlotCount];
 
     void Awake()
     {
@@ -99,6 +102,7 @@ public class HotbarUI : MonoBehaviour
             }
 
             // Inventory closed → use / equip the hotbar item
+            selectedSlot = i;
             TryUseSlot(i);
         }
 
@@ -170,6 +174,19 @@ public class HotbarUI : MonoBehaviour
             sr.sizeDelta       = new Vector2(SlotSize, SlotSize);
             sr.anchoredPosition = new Vector2(x, 0f);
             slotBgs[i] = bg;
+
+            // Inner panel — same size minus 2px border; slot bg shows through as outline when selected
+            GameObject innerObj = new GameObject("Inner");
+            innerObj.transform.SetParent(slotObj.transform, false);
+            Image inner = innerObj.AddComponent<Image>();
+            inner.color = new Color(0.15f, 0.15f, 0.15f, 0.82f);
+            inner.raycastTarget = false;
+            RectTransform innerR = innerObj.GetComponent<RectTransform>();
+            innerR.anchorMin = Vector2.zero;
+            innerR.anchorMax = Vector2.one;
+            innerR.offsetMin = new Vector2(2f, 2f);
+            innerR.offsetMax = new Vector2(-2f, -2f);
+            slotInners[i] = inner;
 
             // Item icon
             GameObject iconObj = new GameObject("Icon");
@@ -275,12 +292,28 @@ public class HotbarUI : MonoBehaviour
     {
         for (int i = 0; i < SlotCount; i++)
         {
+            bool hasItem = hotbarItems[i] != null;
+            Color innerColor = hasItem
+                ? new Color(0.22f, 0.22f, 0.22f, 0.88f)
+                : new Color(0.15f, 0.15f, 0.15f, 0.82f);
+
             if (i == flashSlot)
-                slotBgs[i].color = new Color(0.55f, 0.45f, 0.1f, 0.95f); // gold flash on use
-            else if (hotbarItems[i] != null)
-                slotBgs[i].color = new Color(0.22f, 0.22f, 0.22f, 0.88f);
+            {
+                // Gold flash on use — fill whole slot, no border
+                slotBgs[i].color = new Color(0.55f, 0.45f, 0.1f, 0.95f);
+                if (slotInners[i] != null) slotInners[i].color = new Color(0.55f, 0.45f, 0.1f, 0.95f);
+            }
+            else if (i == selectedSlot)
+            {
+                // Gold border: bright bg shows around the inset inner panel
+                slotBgs[i].color = new Color(0.75f, 0.62f, 0.15f, 1f);
+                if (slotInners[i] != null) slotInners[i].color = innerColor;
+            }
             else
-                slotBgs[i].color = new Color(0.15f, 0.15f, 0.15f, 0.82f);
+            {
+                slotBgs[i].color = innerColor;
+                if (slotInners[i] != null) slotInners[i].color = innerColor;
+            }
         }
     }
 }

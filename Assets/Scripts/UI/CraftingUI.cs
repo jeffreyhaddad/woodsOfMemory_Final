@@ -37,6 +37,13 @@ public class CraftingUI : MonoBehaviour
     // Currently selected recipe
     private CraftingRecipe selectedRecipe;
 
+    // Craft feedback
+    private Image craftBtnImage;
+    private float craftFlashTimer;
+    private bool  craftSuccessActive;
+    private static readonly Color s_craftNormal = new Color(0.2f,  0.45f, 0.2f,  1f);
+    private static readonly Color s_craftFlash  = new Color(0.45f, 0.95f, 0.45f, 1f);
+
     void Start()
     {
         inventory = FindAnyObjectByType<Inventory>();
@@ -81,6 +88,22 @@ public class CraftingUI : MonoBehaviour
             if (isOpen) CloseCrafting();
             else OpenCrafting();
         }
+
+        // Craft button flash — lerps from bright flash back to normal green
+        if (craftFlashTimer > 0f)
+        {
+            craftFlashTimer -= Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(craftFlashTimer / 0.4f);
+            if (craftBtnImage != null)
+                craftBtnImage.color = Color.Lerp(s_craftNormal, s_craftFlash, t);
+
+            if (craftFlashTimer <= 0f)
+            {
+                if (craftBtnImage != null) craftBtnImage.color = s_craftNormal;
+                craftSuccessActive = false;
+                if (selectedRecipe != null) ShowRecipeDetail(selectedRecipe);
+            }
+        }
     }
 
     void OpenCrafting()
@@ -124,7 +147,8 @@ public class CraftingUI : MonoBehaviour
     {
         if (!isOpen) return;
         PopulateRecipeList();
-        if (selectedRecipe != null)
+        // Don't overwrite the success message while it's still showing
+        if (selectedRecipe != null && !craftSuccessActive)
             ShowRecipeDetail(selectedRecipe);
     }
 
@@ -297,6 +321,18 @@ public class CraftingUI : MonoBehaviour
 
         inventory.AddItem(selectedRecipe.result, selectedRecipe.resultQuantity);
         SFXManager.PlayCraft();
+
+        // Visual feedback: flash button + success message in result text
+        string rName = selectedRecipe.result != null
+            ? (string.IsNullOrEmpty(selectedRecipe.result.itemName) ? selectedRecipe.result.name : selectedRecipe.result.itemName)
+            : "item";
+        int rQty = selectedRecipe.resultQuantity;
+        resultText.text  = "✓  " + rName + (rQty > 1 ? "  x" + rQty : "") + "  crafted!";
+        resultText.color = new Color(0.35f, 1f, 0.45f);
+
+        craftSuccessActive = true;
+        craftFlashTimer    = 1.6f;
+        if (craftBtnImage != null) craftBtnImage.color = s_craftFlash;
     }
 
     // ─── Category Tabs ──────────────────────────────────────
@@ -758,8 +794,9 @@ public class CraftingUI : MonoBehaviour
         ctRect.offsetMin = Vector2.zero;
         ctRect.offsetMax = Vector2.zero;
 
-        craftButton = craftBtnObj.AddComponent<Button>();
+        craftButton  = craftBtnObj.AddComponent<Button>();
         craftButton.targetGraphic = craftBtnBg;
+        craftBtnImage = craftBtnBg;
 
         ColorBlock colors = craftButton.colors;
         colors.normalColor = Color.white;

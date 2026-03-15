@@ -31,7 +31,7 @@ public class AmbientAudio : MonoBehaviour
     public float windNightVolume = 0.06f;
 
     [Header("Crickets")]
-    public float cricketNightVolume = 0.09f;
+    public float cricketNightVolume = 0.05f;
 
     private AudioSource baseSource;
     private AudioSource windSource;
@@ -153,6 +153,14 @@ public class AmbientAudio : MonoBehaviour
             samples[i] = Mathf.Clamp(lastSample * 5f * gust, -1f, 1f);
         }
 
+        // Crossfade loop boundaries to prevent click on repeat
+        int xfade = sampleRate / 10; // 100ms
+        for (int i = 0; i < length; i++)
+        {
+            if      (i < xfade)          samples[i] *= (float)i / xfade;
+            else if (i > length - xfade) samples[i] *= (float)(length - i) / xfade;
+        }
+
         AudioClip clip = AudioClip.Create("Wind", length, 1, sampleRate, false);
         clip.SetData(samples, 0);
         return clip;
@@ -160,51 +168,41 @@ public class AmbientAudio : MonoBehaviour
 
     AudioClip GenerateCricketClip()
     {
+        // Sustained band-pass noise centered around cricket frequencies (~3-4 kHz).
+        // No chirp state machine → no transients, no clicks, perfectly smooth loop.
         int sampleRate = 22050;
-        int length = sampleRate * 4; // 4 second loop
+        int length = sampleRate * 8; // 8 second loop
         float[] samples = new float[length];
 
-        // Cricket chirps: rapid pulses of mixed-frequency noise — avoids the pure
-        // sine "whistle" by blending harmonics and a little white noise texture.
-        float chirpTimer = 0f;
-        float chirpDuration = 0f;
-        float chirpFreq = 0f;
-        bool chirping = false;
+        // Two-stage low-pass chain to create a band-pass centred near 3.5 kHz.
+        // Stage 1: coarse high-pass (cuts sub-bass)
+        // Stage 2: low-pass at ~4 kHz to roll off above the cricket band.
+        float lp1 = 0f, lp2 = 0f;
+        float lpCoeff = 0.45f; // ~4 kHz one-pole low-pass at 22050 Hz
 
         for (int i = 0; i < length; i++)
         {
             float t = (float)i / sampleRate;
 
-            if (!chirping)
-            {
-                chirpTimer -= 1f / sampleRate;
-                if (chirpTimer <= 0f)
-                {
-                    chirping = true;
-                    chirpDuration = Random.Range(0.04f, 0.09f);
-                    chirpFreq = Random.Range(3000f, 4000f); // lower = less whistle-y
-                    chirpTimer = chirpDuration;
-                }
-                samples[i] = 0f;
-            }
-            else
-            {
-                chirpTimer -= 1f / sampleRate;
-                float progress = 1f - chirpTimer / chirpDuration;
-                // Amplitude envelope: sharp attack, fast decay
-                float env = Mathf.Sin(Mathf.PI * progress) * Mathf.Pow(1f - progress, 0.4f);
-                // Blend fundamental + 2nd harmonic + a touch of noise for a natural texture
-                float fundamental = Mathf.Sin(t * chirpFreq * Mathf.PI * 2f);
-                float harmonic    = Mathf.Sin(t * chirpFreq * Mathf.PI * 4f) * 0.35f;
-                float noise       = Random.Range(-1f, 1f) * 0.15f;
-                samples[i] = (fundamental + harmonic + noise) * env * 0.2f;
+            // White noise → low-pass → gives a soft hiss in the cricket band
+            float white = Random.Range(-1f, 1f);
+            lp1 = lp1 + lpCoeff * (white - lp1);
+            lp2 = lp2 + lpCoeff * (lp1  - lp2);
+            // High-pass: subtract a heavily smoothed version to cut DC / sub-bass
+            float bandpass = lp1 - lp2;
 
-                if (chirpTimer <= 0f)
-                {
-                    chirping = false;
-                    chirpTimer = Random.Range(0.25f, 0.9f); // Pause between chirps
-                }
-            }
+            // Very slow density swell (insects fade in/out together)
+            float swell = 0.6f + 0.4f * Mathf.Sin(2f * Mathf.PI * 0.11f * t);
+
+            samples[i] = bandpass * swell * 0.35f;
+        }
+
+        // Crossfade loop boundaries
+        int xfade = sampleRate / 4; // 250ms — generous fade, guaranteed clean loop
+        for (int i = 0; i < length; i++)
+        {
+            if      (i < xfade)          samples[i] *= (float)i / xfade;
+            else if (i > length - xfade) samples[i] *= (float)(length - i) / xfade;
         }
 
         AudioClip clip = AudioClip.Create("Crickets", length, 1, sampleRate, false);

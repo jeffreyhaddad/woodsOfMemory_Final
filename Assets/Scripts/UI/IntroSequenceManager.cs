@@ -31,6 +31,8 @@ public class IntroSequenceManager : MonoBehaviour
     private TextMeshProUGUI   hintText;
     private Canvas            overlayCanvas;
     private bool              waitingForDismiss;
+    private TextMeshProUGUI   bodyTmp;
+    private TextMeshProUGUI   promptTmp;
 
     // ── lifecycle ────────────────────────────────────────────
 
@@ -223,13 +225,52 @@ public class IntroSequenceManager : MonoBehaviour
 
         BuildAwakeningOverlay();
 
-        // Wait one frame before listening for "any key" — the E press that
-        // triggered this call would otherwise immediately dismiss the overlay.
-        StartCoroutine(AllowDismissNextFrame());
+        // Start typewriter — it enables waitingForDismiss when done
+        StartCoroutine(TypewriterCoroutine(GetAwakeningText()));
     }
 
-    IEnumerator AllowDismissNextFrame()
+    IEnumerator TypewriterCoroutine(string fullText)
     {
+        // Skip the E-key press that triggered this — wait one frame
+        yield return null;
+
+        float charsPerSecond = 32f;
+        float charInterval   = 1f / charsPerSecond;
+        float timer          = 0f;
+        int   charIndex      = 0;
+
+        while (charIndex < fullText.Length)
+        {
+            // Any key skips to full text immediately
+            if (Input.anyKeyDown)
+            {
+                charIndex = fullText.Length;
+                break;
+            }
+
+            timer += Time.deltaTime;
+            while (timer >= charInterval && charIndex < fullText.Length)
+            {
+                charIndex++;
+                timer -= charInterval;
+            }
+
+            if (bodyTmp != null)
+                bodyTmp.text = fullText.Substring(0, charIndex);
+
+            yield return null;
+        }
+
+        if (bodyTmp != null) bodyTmp.text = fullText;
+
+        // Show and pulse the prompt now that text is complete
+        if (promptTmp != null)
+        {
+            promptTmp.gameObject.SetActive(true);
+            StartCoroutine(PulseText(promptTmp));
+        }
+
+        // Wait one more frame so the key that skipped typing doesn't dismiss
         yield return null;
         waitingForDismiss = true;
     }
@@ -242,8 +283,9 @@ public class IntroSequenceManager : MonoBehaviour
         overlayCanvas = canvasGO.AddComponent<Canvas>();
         overlayCanvas.renderMode   = RenderMode.ScreenSpaceOverlay;
         overlayCanvas.sortingOrder = 299;
-        canvasGO.AddComponent<CanvasScaler>().uiScaleMode =
-            CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        var scaler = canvasGO.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode         = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
 
         // Dark background
         GameObject bgGO = new GameObject("Background");
@@ -252,27 +294,27 @@ public class IntroSequenceManager : MonoBehaviour
         bg.color = new Color(0f, 0f, 0f, 0.88f);
         StretchFull(bg.rectTransform);
 
-        // Title
+        // Title — top strip
         TextMeshProUGUI title = MakeTMP(canvasGO.transform, "Title",
             "THE WOODS OF MEMORY", 42,
             new Color(1f, 0.85f, 0.3f),
-            new Vector2(0.1f, 0.73f), new Vector2(0.9f, 0.86f));
+            new Vector2(0.1f, 0.83f), new Vector2(0.9f, 0.96f));
         title.fontStyle = FontStyles.Bold;
 
-        // Body
-        MakeTMP(canvasGO.transform, "Body",
-            GetAwakeningText(), 22,
+        // Body — middle band with clear gap below title and above prompt
+        bodyTmp = MakeTMP(canvasGO.transform, "Body",
+            "", 22,
             Color.white,
-            new Vector2(0.1f, 0.30f), new Vector2(0.9f, 0.71f),
+            new Vector2(0.08f, 0.18f), new Vector2(0.92f, 0.80f),
             wordWrap: true);
+        bodyTmp.overflowMode = TMPro.TextOverflowModes.Truncate;
 
-        // Prompt (pulsing alpha)
-        TextMeshProUGUI prompt = MakeTMP(canvasGO.transform, "Prompt",
+        // Prompt — bottom strip, hidden until typewriter finishes
+        promptTmp = MakeTMP(canvasGO.transform, "Prompt",
             "Press any key to continue...", 18,
             new Color(0.8f, 0.8f, 0.8f),
-            new Vector2(0.1f, 0.07f), new Vector2(0.9f, 0.14f));
-
-        StartCoroutine(PulseText(prompt));
+            new Vector2(0.1f, 0.05f), new Vector2(0.9f, 0.13f));
+        promptTmp.gameObject.SetActive(false);
     }
 
     TextMeshProUGUI MakeTMP(Transform parent, string goName, string text, float size,

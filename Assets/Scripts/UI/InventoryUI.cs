@@ -22,6 +22,9 @@ public class InventoryUI : MonoBehaviour
     private Image[] iconImages;
     private TextMeshProUGUI[] quantityTexts;
     private GameObject[] slotObjects;
+    private Image[] durabilityBarBgs;
+    private Image[] durabilityBars;
+    private bool durabilitySubscribed;
     private bool isOpen = false;
 
     // Tooltip / use feedback
@@ -69,6 +72,8 @@ public class InventoryUI : MonoBehaviour
     {
         if (inventory != null)
             inventory.OnInventoryChanged -= RefreshUI;
+        if (ToolDurabilityManager.Instance != null)
+            ToolDurabilityManager.Instance.OnDurabilityChanged -= RefreshUI;
     }
 
     void Update()
@@ -84,6 +89,12 @@ public class InventoryUI : MonoBehaviour
             feedbackTimer -= Time.unscaledDeltaTime;
             if (feedbackTimer <= 0f && tooltipText != null)
                 tooltipText.text = "";
+        }
+
+        if (!durabilitySubscribed && ToolDurabilityManager.Instance != null)
+        {
+            ToolDurabilityManager.Instance.OnDurabilityChanged += RefreshUI;
+            durabilitySubscribed = true;
         }
 
         // Follow cursor while dragging
@@ -110,7 +121,7 @@ public class InventoryUI : MonoBehaviour
         Cursor.visible = true;
         PlayerMovement.inputBlocked = true;
 
-        ShowFeedback("Drag to reorder  |  Drag outside to drop  |  Click to use");
+        ShowFeedback("Row 1 = Hotbar [1-5]  |  Drag to reorder  |  Drag outside to drop  |  Click to use");
     }
 
     void CloseInventory()
@@ -185,16 +196,34 @@ public class InventoryUI : MonoBehaviour
                         + (slot.quantity > 1 ? "\nx" + slot.quantity : "");
                 }
             }
+
+            // Durability bar — always shown in inventory for items with maxDurability > 0
+            bool showDur = !slot.IsEmpty
+                        && ToolDurabilityManager.Instance != null
+                        && ToolDurabilityManager.Instance.HasDurability(slot.item.itemName);
+            if (showDur && durabilityBars[i] != null)
+            {
+                float ratio = ToolDurabilityManager.Instance.GetFraction(slot.item.itemName);
+                Color barColor = ratio > 0.6f ? Color.green
+                               : ratio > 0.3f ? new Color(1f, 0.65f, 0f)
+                               : Color.red;
+                durabilityBars[i].rectTransform.sizeDelta = new Vector2((slotSize - 8f) * ratio, 4f);
+                durabilityBars[i].color = barColor;
+            }
+            if (durabilityBarBgs[i] != null) durabilityBarBgs[i].enabled = showDur;
+            if (durabilityBars[i]   != null) durabilityBars[i].enabled   = showDur;
         }
     }
 
     void BuildUI()
     {
         int totalSlots = columns * rows;
-        slotImages    = new Image[totalSlots];
-        iconImages    = new Image[totalSlots];
-        quantityTexts = new TextMeshProUGUI[totalSlots];
-        slotObjects   = new GameObject[totalSlots];
+        slotImages       = new Image[totalSlots];
+        iconImages       = new Image[totalSlots];
+        quantityTexts    = new TextMeshProUGUI[totalSlots];
+        slotObjects      = new GameObject[totalSlots];
+        durabilityBarBgs = new Image[totalSlots];
+        durabilityBars   = new Image[totalSlots];
 
         // Canvas
         GameObject canvasObj = new GameObject("InventoryCanvas");
@@ -298,6 +327,51 @@ public class InventoryUI : MonoBehaviour
             qtyRect.offsetMax = new Vector2(-4, -2);
             quantityTexts[i] = qty;
 
+            // Hotbar row (row 0): subtle amber tint overlay
+            if (row == 0)
+            {
+                GameObject hlObj = new GameObject("HotbarTint");
+                hlObj.transform.SetParent(slotObj.transform, false);
+                Image hl = hlObj.AddComponent<Image>();
+                hl.color         = new Color(0.75f, 0.6f, 0.15f, 0.10f);
+                hl.raycastTarget = false;
+                RectTransform hlR = hlObj.GetComponent<RectTransform>();
+                hlR.anchorMin = Vector2.zero;
+                hlR.anchorMax = Vector2.one;
+                hlR.offsetMin = Vector2.zero;
+                hlR.offsetMax = Vector2.zero;
+            }
+
+            // Durability bar background
+            GameObject durBgObj = new GameObject("DurBg");
+            durBgObj.transform.SetParent(slotObj.transform, false);
+            Image durBg = durBgObj.AddComponent<Image>();
+            durBg.color         = new Color(0.1f, 0.1f, 0.1f, 0.9f);
+            durBg.raycastTarget = false;
+            durBg.enabled       = false;
+            RectTransform durBgR = durBgObj.GetComponent<RectTransform>();
+            durBgR.anchorMin        = new Vector2(0f, 0f);
+            durBgR.anchorMax        = new Vector2(1f, 0f);
+            durBgR.pivot            = new Vector2(0.5f, 0f);
+            durBgR.anchoredPosition = new Vector2(0f, 2f);
+            durBgR.sizeDelta        = new Vector2(-8f, 4f);
+            durabilityBarBgs[i] = durBg;
+
+            // Durability bar fill (left-anchored, width set at runtime)
+            GameObject durObj = new GameObject("DurBar");
+            durObj.transform.SetParent(slotObj.transform, false);
+            Image dur = durObj.AddComponent<Image>();
+            dur.color         = Color.green;
+            dur.raycastTarget = false;
+            dur.enabled       = false;
+            RectTransform durR = durObj.GetComponent<RectTransform>();
+            durR.anchorMin        = new Vector2(0f, 0f);
+            durR.anchorMax        = new Vector2(0f, 0f);
+            durR.pivot            = new Vector2(0f, 0f);
+            durR.anchoredPosition = new Vector2(4f, 2f);
+            durR.sizeDelta        = new Vector2(slotSize - 8f, 4f);
+            durabilityBars[i] = dur;
+
             // EventTrigger: click, drag, hover
             EventTrigger trigger = slotObj.AddComponent<EventTrigger>();
             int slotIndex = i;
@@ -332,6 +406,23 @@ public class InventoryUI : MonoBehaviour
             exitEntry.callback.AddListener((data) => { if (hoveredSlotIndex == slotIndex) { hoveredSlotIndex = -1; RefreshUI(); } });
             trigger.triggers.Add(exitEntry);
         }
+
+        // Hotbar row label — positioned just above row 0
+        float row0TopY = gridHeight / 2f - slotSize / 2f + slotSize / 2f;   // = gridHeight / 2f
+        GameObject hotbarLblObj = new GameObject("HotbarRowLabel");
+        hotbarLblObj.transform.SetParent(gridObj.transform, false);
+        TextMeshProUGUI hotbarLbl = hotbarLblObj.AddComponent<TextMeshProUGUI>();
+        hotbarLbl.text          = "◆  HOTBAR  [1-5]";
+        hotbarLbl.fontSize      = 11;
+        hotbarLbl.alignment     = TextAlignmentOptions.Center;
+        hotbarLbl.color         = new Color(0.85f, 0.72f, 0.3f, 0.9f);
+        hotbarLbl.raycastTarget = false;
+        RectTransform hlRect = hotbarLbl.rectTransform;
+        hlRect.anchorMin        = new Vector2(0f, 0.5f);
+        hlRect.anchorMax        = new Vector2(1f, 0.5f);
+        hlRect.pivot            = new Vector2(0.5f, 0.5f);
+        hlRect.anchoredPosition = new Vector2(0f, row0TopY + 7f);
+        hlRect.sizeDelta        = new Vector2(0f, 14f);
 
         // Tooltip / feedback text at bottom
         GameObject tipObj = new GameObject("Tooltip");

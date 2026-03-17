@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Attached to the Dark Clearing trigger zone.
@@ -38,7 +39,56 @@ public class DarkClearingEvent : MonoBehaviour
 
         triggered = true;
         MissionHUD.Instance?.ShowBanner("You've entered the Dark Clearing...");
+        StartCoroutine(PurpleFlash());
         StartCoroutine(WaveSequence());
+    }
+
+    IEnumerator PurpleFlash()
+    {
+        // Build a full-screen purple overlay canvas
+        GameObject canvasObj = new GameObject("DarkClearingFlash");
+        Canvas canvas = canvasObj.AddComponent<Canvas>();
+        canvas.renderMode   = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 200;
+        DontDestroyOnLoad(canvasObj);
+
+        GameObject imgObj = new GameObject("FlashImage");
+        imgObj.transform.SetParent(canvasObj.transform, false);
+        Image img = imgObj.AddComponent<Image>();
+        img.color = new Color(0.45f, 0f, 0.7f, 0f);
+        RectTransform rt = imgObj.GetComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+
+        // Fade in to peak opacity
+        float fadeIn = 0.4f;
+        float hold   = 0.3f;
+        float fadeOut = 1.2f;
+        float t = 0f;
+
+        while (t < fadeIn)
+        {
+            t += Time.deltaTime;
+            img.color = new Color(0.45f, 0f, 0.7f, Mathf.Lerp(0f, 0.75f, t / fadeIn));
+            yield return null;
+        }
+
+        // Hold briefly
+        img.color = new Color(0.45f, 0f, 0.7f, 0.75f);
+        yield return new WaitForSeconds(hold);
+
+        // Fade out slowly
+        t = 0f;
+        while (t < fadeOut)
+        {
+            t += Time.deltaTime;
+            img.color = new Color(0.45f, 0f, 0.7f, Mathf.Lerp(0.75f, 0f, t / fadeOut));
+            yield return null;
+        }
+
+        Destroy(canvasObj);
     }
 
     IEnumerator WaveSequence()

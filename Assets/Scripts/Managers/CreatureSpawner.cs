@@ -148,8 +148,22 @@ public class CreatureSpawner : MonoBehaviour
             float angle = (360f / count) * i * Mathf.Deg2Rad;
             Vector3 candidate = center + new Vector3(Mathf.Sin(angle) * radius, 0f, Mathf.Cos(angle) * radius);
 
-            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 5f, NavMesh.AllAreas))
+            // Resolve ground height first so the NavMesh sample starts at the right elevation
+            float groundY = terrain != null
+                ? terrain.SampleHeight(candidate) + terrain.transform.position.y
+                : candidate.y;
+
+            // Raycast from above as fallback ground-finding
+            if (Physics.Raycast(candidate + Vector3.up * 200f, Vector3.down, out RaycastHit rcHit, 400f,
+                    ~LayerMask.GetMask("Creature", "Player")))
+                groundY = Mathf.Max(groundY, rcHit.point.y);
+
+            candidate.y = groundY + 1f; // sample NavMesh from 1m above confirmed ground
+
+            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 10f, NavMesh.AllAreas))
                 candidate = hit.position;
+            else
+                candidate.y = groundY;
 
             candidate = ClampToTerrainSurface(candidate, terrain);
 

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class PlayerCombat : MonoBehaviour
@@ -8,6 +9,10 @@ public class PlayerCombat : MonoBehaviour
     public float attackRadius = 2f;
     public float attackCooldown = 0.5f;
     public float attackStaminaCost = 5f;
+
+    [Header("Tool Swing Speed")]
+    [Tooltip("Animation speed multiplier for axe/pickaxe swings. 1 = normal, 1.5 = 50% faster.")]
+    public float toolSwingSpeed = 1.5f;
 
     private float lastAttackTime = -999f;
     private PlayerVitals vitals;
@@ -48,10 +53,17 @@ public class PlayerCombat : MonoBehaviour
         // Play weapon-appropriate attack animation
         if (animator != null)
         {
+            bool isTool = equipped.IndexOf("Pickaxe", System.StringComparison.OrdinalIgnoreCase) >= 0
+                       || equipped.IndexOf("Axe",     System.StringComparison.OrdinalIgnoreCase) >= 0;
+
+            if (isTool) animator.speed = toolSwingSpeed;
+
             if (equipped.IndexOf("Pickaxe", System.StringComparison.OrdinalIgnoreCase) >= 0)
                 animator.CrossFade("PickaxeAttack", 0.1f);
             else if (hasWeapon || equipped.IndexOf("Axe", System.StringComparison.OrdinalIgnoreCase) >= 0)
                 animator.CrossFade("AxeAttack", 0.1f);
+
+            if (isTool) StartCoroutine(ResetAnimSpeed(attackCooldown));
         }
 
         // Degrade durability on axe/pickaxe swings
@@ -93,6 +105,12 @@ public class PlayerCombat : MonoBehaviour
                 break;
             }
         }
+    }
+
+    IEnumerator ResetAnimSpeed(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (animator != null) animator.speed = 1f;
     }
 
     void OnGUI()

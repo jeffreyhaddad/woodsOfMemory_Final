@@ -6,13 +6,15 @@ public class InventorySlot
 {
     public ItemData item;
     public int quantity;
+    public int currentDurability;
 
     public bool IsEmpty => item == null;
 
     public void Clear()
     {
-        item = null;
+        item     = null;
         quantity = 0;
+        currentDurability = 0;
     }
 }
 
@@ -80,6 +82,7 @@ public class Inventory : MonoBehaviour
                 slots[i].item = item;
                 int toAdd = item.isStackable ? Mathf.Min(remaining, item.maxStack) : 1;
                 slots[i].quantity = toAdd;
+                slots[i].currentDurability = item.maxDurability;
                 remaining -= toAdd;
             }
         }

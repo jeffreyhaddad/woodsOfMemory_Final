@@ -8,12 +8,13 @@ public class PlayerMovement : MonoBehaviour
     /// <summary>Set to true to also freeze movement (pause, death, cutscenes).
     /// Inventory/journal/crafting only set inputBlocked, not this.</summary>
     public static bool movementBlocked = false;
-    public bool isInwater = false;
+    public  static bool isInwater = false;
 
+    float[] underWaterMovementAndGravity = { 1f, 2.5f, 2.5f, 6f, -1f };
 
     [Header("Movement Speeds")]
-    public float walkSpeed = 2f;
-    public float runSpeed = 5f;
+    public float walkSpeed = 4f;
+    public float runSpeed = 10f;
     public float crouchSpeed = 5f;
 
     [Header("Jump Settings")]
@@ -61,6 +62,23 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        if (isInwater)
+        {
+            walkSpeed = underWaterMovementAndGravity[0];
+            runSpeed = underWaterMovementAndGravity[1];
+            crouchSpeed = underWaterMovementAndGravity[2];
+            jumpForce = underWaterMovementAndGravity[3];
+            gravity = underWaterMovementAndGravity[4];
+        }
+        if (!isInwater)
+        {
+            walkSpeed = 6f;
+            runSpeed = 12f;
+            crouchSpeed = 10f;
+            jumpForce = 12f;
+            gravity = -20f;
+
+        }
         if (movementBlocked)
         {
             // Zero out animator so player stops walking/running visually

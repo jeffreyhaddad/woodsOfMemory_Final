@@ -17,11 +17,14 @@ public class VitalsHUD : MonoBehaviour
     private Image healthFill;
     private Image hungerFill;
     private Image staminaFill;
+    private Image oxygenFill;
     private TextMeshProUGUI healthText;
     private TextMeshProUGUI hungerText;
     private TextMeshProUGUI staminaText;
+    private TextMeshProUGUI oxygenText;
     private TextMeshProUGUI hungerLabel;
     private TextMeshProUGUI staminaLabel;
+    private TextMeshProUGUI oxygenLabel;
 
     private static readonly Color hungerNormal    = new Color(0.9f,  0.55f, 0.1f);
     private static readonly Color hungerCritical  = new Color(1f,   0.15f, 0.05f);
@@ -57,6 +60,8 @@ public class VitalsHUD : MonoBehaviour
 
     void Update()
     {
+        
+       
         if (vitals == null || hungerFill == null) return;
 
         float hungerPct         = vitals.Hunger / vitals.maxHunger;
@@ -108,10 +113,12 @@ public class VitalsHUD : MonoBehaviour
         healthFill.fillAmount = vitals.Health / vitals.maxHealth;
         hungerFill.fillAmount = vitals.Hunger / vitals.maxHunger;
         staminaFill.fillAmount = vitals.Stamina / vitals.maxStamina;
+        oxygenFill.fillAmount = vitals.Oxygen / vitals.maxOxygen;
 
         healthText.text = Mathf.CeilToInt(vitals.Health).ToString();
         hungerText.text = Mathf.CeilToInt(vitals.Hunger).ToString();
         staminaText.text = Mathf.CeilToInt(vitals.Stamina).ToString();
+        oxygenText.text = Mathf.CeilToInt(vitals.Oxygen).ToString();
     }
 
     void BuildHUD()
@@ -149,9 +156,11 @@ public class VitalsHUD : MonoBehaviour
         // Stamina bar (green)
         CreateBar(container.transform, "Stamina", new Color(0.2f, 0.75f, 0.2f), ref yOffset,
             out staminaFill, out staminaText, out staminaLabel);
+       GameObject OxygenBar= CreateBar(container.transform, "Oxygen", new Color(0.2f, 0.5f, 1f), ref yOffset,
+            out oxygenFill, out oxygenText, out oxygenLabel);
     }
 
-    void CreateBar(Transform parent, string label, Color fillColor, ref float yOffset,
+    GameObject  CreateBar(Transform parent, string label, Color fillColor, ref float yOffset,
         out Image fillImage, out TextMeshProUGUI valueText, out TextMeshProUGUI labelOut)
     {
         // Label
@@ -212,5 +221,6 @@ public class VitalsHUD : MonoBehaviour
         textRect.offsetMax = Vector2.zero;
 
         yOffset += barHeight + barSpacing;
+        return bgObj;
     }
 }

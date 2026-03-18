@@ -5,6 +5,13 @@ public class PlayerVitals : MonoBehaviour
 {
     [Header("Health")]
     public float maxHealth = 100f;
+    [Header("Oxygen")]
+    public float maxOxygen = 100f;
+    public float OxygenDrainRate = 15f;
+    public float OxygenRegenerationRate = 10f;
+    [Tooltip("Health lost per second when oxygen reaches 0")]
+    public float suffocationDamage = 5f;
+
     [Tooltip("Health regen per second when hunger > 50")]
     public float healthRegenRate = 0.5f;
     [Tooltip("Health lost per second when hunger is 0")]
@@ -31,6 +38,7 @@ public class PlayerVitals : MonoBehaviour
     private float health;
     private float hunger;
     private float stamina;
+    private float oxygen;
     private float damageFlashTimer;
     private bool isExhausted = false;
 
@@ -51,6 +59,11 @@ public class PlayerVitals : MonoBehaviour
         get => stamina;
         set { stamina = Mathf.Clamp(value, 0f, maxStamina); OnVitalsChanged?.Invoke(); }
     }
+    public float Oxygen
+    {
+        get => oxygen;
+        set { oxygen = Mathf.Clamp(value, 0f, maxOxygen); OnVitalsChanged?.Invoke(); }
+    }
 
     public bool IsExhausted => isExhausted;
     public bool CanRun => !isExhausted;
@@ -64,11 +77,14 @@ public class PlayerVitals : MonoBehaviour
         health = maxHealth;
         hunger = maxHunger;
         stamina = maxStamina;
+        oxygen = maxOxygen;
+        
     }
 
     private float lastNotifiedHealth;
     private float lastNotifiedHunger;
     private float lastNotifiedStamina;
+    private float lastNotifiedOxygen;
 
     void Update()
     {
@@ -79,6 +95,16 @@ public class PlayerVitals : MonoBehaviour
             OnPlayerDeath?.Invoke();
             enabled = false;
             return;
+        }
+        if (PlayerMovement.isInwater)
+        {
+            oxygen = Mathf.Max(0f, oxygen - OxygenDrainRate * Time.deltaTime);
+            if (oxygen <= 0f)
+                health = Mathf.Max(0f, health - suffocationDamage * Time.deltaTime);
+        }
+        else
+        {
+            oxygen = Mathf.Min(maxOxygen, oxygen + OxygenRegenerationRate * Time.deltaTime);
         }
 
         // Hunger drains passively
@@ -102,11 +128,13 @@ public class PlayerVitals : MonoBehaviour
         // Only notify UI when display values actually change (whole numbers)
         if (Mathf.CeilToInt(health) != Mathf.CeilToInt(lastNotifiedHealth) ||
             Mathf.CeilToInt(hunger) != Mathf.CeilToInt(lastNotifiedHunger) ||
-            Mathf.CeilToInt(stamina) != Mathf.CeilToInt(lastNotifiedStamina))
+            Mathf.CeilToInt(stamina) != Mathf.CeilToInt(lastNotifiedStamina) ||
+            Mathf.CeilToInt(oxygen) != Mathf.CeilToInt(lastNotifiedOxygen))
         {
             lastNotifiedHealth = health;
             lastNotifiedHunger = hunger;
             lastNotifiedStamina = stamina;
+            lastNotifiedOxygen = oxygen;
             OnVitalsChanged?.Invoke();
         }
     }
@@ -119,7 +147,6 @@ public class PlayerVitals : MonoBehaviour
         if (stamina <= 0f && !isExhausted)
             isExhausted = true;
     }
-
     /// <summary>Regenerate stamina when not running. Called by PlayerMovement each frame.
     /// UI notification is handled by the throttled check in Update().</summary>
     public void RegenStamina(float amount)

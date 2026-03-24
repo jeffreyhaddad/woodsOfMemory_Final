@@ -61,6 +61,20 @@ public class MapSystem : MonoBehaviour
     private float minimapUVW;
     private float minimapUVH;
 
+    // ─── POI dot pools ────────────────────────────────────────
+    private Transform mmMask;   // parent for minimap POI dots (inside circular mask)
+    private Transform fmPanel;  // parent for full-map POI dots (inside map panel)
+    private readonly System.Collections.Generic.List<RectTransform> _fmPoiDots =
+        new System.Collections.Generic.List<RectTransform>();
+    private readonly System.Collections.Generic.List<Image>         _fmPoiImgs =
+        new System.Collections.Generic.List<Image>();
+    private readonly System.Collections.Generic.List<RectTransform> _mmPoiDots =
+        new System.Collections.Generic.List<RectTransform>();
+    private readonly System.Collections.Generic.List<Image>         _mmPoiImgs =
+        new System.Collections.Generic.List<Image>();
+    private readonly System.Collections.Generic.List<CompassUI.POIMapInfo> _poiScratch =
+        new System.Collections.Generic.List<CompassUI.POIMapInfo>();
+
     // ──────────────────────────────────────────────────────────
 
     void Start()
@@ -105,6 +119,7 @@ public class MapSystem : MonoBehaviour
         }
 
         SyncMinimapUVs();
+        SyncPOIDots();
 
         if (fullRoot.activeSelf)
         {
@@ -360,6 +375,7 @@ public class MapSystem : MonoBehaviour
             SetBR(RT(maskGO), MmPx, -20f, 20f);
         }
         Transform mm = maskGO.transform;
+        mmMask = mm;  // save for POI dot parenting
 
         // Map texture (scrolled so player stays centred)
         {
@@ -452,6 +468,7 @@ public class MapSystem : MonoBehaviour
             var rt = RT(panel); Centre(rt); rt.sizeDelta = new Vector2(FullMapPx, FullMapPx);
         }
         Transform pt = panel.transform;
+        fmPanel = pt;  // save for POI dot parenting
 
         // Full terrain map (uvRect 0,0,1,1 = entire world)
         {
@@ -606,6 +623,69 @@ public class MapSystem : MonoBehaviour
                     if (d < best) { best = d; cachedObjPos = c.transform.position; }
                 }
                 if (cachedObjPos.HasValue) return;
+            }
+        }
+    }
+
+    // ─── Discovered POI Dots ──────────────────────────────────
+    // Called every frame — cheap because _pois is tiny and no allocation after warm-up.
+
+    void SyncPOIDots()
+    {
+        CompassUI.GetDiscoveredPOIs(_poiScratch);
+        int count = _poiScratch.Count;
+
+        // Grow dot pools as new POIs are discovered
+        while (_fmPoiDots.Count < count)
+        {
+            var go  = UIGo("FMPOIDot", fmPanel);
+            var img = go.AddComponent<Image>();
+            img.raycastTarget = false;
+            var rt = RT(go); Centre(rt); rt.sizeDelta = new Vector2(8f, 8f);
+            _fmPoiDots.Add(rt);
+            _fmPoiImgs.Add(img);
+        }
+        while (_mmPoiDots.Count < count)
+        {
+            var go  = UIGo("MMPOIDot", mmMask);
+            var img = go.AddComponent<Image>();
+            img.raycastTarget = false;
+            var rt = RT(go); Centre(rt); rt.sizeDelta = new Vector2(6f, 6f);
+            _mmPoiDots.Add(rt);
+            _mmPoiImgs.Add(img);
+        }
+
+        bool  mapOpen      = fullRoot.activeSelf;
+        float mmPxPerMeter = MmPx * 0.5f / minimapRadius;
+
+        for (int i = 0; i < _fmPoiDots.Count; i++)
+        {
+            if (i < count)
+            {
+                var poi = _poiScratch[i];
+
+                // Full-map dot (shown only when full map is open)
+                float fx = ((poi.worldPos.x - tOX) / tSX - 0.5f) * FullMapPx;
+                float fz = ((poi.worldPos.z - tOZ) / tSZ - 0.5f) * FullMapPx;
+                _fmPoiDots[i].anchoredPosition = new Vector2(fx, fz);
+                _fmPoiImgs[i].color = poi.color;
+                _fmPoiDots[i].gameObject.SetActive(mapOpen);
+
+                // Minimap dot (shown only when within minimap radius)
+                float dx   = poi.worldPos.x - player.position.x;
+                float dz   = poi.worldPos.z - player.position.z;
+                bool inRange = dx * dx + dz * dz < minimapRadius * minimapRadius;
+                _mmPoiDots[i].gameObject.SetActive(inRange);
+                if (inRange)
+                {
+                    _mmPoiDots[i].anchoredPosition = new Vector2(dx * mmPxPerMeter, dz * mmPxPerMeter);
+                    _mmPoiImgs[i].color = poi.color;
+                }
+            }
+            else
+            {
+                _fmPoiDots[i].gameObject.SetActive(false);
+                _mmPoiDots[i].gameObject.SetActive(false);
             }
         }
     }

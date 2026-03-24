@@ -10,6 +10,10 @@ public class MissionManager : MonoBehaviour
     [Tooltip("Leave empty to auto-generate the 6 story missions.")]
     public Mission[] missions;
 
+    [Header("Debug")]
+    [Tooltip("Skip to this mission index on start (0 = normal, 4 = Into the Dark / dark clearing).")]
+    public int debugStartMissionIndex = 4;
+
     public int CurrentMissionIndex { get; set; } = 0;
     public Mission CurrentMission => (CurrentMissionIndex < missions.Length) ? missions[CurrentMissionIndex] : null;
     public bool AllMissionsComplete => CurrentMissionIndex >= missions.Length;
@@ -63,13 +67,13 @@ public class MissionManager : MonoBehaviour
 
         // Start first mission — deferred if IntroSequenceManager is present
         if (FindAnyObjectByType<IntroSequenceManager>() == null)
-            StartMission(0);
+            StartMission(debugStartMissionIndex);
     }
 
     /// <summary>Called by IntroSequenceManager after the intro completes.</summary>
     public void BeginMissions()
     {
-        StartMission(0);
+        StartMission(debugStartMissionIndex);
     }
 
     void OnDestroy()
@@ -214,8 +218,9 @@ public class MissionManager : MonoBehaviour
             MissionObjective obj = mission.objectives[i];
             if (obj.IsCompleted) continue;
 
+            string normalizedLocation = locationName.Replace('_', ' ');
             if (obj.objectiveType == ObjectiveType.ReachLocation &&
-                obj.description.Contains(locationName))
+                obj.description.IndexOf(normalizedLocation, StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 obj.currentCount++;
                 OnObjectiveProgress?.Invoke(obj);
@@ -319,10 +324,11 @@ public class MissionManager : MonoBehaviour
 
         // Mission 6: The Escape
         list.Add(MakeMission("The Escape",
-            "You've survived long enough. Find the way out of these woods.",
+            "The notes warned you — something keeps pulling people back. You can feel it. Find the exit and fight through whatever comes.",
             new MissionObjective[]
             {
-                MakeObjective("Find the forest exit", ObjectiveType.ReachLocation, "", "", 1),
+                MakeObjective("Reach the forest exit",      ObjectiveType.ReachLocation, "",               "",                1),
+                MakeObjective("Survive the final assault",  ObjectiveType.KillCreature,  "",               "Shadow Creature", 6),
             }));
 
         missions = list.ToArray();

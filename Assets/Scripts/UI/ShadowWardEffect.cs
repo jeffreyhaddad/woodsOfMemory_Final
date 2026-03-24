@@ -28,6 +28,11 @@ public class ShadowWardEffect : MonoBehaviour
     private TextMeshProUGUI arrowGlyph;
     private TextMeshProUGUI dirLabel;
 
+    // Timer HUD
+    private GameObject      timerRoot;
+    private Image           timerBar;      // fill image
+    private TextMeshProUGUI timerText;
+
     // ── State ──────────────────────────────────────────────────
     private bool      isActive   = false;
     private float     timeLeft   = 0f;
@@ -52,6 +57,7 @@ public class ShadowWardEffect : MonoBehaviour
         if (timeLeft <= 0f) return; // coroutine handles deactivation
 
         UpdateDirectionIndicator();
+        UpdateTimerHUD();
     }
 
     // ─── Public API ───────────────────────────────────────────
@@ -77,6 +83,7 @@ public class ShadowWardEffect : MonoBehaviour
         isActive = true;
         timeLeft = visionDuration;
         SetIndicatorVisible(true);
+        if (timerRoot != null) timerRoot.SetActive(true);
         activeCoroutine = StartCoroutine(VisionSequence());
     }
 
@@ -114,6 +121,23 @@ public class ShadowWardEffect : MonoBehaviour
         isActive = false;
         activeCoroutine = null;
         SetIndicatorVisible(false);
+        if (timerRoot != null) timerRoot.SetActive(false);
+    }
+
+    // ─── Timer HUD ────────────────────────────────────────────
+
+    void UpdateTimerHUD()
+    {
+        if (timerBar  == null || timerText == null) return;
+        float fraction = Mathf.Clamp01(timeLeft / visionDuration);
+        timerBar.rectTransform.anchorMax = new Vector2(fraction, 1f);
+
+        // Color shifts green→yellow→red as time runs out
+        timerBar.color = Color.Lerp(new Color(0.8f, 0.2f, 1f), new Color(1f, 0.3f, 0.3f),
+                                    1f - fraction);
+
+        int secs = Mathf.CeilToInt(timeLeft);
+        timerText.text = $"Ward  {secs}s";
     }
 
     // ─── Direction Indicator ──────────────────────────────────
@@ -245,6 +269,74 @@ public class ShadowWardEffect : MonoBehaviour
         lr.pivot            = new Vector2(0.5f, 1f);
         lr.anchoredPosition = new Vector2(0f, -4f);
         lr.sizeDelta        = new Vector2(140f, 24f);
+
+        BuildTimerHUD(wardCanvas);
+    }
+
+    void BuildTimerHUD(Canvas canvas)
+    {
+        // Anchored top-left, below the compass area
+        timerRoot = new GameObject("WardTimer");
+        timerRoot.transform.SetParent(canvas.transform, false);
+
+        RectTransform rootRT = timerRoot.AddComponent<RectTransform>();
+        // Bottom-right, just above the minimap circle (minimap is 180 px tall + 20 px margin)
+        rootRT.anchorMin        = new Vector2(1f, 0f);
+        rootRT.anchorMax        = new Vector2(1f, 0f);
+        rootRT.pivot            = new Vector2(1f, 0f);
+        rootRT.anchoredPosition = new Vector2(-20f, 210f);
+        rootRT.sizeDelta        = new Vector2(180f, 36f);
+
+        // Dark backing panel
+        GameObject bg = new GameObject("BG");
+        bg.transform.SetParent(timerRoot.transform, false);
+        Image bgImg = bg.AddComponent<Image>();
+        bgImg.color         = new Color(0f, 0f, 0f, 0.55f);
+        bgImg.raycastTarget = false;
+        RectTransform bgRT  = bgImg.rectTransform;
+        bgRT.anchorMin = Vector2.zero; bgRT.anchorMax = Vector2.one;
+        bgRT.offsetMin = Vector2.zero; bgRT.offsetMax = Vector2.zero;
+
+        // Bar track (dark purple)
+        GameObject track = new GameObject("Track");
+        track.transform.SetParent(timerRoot.transform, false);
+        Image trackImg       = track.AddComponent<Image>();
+        trackImg.color       = new Color(0.15f, 0f, 0.25f, 1f);
+        trackImg.raycastTarget = false;
+        RectTransform trackRT = trackImg.rectTransform;
+        trackRT.anchorMin       = new Vector2(0f, 0f);
+        trackRT.anchorMax       = new Vector2(1f, 0f);
+        trackRT.pivot           = new Vector2(0f, 0f);
+        trackRT.anchoredPosition = new Vector2(0f, 0f);
+        trackRT.sizeDelta       = new Vector2(0f, 7f);
+
+        // Fill bar — anchor-based shrink (no sprite needed)
+        GameObject fill = new GameObject("Fill");
+        fill.transform.SetParent(track.transform, false);
+        timerBar             = fill.AddComponent<Image>();
+        timerBar.color       = new Color(0.8f, 0.2f, 1f, 1f);
+        timerBar.raycastTarget = false;
+        RectTransform fillRT = timerBar.rectTransform;
+        fillRT.anchorMin = Vector2.zero; fillRT.anchorMax = Vector2.one;
+        fillRT.offsetMin = Vector2.zero; fillRT.offsetMax = Vector2.zero;
+
+        // Timer text
+        GameObject textGO = new GameObject("TimerText");
+        textGO.transform.SetParent(timerRoot.transform, false);
+        timerText               = textGO.AddComponent<TextMeshProUGUI>();
+        timerText.text          = "Ward  45s";
+        timerText.fontSize      = 14;
+        timerText.fontStyle     = FontStyles.Bold;
+        timerText.color         = new Color(0.9f, 0.7f, 1f, 1f);
+        timerText.alignment     = TextAlignmentOptions.MidlineLeft;
+        timerText.raycastTarget = false;
+        RectTransform txtRT     = timerText.rectTransform;
+        txtRT.anchorMin         = new Vector2(0f, 0.25f);
+        txtRT.anchorMax         = new Vector2(1f, 1f);
+        txtRT.offsetMin         = new Vector2(8f, 0f);
+        txtRT.offsetMax         = new Vector2(-8f, 0f);
+
+        timerRoot.SetActive(false); // hidden until ward is active
     }
 
     void SetIndicatorVisible(bool visible)

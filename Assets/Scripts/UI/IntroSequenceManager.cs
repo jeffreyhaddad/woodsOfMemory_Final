@@ -395,6 +395,24 @@ public class IntroSequenceManager : MonoBehaviour
         if (MissionManager.Instance != null)
             MissionManager.Instance.BeginMissions();
 
+        // DEBUG: give player Shadow Wards at start so Mission 5 clearing can be tested immediately
+        Inventory inv = FindAnyObjectByType<Inventory>();
+        if (inv != null)
+        {
+            ItemData ward = ItemRegistry.Get("Shadow Ward");
+            if (ward == null)
+            {
+                ward = ScriptableObject.CreateInstance<ItemData>();
+                ward.itemName    = "Shadow Ward";
+                ward.isStackable = true;
+                ward.maxStack    = 5;
+                ward.category    = ItemCategory.Tool;
+                ward.useAction   = ItemUseAction.UseShadowWard;
+                ItemRegistry.Register(ward);
+            }
+            inv.AddItem(ward, 3);
+        }
+
         // Destroy only this component, NOT the whole Manager GameObject
         Destroy(this);
     }

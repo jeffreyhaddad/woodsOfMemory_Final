@@ -160,12 +160,27 @@ public class WorldSetup : MonoBehaviour
         Vector3 c1 = cabinObj != null ? cabinObj.transform.position : cabin1Position;
         CreateTrigger("CabinTrigger1", c1, cabinTriggerSize, "start_cabin");
         //CreateTrigger("CabinTrigger2", cabin2Position, cabinTriggerSize, "cabin_area");
+
+        // Pick a random walkable position for the dark clearing at runtime
+        darkClearingPosition = FindRandomNavMeshPoint(spawnCenter, 80f, 160f)
+                               ?? darkClearingPosition;
+
         // Dark Clearing — oneShot=false so DarkClearingEvent's coroutine isn't cut short
         GameObject clearingObj = CreateTrigger("DarkClearing", darkClearingPosition, darkClearingTriggerSize, "dark_clearing", oneShot: false);
         if (clearingObj != null)
             clearingObj.AddComponent<DarkClearingEvent>();
 
-        CreateTrigger("ForestExit", exitPosition, exitTriggerSize, "exit");
+        GameObject exitObj = CreateTrigger("ForestExit", exitPosition, exitTriggerSize, "exit", oneShot: false);
+        if (exitObj != null)
+            exitObj.AddComponent<ForestExitEvent>();
+
+        // Use terrain-corrected Y from the trigger objects so compass/ward arrows
+        // never point underground. The inspector Vector3 defaults all have Y=0.
+        Vector3 clearingPoiPos = clearingObj != null ? clearingObj.transform.position
+                                                     : new Vector3(darkClearingPosition.x, GetTerrainHeight(darkClearingPosition), darkClearingPosition.z);
+        Vector3 cabin2PoiPos   = new Vector3(cabin2Position.x, GetTerrainHeight(cabin2Position), cabin2Position.z);
+        Vector3 exitPoiPos     = exitObj != null ? exitObj.transform.position
+                                                 : new Vector3(exitPosition.x, GetTerrainHeight(exitPosition), exitPosition.z);
 
         // Register compass POIs.
         // Main cabin is auto-discovered — player starts here.
@@ -176,19 +191,19 @@ public class WorldSetup : MonoBehaviour
             new Color(0.9f, 0.78f, 0.5f),
             CompassUI.POIType.Location);
 
-        CompassUI.RegisterPOI("Second Cabin", cabin2Position,
+        CompassUI.RegisterPOI("Second Cabin", cabin2PoiPos,
             startDiscovered: false,
             discoveryRadius: 35f,
             new Color(1f, 0.85f, 0.4f),
             CompassUI.POIType.Location);
 
-        CompassUI.RegisterPOI("Dark Clearing", darkClearingPosition,
+        CompassUI.RegisterPOI("Dark Clearing", clearingPoiPos,
             startDiscovered: false,
             discoveryRadius: 30f,
             new Color(0.5f, 0.3f, 0.8f),
             CompassUI.POIType.Location);
 
-        CompassUI.RegisterPOI("Forest Exit", exitPosition,
+        CompassUI.RegisterPOI("Forest Exit", exitPoiPos,
             startDiscovered: false,
             discoveryRadius: 30f,
             new Color(0.45f, 1f, 0.5f),
@@ -394,6 +409,26 @@ public class WorldSetup : MonoBehaviour
         if (rend == null) return;
         // Use sharedMaterial (not .material) to avoid creating per-renderer copies
         rend.sharedMaterial = GetSharedMaterial(color);
+    }
+
+    /// <summary>
+    /// Picks a random walkable NavMesh point between minDist and maxDist from origin.
+    /// Returns null if no valid point is found after many attempts.
+    /// </summary>
+    Vector3? FindRandomNavMeshPoint(Vector3 origin, float minDist, float maxDist)
+    {
+        for (int i = 0; i < 40; i++)
+        {
+            Vector2 rnd = Random.insideUnitCircle.normalized * Random.Range(minDist, maxDist);
+            Vector3 candidate = origin + new Vector3(rnd.x, 0f, rnd.y);
+            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 15f, NavMesh.AllAreas))
+            {
+                Debug.Log($"[WorldSetup] Dark Clearing placed at NavMesh point {hit.position}");
+                return hit.position;
+            }
+        }
+        Debug.LogWarning("[WorldSetup] Could not find random NavMesh point for Dark Clearing — using inspector fallback.");
+        return null;
     }
 
     float GetTerrainHeight(Vector3 position)

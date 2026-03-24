@@ -53,12 +53,12 @@ public class GetKeyFromBoxScript : MonoBehaviour
     private void OnGUI()
     {
         if (isPlayerNear && !hasBeenOpened && MissionManager.Instance.CurrentMissionIndex == 2)
-            GUI.Label(new Rect(Screen.width / 2 - 150, Screen.height - 100, 300, 30), "Press O to open the box");
+            GUI.Label(new Rect(Screen.width / 2 - 150, Screen.height - 100, 300, 30), "Press E to open the box");
     }
 
     void Update()
     {
-        if (MissionManager.Instance.CurrentMissionIndex == 2 && isPlayerNear && Input.GetKeyDown(KeyCode.O) && !hasBeenOpened)
+        if (MissionManager.Instance.CurrentMissionIndex == 2 && isPlayerNear && Input.GetKeyDown(KeyCode.E) && !hasBeenOpened)
         {
             hasBeenOpened = true;
             GiveKeyToPlayer();

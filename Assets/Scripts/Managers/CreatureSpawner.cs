@@ -142,41 +142,60 @@ public class CreatureSpawner : MonoBehaviour
     {
         if (shadowPrefab == null) return;
 
-        Terrain terrain = Terrain.activeTerrain; // cache once outside loop
+        int layerMask = ~LayerMask.GetMask("Creature", "Player");
+
         for (int i = 0; i < count; i++)
         {
             float angle = (360f / count) * i * Mathf.Deg2Rad;
-            Vector3 candidate = center + new Vector3(Mathf.Sin(angle) * radius, 0f, Mathf.Cos(angle) * radius);
+            float x = center.x + Mathf.Sin(angle) * radius;
+            float z = center.z + Mathf.Cos(angle) * radius;
 
-            // Resolve ground height first so the NavMesh sample starts at the right elevation
-            float groundY = terrain != null
-                ? terrain.SampleHeight(candidate) + terrain.transform.position.y
-                : candidate.y;
-
-            // Raycast from above as fallback ground-finding
-            if (Physics.Raycast(candidate + Vector3.up * 200f, Vector3.down, out RaycastHit rcHit, 400f,
-                    ~LayerMask.GetMask("Creature", "Player")))
-                groundY = Mathf.Max(groundY, rcHit.point.y);
-
-            candidate.y = groundY + 1f; // sample NavMesh from 1m above confirmed ground
-
-            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 10f, NavMesh.AllAreas))
-                candidate = hit.position;
+            // Cast straight down from very high up — hits the actual top surface of
+            // whatever geometry exists (terrain, rocks, platforms).  This is the only
+            // approach that is immune to NavMesh bake errors or terrain offset issues.
+            float y;
+            if (Physics.Raycast(new Vector3(x, 10000f, z), Vector3.down,
+                    out RaycastHit hit, 20000f, layerMask))
+            {
+                y = hit.point.y;
+            }
             else
-                candidate.y = groundY;
+            {
+                // Physics fallback: terrain API
+                Terrain t = Terrain.activeTerrain;
+                y = t != null
+                    ? t.SampleHeight(new Vector3(x, 0f, z)) + t.transform.position.y
+                    : center.y;
+            }
 
-            candidate = ClampToTerrainSurface(candidate, terrain);
+            Vector3 spawnPos = new Vector3(x, y + 0.5f, z);
 
-            GameObject go = Instantiate(shadowPrefab, candidate, Quaternion.Euler(0, Random.Range(0f, 360f), 0));
+            GameObject go = Instantiate(shadowPrefab, spawnPos,
+                Quaternion.Euler(0, Random.Range(0f, 360f), 0));
+
+            // NavMeshAgent.OnEnable (fired during Instantiate) auto-snaps the agent
+            // to whatever NavMesh it finds, which can be BELOW the visible terrain
+            // surface when the bake is off.  Disable → reposition → re-enable forces
+            // the agent to re-initialize from our confirmed surface position instead.
+            NavMeshAgent a = go.GetComponent<NavMeshAgent>();
+            if (a != null)
+            {
+                a.enabled = false;
+                go.transform.position = spawnPos;
+                a.enabled = true;
+            }
+
             CreatureAI ai = go.GetComponent<CreatureAI>();
             if (ai != null)
             {
                 ai.OnCreatureDeath += c => activeShadows.Remove(c);
                 activeShadows.Add(ai);
             }
+
+            Debug.Log($"[ShadowWave] Spawned creature {i} at {spawnPos} (raycast surface)");
         }
 
-        Debug.Log($"[CreatureSpawner] Spawned assault wave of {count} shadows at {center}");
+        Debug.Log($"[CreatureSpawner] Spawned {count}-creature wave around {center}");
     }
 
     bool TryGetSpawnPoint(float radius, out Vector3 result)

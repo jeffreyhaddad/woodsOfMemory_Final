@@ -95,6 +95,30 @@ public class CompassUI : MonoBehaviour
             if (_pois[i].label == label) { _pois.RemoveAt(i); return; }
     }
 
+    public struct POIMapInfo
+    {
+        public string  label;
+        public Vector3 worldPos;
+        public Color   color;
+    }
+
+    /// <summary>
+    /// Fills <paramref name="output"/> with all currently-discovered POIs.
+    /// Clears the list first. Allocation-free once the list has enough capacity.
+    /// </summary>
+    public static void GetDiscoveredPOIs(List<POIMapInfo> output)
+    {
+        output.Clear();
+        for (int i = 0; i < _pois.Count; i++)
+            if (_pois[i].discovered)
+                output.Add(new POIMapInfo
+                {
+                    label    = _pois[i].label,
+                    worldPos = _pois[i].worldPos,
+                    color    = _pois[i].color,
+                });
+    }
+
     // ─── Settings ─────────────────────────────────────────────
 
     [Header("Compass Bar")]

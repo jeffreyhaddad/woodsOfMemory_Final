@@ -77,6 +77,8 @@ public class GameManager : MonoBehaviour
             gameObject.AddComponent<HotbarUI>();
         if (FindAnyObjectByType<PickupNotificationUI>() == null)
             gameObject.AddComponent<PickupNotificationUI>();
+        if (FindAnyObjectByType<EndingScreenUI>() == null)
+            gameObject.AddComponent<EndingScreenUI>();
         if (SleepManager.Instance == null)
             gameObject.AddComponent<SleepManager>();
         if (SettingsManager.Instance == null)

@@ -12,7 +12,7 @@ public class MissionManager : MonoBehaviour
 
     [Header("Debug")]
     [Tooltip("Skip to this mission index on start (0 = normal, 4 = Into the Dark / dark clearing).")]
-    public int debugStartMissionIndex = 4;
+    public int debugStartMissionIndex = 0;
 
     public int CurrentMissionIndex { get; set; } = 0;
     public Mission CurrentMission => (CurrentMissionIndex < missions.Length) ? missions[CurrentMissionIndex] : null;
@@ -299,7 +299,7 @@ public class MissionManager : MonoBehaviour
             new MissionObjective[]
             {
                 MakeObjective("Collect the key inside the wooden box", ObjectiveType.CollectItem,   "Rusted Key",       "", 1),
-                MakeObjective("Open the door of the cabin_area",        ObjectiveType.ReachLocation, "cabin_area",       "", 1),
+                MakeObjective("Open the door of the cabin area",         ObjectiveType.ReachLocation, "cabin_area",       "", 1),
                 MakeObjective("Collect water from the well",           ObjectiveType.CollectItem,   "Water from well",  "", 1),
             }));
 

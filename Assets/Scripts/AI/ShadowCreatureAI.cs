@@ -40,6 +40,9 @@ public class ShadowCreatureAI : CreatureAI
     private ZombieAlertIndicator alertIndicator;
 
     private float pathUpdateTimer;
+    // Periodically re-send the Run CrossFade to fight the Animator's exitTime
+    // auto-transition that fires at ~90% of the clip and drops back to Idle.
+    private float chaseAnimRefreshTimer;
 
     // Track last anim state to avoid redundant CrossFades
     private CreatureState lastAnimState = (CreatureState)(-1);
@@ -66,9 +69,7 @@ public class ShadowCreatureAI : CreatureAI
             agent.updateRotation   = false;
             agent.acceleration     = 24f;
             agent.angularSpeed     = 0f;
-            // Stopping distance is larger than attack range so the NavMesh agent
-            // begins decelerating well before reaching the player — no overshoot.
-            agent.stoppingDistance = (data != null ? data.attackRange : 2f) + 1.2f;
+            agent.stoppingDistance = data != null ? data.attackRange : 2f;
             agent.speed            = data != null ? data.moveSpeed : 3f;
         }
 
@@ -163,9 +164,16 @@ public class ShadowCreatureAI : CreatureAI
             SmoothRotateTowards(playerTransform.position);
         }
 
-        // Enter attack state early enough that natural NavMesh deceleration
-        // (via stoppingDistance) brings the zombie to a stop beside the player
-        if (hDist <= (data != null ? data.attackRange : 2f) + 2.0f)
+        // Fight the Animator's exitTime auto-transition: re-send Run every 0.6s
+        // so it never drops back to Idle while chasing.
+        chaseAnimRefreshTimer -= Time.deltaTime;
+        if (chaseAnimRefreshTimer <= 0f)
+        {
+            PlayAnimation(AnimRun, 0.1f);
+            chaseAnimRefreshTimer = 0.6f;
+        }
+
+        if (hDist <= (data != null ? data.attackRange : 2f) + 0.5f)
         {
             TransitionToAttack();
             return;
@@ -243,7 +251,13 @@ public class ShadowCreatureAI : CreatureAI
     {
         currentState = CreatureState.Attack;
         if (agent.enabled && agent.isOnNavMesh)
+        {
+            // Warp to current position — resets the agent's internal velocity and
+            // path state completely, which is the only reliable way to stop
+            // NavMeshAgent momentum without a multi-frame coast.
+            agent.Warp(transform.position);
             agent.speed = attackShuffleSpeed;
+        }
         attackTimer     = firstAttackDelay;
         pathUpdateTimer = 0.25f;        // don't move again for a moment after stopping
         SetAnimation(AnimIdle, 0.15f);

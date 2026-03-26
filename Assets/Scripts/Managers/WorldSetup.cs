@@ -68,13 +68,11 @@ public class WorldSetup : MonoBehaviour
 
     // Shared material cache — all pickups of the same color reuse one material (enables GPU batching)
     private static readonly Dictionary<Color, Material> sharedMaterials = new Dictionary<Color, Material>();
-    private static Material sharedTransparentMarkerMat;
 
     void OnDestroy()
     {
         // Clear static material caches so they don't accumulate across editor play sessions
         sharedMaterials.Clear();
-        sharedTransparentMarkerMat = null;
         cachedURPLitShader = null;
     }
 
@@ -227,27 +225,6 @@ public class WorldSetup : MonoBehaviour
         MissionTrigger trigger = obj.AddComponent<MissionTrigger>();
         trigger.locationName = locationName;
         trigger.oneShot = oneShot;
-
-        // Visual marker (semi-transparent pillar) for debugging — remove for release
-        GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        marker.transform.SetParent(obj.transform, false);
-        marker.transform.localScale = new Vector3(1f, 3f, 1f);
-        Destroy(marker.GetComponent<Collider>());
-        Renderer rend = marker.GetComponent<Renderer>();
-        // Share one transparent marker material across all triggers
-        if (sharedTransparentMarkerMat == null)
-        {
-            sharedTransparentMarkerMat = new Material(cachedURPLitShader);
-            sharedTransparentMarkerMat.color = new Color(1f, 1f, 0f, 0.15f);
-            sharedTransparentMarkerMat.SetFloat("_Surface", 1);
-            sharedTransparentMarkerMat.SetFloat("_Blend", 0);
-            sharedTransparentMarkerMat.SetOverrideTag("RenderType", "Transparent");
-            sharedTransparentMarkerMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-            sharedTransparentMarkerMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-            sharedTransparentMarkerMat.SetInt("_ZWrite", 0);
-            sharedTransparentMarkerMat.renderQueue = 3000;
-        }
-        rend.sharedMaterial = sharedTransparentMarkerMat;
 
         return obj;
     }

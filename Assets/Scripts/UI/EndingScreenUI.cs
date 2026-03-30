@@ -36,7 +36,13 @@ public class EndingScreenUI : MonoBehaviour
         if (anyKeyEnabled && Input.anyKeyDown)
         {
             anyKeyEnabled = false;
-            GameManager.Instance?.QuitToMenu();
+            // Transition to the credits/game-complete screen.
+            // Fall back to quitting directly if GameCompleteUI isn't present.
+            GameCompleteUI credits = FindAnyObjectByType<GameCompleteUI>();
+            if (credits != null)
+                credits.ShowEndingScreen();
+            else
+                GameManager.Instance?.QuitToMenu();
         }
     }
 

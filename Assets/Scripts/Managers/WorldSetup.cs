@@ -156,6 +156,15 @@ public class WorldSetup : MonoBehaviour
         // Falls back to inspector value if no Cabin found in scene.
         GameObject cabinObj = GameObject.Find("Cabin");
         Vector3 c1 = cabinObj != null ? cabinObj.transform.position : cabin1Position;
+
+        // Add NavMeshObstacle to any cabin objects so creatures can't path through them.
+        // carving=true punches a hole in the runtime NavMesh even if the bake didn't mark
+        // the cabin as Not Walkable.
+        AddNavMeshObstacle(cabinObj);
+        AddNavMeshObstacle(GameObject.Find("Cabin2"));
+        AddNavMeshObstacle(GameObject.Find("Cabin_2"));
+        AddNavMeshObstacle(GameObject.Find("Cabin 2"));
+
         CreateTrigger("CabinTrigger1", c1, cabinTriggerSize, "start_cabin");
         //CreateTrigger("CabinTrigger2", cabin2Position, cabinTriggerSize, "cabin_area");
 
@@ -315,10 +324,16 @@ public class WorldSetup : MonoBehaviour
 
         // Place notes at specified positions, using entries index 1-10
         // (index 0 is "Awakening" which auto-adds on start / via IntroSequenceManager)
+        // note11 must be placed at the actual dark clearing position, which was
+        // randomized at runtime in CreateMissionTriggers(). The inspector field
+        // note11Position is only the fallback if no NavMesh point was found.
+        Vector3 resolvedNote11Pos = new Vector3(
+            darkClearingPosition.x, 0f, darkClearingPosition.z);
+
         Vector3[] notePositions = {
             note1Position, note2Position, note3Position, note4Position, note5Position,
             note6Position, note7Position, note8Position, note9Position, note10Position,
-            note11Position  // "Note: Why I Came" — at the Dark Clearing
+            resolvedNote11Pos  // "Note: Why I Came" — always at the actual Dark Clearing
         };
 
         int placed = 0;
@@ -360,6 +375,17 @@ public class WorldSetup : MonoBehaviour
         Destroy(visual.GetComponent<Collider>());
 
         ApplyColor(visual.GetComponent<Renderer>(), new Color(0.9f, 0.85f, 0.7f));
+
+        // Warm glow so notes are visible from a distance
+        GameObject lightGO = new GameObject("NoteGlow");
+        lightGO.transform.SetParent(obj.transform, false);
+        lightGO.transform.localPosition = Vector3.up * 0.3f;
+        Light glow     = lightGO.AddComponent<Light>();
+        glow.type      = LightType.Point;
+        glow.color     = new Color(1f, 0.9f, 0.5f);
+        glow.range     = 5f;
+        glow.intensity = 1.2f;
+        glow.shadows   = LightShadows.None;
 
         // Slight hover/bob effect
         obj.AddComponent<PickupBob>();
@@ -419,6 +445,43 @@ public class WorldSetup : MonoBehaviour
             return hit.point.y;
 
         return 0f;
+    }
+
+    /// <summary>
+    /// Adds a carving NavMeshObstacle to a cabin so AI agents can't walk through its walls.
+    /// Safe to call with null (no-ops if the object doesn't exist or already has an obstacle).
+    /// </summary>
+    static void AddNavMeshObstacle(GameObject obj)
+    {
+        if (obj == null) return;
+        if (obj.GetComponent<NavMeshObstacle>() != null) return;
+
+        // Calculate a world-space bounding box from all child renderers.
+        Bounds bounds = new Bounds();
+        bool hasBounds = false;
+        foreach (Renderer rend in obj.GetComponentsInChildren<Renderer>())
+        {
+            if (!hasBounds) { bounds = rend.bounds; hasBounds = true; }
+            else            { bounds.Encapsulate(rend.bounds); }
+        }
+
+        NavMeshObstacle obstacle = obj.AddComponent<NavMeshObstacle>();
+        obstacle.shape               = NavMeshObstacleShape.Box;
+        obstacle.carving             = true;
+        obstacle.carveOnlyStationary = true;
+
+        if (hasBounds)
+        {
+            Vector3 ls = obj.transform.lossyScale;
+            obstacle.center = obj.transform.InverseTransformPoint(bounds.center);
+            obstacle.size   = new Vector3(
+                ls.x > 0f ? bounds.size.x / ls.x : bounds.size.x,
+                ls.y > 0f ? bounds.size.y / ls.y : bounds.size.y,
+                ls.z > 0f ? bounds.size.z / ls.z : bounds.size.z);
+        }
+
+        Debug.Log($"[WorldSetup] Added NavMeshObstacle to {obj.name}" +
+                  (hasBounds ? $" (size {obstacle.size:F1})" : " (default size)"));
     }
 
     ItemData MakeItem(string itemName, ItemCategory cat, bool stackable, int maxStack,

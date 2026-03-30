@@ -20,17 +20,10 @@ public class GameCompleteUI : MonoBehaviour
 
         BuildUI();
         panelObj.SetActive(false);
-
-        missionManager.OnAllMissionsCompleted += ShowEndingScreen;
     }
 
-    void OnDestroy()
-    {
-        if (missionManager != null)
-            missionManager.OnAllMissionsCompleted -= ShowEndingScreen;
-    }
-
-    void ShowEndingScreen()
+    /// <summary>Called by EndingScreenUI after the cinematic text sequence completes.</summary>
+    public void ShowEndingScreen()
     {
         panelObj.SetActive(true);
 

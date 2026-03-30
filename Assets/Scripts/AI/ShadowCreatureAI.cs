@@ -40,9 +40,6 @@ public class ShadowCreatureAI : CreatureAI
     private ZombieAlertIndicator alertIndicator;
 
     private float pathUpdateTimer;
-    // Periodically re-send the Run CrossFade to fight the Animator's exitTime
-    // auto-transition that fires at ~90% of the clip and drops back to Idle.
-    private float chaseAnimRefreshTimer;
 
     // Track last anim state to avoid redundant CrossFades
     private CreatureState lastAnimState = (CreatureState)(-1);
@@ -67,7 +64,7 @@ public class ShadowCreatureAI : CreatureAI
         if (agent != null && agent.isOnNavMesh)
         {
             agent.updateRotation   = false;
-            agent.acceleration     = 24f;
+            agent.acceleration     = 8f;
             agent.angularSpeed     = 0f;
             agent.stoppingDistance = data != null ? data.attackRange : 2f;
             agent.speed            = data != null ? data.moveSpeed : 3f;
@@ -89,7 +86,7 @@ public class ShadowCreatureAI : CreatureAI
             Rigidbody rb = gameObject.AddComponent<Rigidbody>();
             rb.isKinematic   = true;
             rb.useGravity    = false;
-            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            rb.interpolation = RigidbodyInterpolation.None; // NavMeshAgent owns the transform — interpolation fights it
         }
 
         ZombieHealthBar hb = gameObject.AddComponent<ZombieHealthBar>();
@@ -150,27 +147,40 @@ public class ShadowCreatureAI : CreatureAI
 
     void UpdateChase(float hDist)
     {
-        if (playerTransform != null)
+        if (playerTransform != null && agent.enabled && agent.isOnNavMesh)
         {
-            // Update path frequently so the creature tracks a moving player tightly
-            pathUpdateTimer -= Time.deltaTime;
-            if (pathUpdateTimer <= 0f)
-            {
-                agent.SetDestination(playerTransform.position);
-                pathUpdateTimer = 0.12f;
-            }
-
-            // Always rotate directly toward the player — never follow velocity curve
+            // Update destination every frame — Unity only recalculates the path
+            // when the position actually changes, so this is not expensive and
+            // eliminates the stale-path jitter caused by a fixed timer.
+            agent.SetDestination(playerTransform.position);
             SmoothRotateTowards(playerTransform.position);
         }
 
-        // Fight the Animator's exitTime auto-transition: re-send Run every 0.6s
-        // so it never drops back to Idle while chasing.
-        chaseAnimRefreshTimer -= Time.deltaTime;
-        if (chaseAnimRefreshTimer <= 0f)
+        // Keep Run looping every frame — the Animator Controller has exitTime on the
+        // Run→Idle transition that fires at ~90% of the clip. A periodic timer is too
+        // slow; we must check every frame.
+        //
+        // Strategy:
+        //   • If IN Run and approaching exitTime (>80%), preemptively CrossFade
+        //     back to the start of Run before exitTime can fire.
+        //     IsInTransition guard prevents re-firing while the blend is in progress.
+        //   • If already OUTSIDE Run (exitTime beat us), CrossFade back in
+        //     immediately, but only when not already mid-transition to Run.
+        if (animator != null)
         {
-            PlayAnimation(AnimRun, 0.1f);
-            chaseAnimRefreshTimer = 0.6f;
+            AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
+            if (info.IsName(AnimRun))
+            {
+                if (info.normalizedTime % 1f > 0.8f && !animator.IsInTransition(0))
+                    animator.CrossFadeInFixedTime(AnimRun, 0.15f, 0, 0f);
+            }
+            else
+            {
+                bool alreadyGoingToRun = animator.IsInTransition(0) &&
+                    animator.GetNextAnimatorStateInfo(0).IsName(AnimRun);
+                if (!alreadyGoingToRun)
+                    animator.CrossFadeInFixedTime(AnimRun, 0.15f);
+            }
         }
 
         if (hDist <= (data != null ? data.attackRange : 2f) + 0.5f)
@@ -179,7 +189,6 @@ public class ShadowCreatureAI : CreatureAI
             return;
         }
 
-        // Lost the player
         if (hDist > data.detectionRange * 1.5f)
             TransitionToPatrol();
     }
@@ -225,7 +234,11 @@ public class ShadowCreatureAI : CreatureAI
     {
         currentState  = CreatureState.Patrol;
         if (agent.enabled && agent.isOnNavMesh)
-            agent.speed = data != null ? data.moveSpeed : 3f;
+        {
+            agent.speed                 = data != null ? data.moveSpeed : 3f;
+            agent.stoppingDistance      = 1f;
+            agent.obstacleAvoidanceType = ObstacleAvoidanceType.LowQualityObstacleAvoidance;
+        }
         PickNewPatrolTarget();
         SetAnimation(AnimWalk, 0.2f);
     }
@@ -235,13 +248,15 @@ public class ShadowCreatureAI : CreatureAI
         currentState = CreatureState.Chase;
         if (agent.enabled && agent.isOnNavMesh)
         {
-            agent.speed = data != null ? data.runSpeed : 6f;
-            // Cancel any patrol path immediately so the creature beelines for the player
-            agent.ResetPath();
+            agent.speed            = data != null ? data.runSpeed : 6f;
+            // stoppingDistance matches the attack trigger so the agent decelerates
+            // smoothly and stops exactly where attack fires — no overshoot, no oscillation.
+            agent.stoppingDistance = (data != null ? data.attackRange : 2f) + 0.5f;
+            // Disable avoidance during chase — lateral micro-corrections cause visible jitter.
+            agent.obstacleAvoidanceType = ObstacleAvoidanceType.NoObstacleAvoidance;
             if (playerTransform != null)
                 agent.SetDestination(playerTransform.position);
         }
-        pathUpdateTimer = 0f;
         alertIndicator?.ShowAlert();
         SFXManager.PlayZombieGrowl();
         SetAnimation(AnimRun, 0.1f);
@@ -252,14 +267,14 @@ public class ShadowCreatureAI : CreatureAI
         currentState = CreatureState.Attack;
         if (agent.enabled && agent.isOnNavMesh)
         {
-            // Warp to current position — resets the agent's internal velocity and
-            // path state completely, which is the only reliable way to stop
-            // NavMeshAgent momentum without a multi-frame coast.
             agent.Warp(transform.position);
-            agent.speed = attackShuffleSpeed;
+            agent.speed                 = attackShuffleSpeed;
+            agent.stoppingDistance      = 0f;
+            agent.obstacleAvoidanceType = ObstacleAvoidanceType.LowQualityObstacleAvoidance;
         }
         attackTimer     = firstAttackDelay;
         pathUpdateTimer = 0.25f;        // don't move again for a moment after stopping
+        lastAnimState   = (CreatureState)(-1); // force idle to always play on attack entry
         SetAnimation(AnimIdle, 0.15f);
     }
 

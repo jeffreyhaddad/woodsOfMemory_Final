@@ -109,7 +109,7 @@ public class EquipmentHUD : MonoBehaviour
         rect.anchorMin = new Vector2(0, 1);
         rect.anchorMax = new Vector2(0, 1);
         rect.pivot = new Vector2(0, 1);
-        rect.anchoredPosition = new Vector2(20, -170);
+        rect.anchoredPosition = new Vector2(20, -215);
         rect.sizeDelta = new Vector2(220, 60);
 
         weaponText = CreateLine(container.transform, 0);

@@ -35,6 +35,12 @@ public class VitalsHUD : MonoBehaviour
     private bool lastHungerCritical  = false;
     private bool lastStaminaCritical = false;
 
+    // Cache last displayed int values so ToString() only runs when the number changes
+    private int lastHealthInt  = -1;
+    private int lastHungerInt  = -1;
+    private int lastStaminaInt = -1;
+    private int lastOxygenInt  = -1;
+
     void Start()
     {
         if (vitals == null)
@@ -110,15 +116,20 @@ public class VitalsHUD : MonoBehaviour
 
     void RefreshBars()
     {
-        healthFill.fillAmount = vitals.Health / vitals.maxHealth;
-        hungerFill.fillAmount = vitals.Hunger / vitals.maxHunger;
+        healthFill.fillAmount  = vitals.Health  / vitals.maxHealth;
+        hungerFill.fillAmount  = vitals.Hunger  / vitals.maxHunger;
         staminaFill.fillAmount = vitals.Stamina / vitals.maxStamina;
-        oxygenFill.fillAmount = vitals.Oxygen / vitals.maxOxygen;
+        oxygenFill.fillAmount  = vitals.Oxygen  / vitals.maxOxygen;
 
-        healthText.text = Mathf.CeilToInt(vitals.Health).ToString();
-        hungerText.text = Mathf.CeilToInt(vitals.Hunger).ToString();
-        staminaText.text = Mathf.CeilToInt(vitals.Stamina).ToString();
-        oxygenText.text = Mathf.CeilToInt(vitals.Oxygen).ToString();
+        int h = Mathf.CeilToInt(vitals.Health);
+        int u = Mathf.CeilToInt(vitals.Hunger);
+        int s = Mathf.CeilToInt(vitals.Stamina);
+        int o = Mathf.CeilToInt(vitals.Oxygen);
+
+        if (h != lastHealthInt)  { healthText.text  = h.ToString(); lastHealthInt  = h; }
+        if (u != lastHungerInt)  { hungerText.text  = u.ToString(); lastHungerInt  = u; }
+        if (s != lastStaminaInt) { staminaText.text = s.ToString(); lastStaminaInt = s; }
+        if (o != lastOxygenInt)  { oxygenText.text  = o.ToString(); lastOxygenInt  = o; }
     }
 
     void BuildHUD()

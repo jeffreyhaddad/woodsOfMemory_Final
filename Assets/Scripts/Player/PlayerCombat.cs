@@ -47,34 +47,28 @@ public class PlayerCombat : MonoBehaviour
 
     void Attack()
     {
-        string equipped = EquipmentManager.Instance?.EquippedTool?.itemName ?? "";
-        bool hasWeapon  = EquipmentManager.Instance?.EquippedWeapon != null;
+        string equipped   = EquipmentManager.Instance?.EquippedTool?.itemName ?? "";
+        bool   hasWeapon  = EquipmentManager.Instance?.EquippedWeapon != null;
+        bool   isPickaxe  = equipped.IndexOf("Pickaxe", System.StringComparison.OrdinalIgnoreCase) >= 0;
+        bool   isAxe      = equipped.IndexOf("Axe",     System.StringComparison.OrdinalIgnoreCase) >= 0;
+        bool   isTool     = isPickaxe || isAxe;
 
         // Play weapon-appropriate attack animation
         if (animator != null)
         {
-            bool isTool = equipped.IndexOf("Pickaxe", System.StringComparison.OrdinalIgnoreCase) >= 0
-                       || equipped.IndexOf("Axe",     System.StringComparison.OrdinalIgnoreCase) >= 0;
-
             if (isTool) animator.speed = toolSwingSpeed;
 
-            if (equipped.IndexOf("Pickaxe", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            if (isPickaxe)
                 animator.CrossFade("PickaxeAttack", 0.1f);
-            else if (hasWeapon || equipped.IndexOf("Axe", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            else if (hasWeapon || isAxe)
                 animator.CrossFade("AxeAttack", 0.1f);
 
             if (isTool) StartCoroutine(ResetAnimSpeed(attackCooldown));
         }
 
         // Degrade durability on axe/pickaxe swings
-        if (!string.IsNullOrEmpty(equipped) && ToolDurabilityManager.Instance != null)
-        {
-            if (equipped.IndexOf("Axe", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-                equipped.IndexOf("Pickaxe", System.StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                ToolDurabilityManager.Instance.UseTool(equipped);
-            }
-        }
+        if (isTool && ToolDurabilityManager.Instance != null)
+            ToolDurabilityManager.Instance.UseTool(equipped);
 
         float totalDamage = attackDamage;
         if (EquipmentManager.Instance != null)

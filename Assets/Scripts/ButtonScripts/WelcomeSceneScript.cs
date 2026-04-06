@@ -26,6 +26,16 @@ public class WelcomeSceneScript : MonoBehaviour
         SceneManager.LoadScene("TerrainScene");
     }
 
+    public void ContinueGame()
+    {
+        if (SaveManager.SaveFileExists(0))
+            SaveManager.RequestLoad(0);
+        SceneManager.LoadScene("TerrainScene");
+    }
+
+    /// <summary>Returns true if slot 0 has a save file (for greying out the Continue button).</summary>
+    public static bool HasSave() => SaveManager.SaveFileExists(0);
+
     public void QuitGame()
     {
         Application.Quit();

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -5,6 +6,11 @@ using UnityEngine;
 public class SaveManager : MonoBehaviour
 {
     public static SaveManager Instance { get; private set; }
+
+    private static int pendingLoadSlot = -1;
+
+    /// <summary>Queue a save-load to apply after TerrainScene finishes initializing.</summary>
+    public static void RequestLoad(int slot) => pendingLoadSlot = slot;
 
     [Header("Auto-Save")]
     public float autoSaveIntervalMinutes = 5f;
@@ -31,7 +37,23 @@ public class SaveManager : MonoBehaviour
         missionManager = FindAnyObjectByType<MissionManager>();
         if (missionManager != null)
             missionManager.OnMissionCompleted += OnMissionCompleted;
+
+        // Load a pending save from the main menu (e.g. "Continue" button).
+        // Deferred one frame so all other managers' Start() methods have run
+        // and ItemRegistry is fully populated before we restore inventory.
+        if (pendingLoadSlot >= 0)
+            StartCoroutine(LoadAfterStart(pendingLoadSlot));
     }
+
+    IEnumerator LoadAfterStart(int slot)
+    {
+        pendingLoadSlot = -1;
+        yield return null; // wait one frame for all Start() calls to finish
+        Load(slot);
+    }
+
+    // Safe to call from any scene — does not require an instance.
+    public static bool SaveFileExists(int slot) => File.Exists(GetSavePath(slot));
 
     void OnDestroy()
     {
@@ -290,8 +312,6 @@ public class SaveManager : MonoBehaviour
         return "Saved: " + data.saveDate;
     }
 
-    string GetSavePath(int slot)
-    {
-        return Path.Combine(Application.persistentDataPath, "save_slot_" + slot + ".json");
-    }
+    static string GetSavePath(int slot) =>
+        Path.Combine(Application.persistentDataPath, "save_slot_" + slot + ".json");
 }

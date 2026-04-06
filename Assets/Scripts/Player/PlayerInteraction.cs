@@ -78,10 +78,10 @@ public class PlayerInteraction : MonoBehaviour
                 if (currentTarget != null)
                     currentTarget.OnLoseFocus();
                 currentTarget = closest;
+                ShowPrompt(currentTarget.promptText); // only rebuild string on target change
             }
 
             currentTarget.OnFocus();
-            ShowPrompt(currentTarget.promptText);
         }
         else
         {

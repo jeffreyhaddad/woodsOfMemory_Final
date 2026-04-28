@@ -41,6 +41,7 @@ public class PlayerVitals : MonoBehaviour
     private float oxygen;
     private float damageFlashTimer;
     private bool isExhausted = false;
+    private bool heartbeatActive = false;
 
     public float Health
     {
@@ -122,8 +123,11 @@ public class PlayerVitals : MonoBehaviour
         }
 
         // Stop heartbeat once health regens above 25%
-        if (health > maxHealth * 0.25f)
+        if (heartbeatActive && health > maxHealth * 0.25f)
+        {
             SFXManager.StopHeartbeat();
+            heartbeatActive = false;
+        }
 
         // Only notify UI when display values actually change (whole numbers)
         if (Mathf.CeilToInt(health) != Mathf.CeilToInt(lastNotifiedHealth) ||
@@ -183,9 +187,14 @@ public class PlayerVitals : MonoBehaviour
 
         // Low health heartbeat warning
         if (health > 0f && health <= maxHealth * 0.25f)
-            SFXManager.StartHeartbeat();
-        else
+        {
+            if (!heartbeatActive) { SFXManager.StartHeartbeat(); heartbeatActive = true; }
+        }
+        else if (heartbeatActive)
+        {
             SFXManager.StopHeartbeat();
+            heartbeatActive = false;
+        }
     }
 
     /// <summary>Restore hunger from eating food.</summary>

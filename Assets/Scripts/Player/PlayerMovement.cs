@@ -37,6 +37,7 @@ public class PlayerMovement : MonoBehaviour
     private float standCenterY;
     private float verticalVelocity;
     private float footstepTimer;
+    private bool lastWaterState = false;
 
     // Cached terrain data for footstep ground detection
     private Terrain cachedTerrain;
@@ -62,22 +63,25 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        if (isInwater)
+        if (isInwater != lastWaterState)
         {
-            walkSpeed = underWaterMovementAndGravity[0];
-            runSpeed = underWaterMovementAndGravity[1];
-            crouchSpeed = underWaterMovementAndGravity[2];
-            jumpForce = underWaterMovementAndGravity[3];
-            gravity = underWaterMovementAndGravity[4];
-        }
-        if (!isInwater)
-        {
-            walkSpeed = 6f;
-            runSpeed = 12f;
-            crouchSpeed = 10f;
-            jumpForce = 12f;
-            gravity = -20f;
-
+            lastWaterState = isInwater;
+            if (isInwater)
+            {
+                walkSpeed   = underWaterMovementAndGravity[0];
+                runSpeed    = underWaterMovementAndGravity[1];
+                crouchSpeed = underWaterMovementAndGravity[2];
+                jumpForce   = underWaterMovementAndGravity[3];
+                gravity     = underWaterMovementAndGravity[4];
+            }
+            else
+            {
+                walkSpeed   = 6f;
+                runSpeed    = 12f;
+                crouchSpeed = 10f;
+                jumpForce   = 12f;
+                gravity     = -20f;
+            }
         }
         if (movementBlocked)
         {

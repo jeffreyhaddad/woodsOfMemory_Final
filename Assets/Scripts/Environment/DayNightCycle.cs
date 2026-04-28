@@ -119,6 +119,7 @@ public class DayNightCycle : MonoBehaviour
 
     // Throttle counter for expensive updates
     private int updateCounter;
+    private bool lastMoonVisible = false;
 
     // Night atmosphere overlay
     private Image nightOverlay;
@@ -226,13 +227,18 @@ public class DayNightCycle : MonoBehaviour
         wasNight = IsNight;
     }
 
+    private float lastNightBlend = -1f;
+
     void UpdateNightAtmosphere()
     {
         if (nightOverlay == null) return;
 
-        // Dark-blue tint scales with how far into night we are
+        float blend = NightBlend() * 0.20f;
+        if (Mathf.Approximately(blend, lastNightBlend)) return;
+        lastNightBlend = blend;
+
         Color oc = nightOverlay.color;
-        oc.a = NightBlend() * 0.20f;
+        oc.a = blend;
         nightOverlay.color = oc;
     }
 
@@ -438,7 +444,11 @@ public class DayNightCycle : MonoBehaviour
         // Only render when above horizon and during night
         bool aboveHorizon = moonDir.y > -0.05f;
         bool shouldShow = brightness > 0.01f && aboveHorizon;
-        moonBillboard.SetActive(shouldShow);
+        if (shouldShow != lastMoonVisible)
+        {
+            moonBillboard.SetActive(shouldShow);
+            lastMoonVisible = shouldShow;
+        }
 
         if (shouldShow && moonMat != null)
         {

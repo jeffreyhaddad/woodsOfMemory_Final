@@ -25,7 +25,8 @@ public class CompassUI : MonoBehaviour
         public Vector3 worldPos;
         public Color   color;
         public POIType type;
-        public float   discoveryRadius; // metres — enter this to discover
+        public float   discoveryRadius;    // metres — enter this to discover
+        public float   discoveryRadiusSqr; // pre-squared for sqrMagnitude checks
         public bool    discovered;
     }
 
@@ -56,12 +57,13 @@ public class CompassUI : MonoBehaviour
 
         _pois.Add(new POI
         {
-            label           = label,
-            worldPos        = worldPos,
-            color           = color,
-            type            = type,
-            discoveryRadius = discoveryRadius,
-            discovered      = startDiscovered
+            label              = label,
+            worldPos           = worldPos,
+            color              = color,
+            type               = type,
+            discoveryRadius    = discoveryRadius,
+            discoveryRadiusSqr = discoveryRadius * discoveryRadius,
+            discovered         = startDiscovered
         });
     }
 
@@ -204,7 +206,7 @@ public class CompassUI : MonoBehaviour
         for (int i = 0; i < _pois.Count; i++)
         {
             if (_pois[i].discovered) continue;
-            if (Vector3.Distance(pp, _pois[i].worldPos) <= _pois[i].discoveryRadius)
+            if ((pp - _pois[i].worldPos).sqrMagnitude <= _pois[i].discoveryRadiusSqr)
                 _pois[i].discovered = true;
         }
     }

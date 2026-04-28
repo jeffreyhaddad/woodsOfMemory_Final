@@ -16,10 +16,12 @@ public class DamageNumber : MonoBehaviour
         public float   amount;
         public float   age;
         public float   xDrift;   // screen-space horizontal drift in pixels
+        public string  text;     // pre-built string, avoids allocation each repaint
     }
 
     private readonly List<Entry> active = new List<Entry>();
     private GUIStyle style;
+    private Camera cachedCam;
 
     private const float Duration = 1.5f;
 
@@ -32,12 +34,14 @@ public class DamageNumber : MonoBehaviour
             GameObject go = new GameObject("DamageNumberSystem");
             instance = go.AddComponent<DamageNumber>();
         }
+        float rounded = Mathf.Round(amount);
         instance.active.Add(new Entry
         {
             worldPos = worldPos + Vector3.up * 0.5f,
-            amount   = Mathf.Round(amount),
+            amount   = rounded,
             age      = 0f,
-            xDrift   = Random.Range(-20f, 20f)
+            xDrift   = Random.Range(-20f, 20f),
+            text     = "-" + (int)rounded
         });
     }
 
@@ -59,7 +63,8 @@ public class DamageNumber : MonoBehaviour
         if (Event.current.type != EventType.Repaint) return;
         if (active.Count == 0) return;
 
-        Camera cam = Camera.main;
+        if (cachedCam == null) cachedCam = Camera.main;
+        Camera cam = cachedCam;
         if (cam == null) return;
 
         if (style == null)
@@ -94,7 +99,7 @@ public class DamageNumber : MonoBehaviour
             int fs  = Mathf.RoundToInt(28f * scale);
             style.fontSize = fs;
 
-            string text = "-" + (int)e.amount;
+            string text = e.text;
             float  rw   = 100f;
             float  rh   = 48f;
             Rect   r    = new Rect(sx - rw * 0.5f, sy - rh * 0.5f, rw, rh);

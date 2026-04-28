@@ -368,7 +368,8 @@ public class ShadowCreatureAI : CreatureAI
 
     // ── Shadow Essence Drop ───────────────────────────────────
 
-    private static ItemData essenceItem;
+    private static ItemData   essenceItem;
+    private static Material   essenceMat;
 
     void SpawnShadowEssence()
     {
@@ -387,6 +388,16 @@ public class ShadowCreatureAI : CreatureAI
             }
         }
 
+        // Build the shared essence material once — Shader.Find is slow at runtime
+        if (essenceMat == null)
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            essenceMat       = new Material(shader);
+            essenceMat.color = new Color(0.45f, 0f, 0.85f);
+            if (essenceMat.HasProperty("_BaseColor"))
+                essenceMat.SetColor("_BaseColor", new Color(0.45f, 0f, 0.85f));
+        }
+
         GameObject pickupObj = new GameObject("Shadow Essence Drop");
         pickupObj.transform.position = transform.position + Vector3.up * 0.5f;
 
@@ -402,13 +413,7 @@ public class ShadowCreatureAI : CreatureAI
         visual.transform.SetParent(pickupObj.transform, false);
         visual.transform.localScale = Vector3.one * 0.3f;
         Destroy(visual.GetComponent<Collider>());
-
-        Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-        Material mat  = new Material(shader);
-        mat.color = new Color(0.45f, 0f, 0.85f);
-        if (mat.HasProperty("_BaseColor"))
-            mat.SetColor("_BaseColor", new Color(0.45f, 0f, 0.85f));
-        visual.GetComponent<Renderer>().material = mat;
+        visual.GetComponent<Renderer>().sharedMaterial = essenceMat;
 
         pickupObj.AddComponent<PickupBob>();
     }

@@ -36,11 +36,10 @@ public class EndingScreenUI : MonoBehaviour
         if (anyKeyEnabled && Input.anyKeyDown)
         {
             anyKeyEnabled = false;
-            // Transition to the credits/game-complete screen.
-            // Fall back to quitting directly if GameCompleteUI isn't present.
+            endCanvas.gameObject.SetActive(false);
             GameCompleteUI credits = FindAnyObjectByType<GameCompleteUI>();
             if (credits != null)
-                credits.ShowEndingScreen();
+                credits.ShowEndingScreen(GameManager.Instance?.GameTime ?? 0f);
             else
                 GameManager.Instance?.QuitToMenu();
         }
@@ -48,6 +47,7 @@ public class EndingScreenUI : MonoBehaviour
 
     void OnAllMissionsCompleted()
     {
+        GameManager.Instance?.StopTimer();
         StartCoroutine(PlayEnding());
     }
 

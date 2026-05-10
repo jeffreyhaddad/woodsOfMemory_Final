@@ -11,7 +11,7 @@ public class MissionManager : MonoBehaviour
     public Mission[] missions;
 
     [Header("Debug")]
-    [Tooltip("Skip to this mission index on start (0 = normal, 4 = Into the Dark / dark clearing).")]
+    [Tooltip("Skip to this mission index on start (0 = normal, 5 = The Escape / final mission).")]
     public int debugStartMissionIndex = 0;
 
     public int CurrentMissionIndex { get; set; } = 0;
@@ -267,6 +267,14 @@ public class MissionManager : MonoBehaviour
         return total;
     }
 
+    /// <summary>Editor-only: immediately fires the all-complete event for end-screen testing.</summary>
+    public void FireWinForTesting()
+    {
+        if (AllMissionsComplete) return;
+        CurrentMissionIndex = missions.Length;
+        OnAllMissionsCompleted?.Invoke();
+    }
+
     // ─── Default Mission Generation ──────────────────────────
 
     void CreateDefaultMissions()
@@ -305,11 +313,11 @@ public class MissionManager : MonoBehaviour
 
         // Mission 4: Shadow Harvest
         list.Add(MakeMission("Shadow Harvest",
-            "Dark creatures stalk these woods at night. Hunt down five of them and collect their essence.",
+            "Dark creatures stalk these woods at night. Hunt down two of them and collect their essence.",
             new MissionObjective[]
             {
-                MakeObjective("Kill shadow creatures",        ObjectiveType.KillCreature, "",               "Shadow Creature", 5),
-                MakeObjective("Collect Shadow Essence",       ObjectiveType.CollectItem,  "Shadow Essence", "",                5),
+                MakeObjective("Kill shadow creatures",        ObjectiveType.KillCreature, "",               "Shadow Creature", 2),
+                MakeObjective("Collect Shadow Essence",       ObjectiveType.CollectItem,  "Shadow Essence", "",                2),
             }));
 
         // Mission 5: Into the Dark

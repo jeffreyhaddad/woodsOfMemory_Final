@@ -32,6 +32,10 @@ public class GameManager : MonoBehaviour
     private bool spawnCaptured;
     private GameObject cachedCabin;
 
+    // Completion timer — counts real gameplay seconds (pauses with timeScale)
+    public float GameTime { get; private set; }
+    private bool _timerRunning = true;
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -79,6 +83,8 @@ public class GameManager : MonoBehaviour
             gameObject.AddComponent<PickupNotificationUI>();
         if (FindAnyObjectByType<EndingScreenUI>() == null)
             gameObject.AddComponent<EndingScreenUI>();
+        if (FindAnyObjectByType<GameCompleteUI>() == null)
+            gameObject.AddComponent<GameCompleteUI>();
         if (SleepManager.Instance == null)
             gameObject.AddComponent<SleepManager>();
         if (SettingsManager.Instance == null)
@@ -119,6 +125,20 @@ public class GameManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
+
+    void Update()
+    {
+        if (_timerRunning && CurrentState == GameState.Playing)
+            GameTime += Time.deltaTime;
+
+#if UNITY_EDITOR
+        // F9 — instantly trigger the win condition for testing
+        if (Input.GetKeyDown(KeyCode.F9))
+            MissionManager.Instance?.FireWinForTesting();
+#endif
+    }
+
+    public void StopTimer() => _timerRunning = false;
 
     void CacheReferences()
     {

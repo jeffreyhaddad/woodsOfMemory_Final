@@ -41,6 +41,14 @@ public class IntroSequenceManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(this); return; }
         Instance = this;
 
+        // Loading a save — skip the entire intro before anything is set up.
+        // SaveManager.LoadAfterStart will restore all state and unblock the player.
+        if (SaveManager.HasPendingLoad)
+        {
+            Destroy(this);
+            return;
+        }
+
         PlayerMovement.inputBlocked    = true;
         PlayerMovement.movementBlocked = true;
 

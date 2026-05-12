@@ -11,7 +11,7 @@ public class MissionManager : MonoBehaviour
     public Mission[] missions;
 
     [Header("Debug")]
-    [Tooltip("Skip to this mission index on start (0 = normal, 5 = The Escape / final mission).")]
+    [Tooltip("Skip to this mission index on start (0 = normal, 4 = Into the Dark / shadow assault, 5 = The Escape).")]
     public int debugStartMissionIndex = 0;
 
     public int CurrentMissionIndex { get; set; } = 0;
@@ -65,9 +65,12 @@ public class MissionManager : MonoBehaviour
         if (inventory != null)
             inventory.OnInventoryChanged += OnInventoryChanged;
 
-        // Start first mission — deferred if IntroSequenceManager is present
-        if (FindAnyObjectByType<IntroSequenceManager>() == null)
-            StartMission(debugStartMissionIndex);
+        // Skip mission auto-start when loading a save — RestoreFromSave handles it
+        if (!SaveManager.HasPendingLoad)
+        {
+            if (FindAnyObjectByType<IntroSequenceManager>() == null)
+                StartMission(debugStartMissionIndex);
+        }
     }
 
     /// <summary>Called by IntroSequenceManager after the intro completes.</summary>
@@ -267,6 +270,42 @@ public class MissionManager : MonoBehaviour
         return total;
     }
 
+    /// <summary>
+    /// Called by SaveManager.Load() to restore full mission state from a save file.
+    /// Resets every mission, sets the saved one as active, and fires OnMissionStarted
+    /// so the HUD and all listeners update immediately.
+    /// </summary>
+    public void RestoreFromSave(int savedMissionIndex, System.Collections.Generic.List<int> objectiveProgress)
+    {
+        // Reset ALL missions so no stale isActive flags remain
+        for (int i = 0; i < missions.Length; i++)
+        {
+            missions[i].isCompleted = i < savedMissionIndex;
+            missions[i].isActive    = false;
+        }
+
+        CurrentMissionIndex = savedMissionIndex;
+
+        if (savedMissionIndex < missions.Length)
+        {
+            Mission current = missions[savedMissionIndex];
+            current.isActive    = true;
+            current.isCompleted = false;
+
+            // Restore objective progress
+            for (int i = 0; i < current.objectives.Length && i < objectiveProgress.Count; i++)
+                current.objectives[i].currentCount = objectiveProgress[i];
+
+            // Fire event so MissionHUD, MissionTransitionUI etc. all update
+            OnMissionStarted?.Invoke(current);
+        }
+        else
+        {
+            // All missions were completed when saved
+            CurrentMissionIndex = missions.Length;
+        }
+    }
+
     /// <summary>Editor-only: immediately fires the all-complete event for end-screen testing.</summary>
     public void FireWinForTesting()
     {
@@ -327,7 +366,7 @@ public class MissionManager : MonoBehaviour
             {
                 MakeObjective("Craft a Shadow Ward",          ObjectiveType.CraftItem,    "Shadow Ward",   "",                1),
                 MakeObjective("Find the Dark Clearing",       ObjectiveType.ReachLocation, "dark_clearing", "",               1),
-                MakeObjective("Survive the shadow assault",   ObjectiveType.KillCreature,  "",             "Shadow Creature", 8),
+                MakeObjective("Survive the shadow assault",   ObjectiveType.KillCreature,  "",             "Shadow Creature", 5),
             }));
 
         // Mission 6: The Escape

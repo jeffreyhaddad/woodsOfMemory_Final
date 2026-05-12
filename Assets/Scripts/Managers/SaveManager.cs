@@ -7,10 +7,17 @@ public class SaveManager : MonoBehaviour
 {
     public static SaveManager Instance { get; private set; }
 
-    private static int pendingLoadSlot = -1;
+    private static int  pendingLoadSlot   = -1;
+    private static bool isLoadingFromMenu = false;
 
     /// <summary>Queue a save-load to apply after TerrainScene finishes initializing.</summary>
-    public static void RequestLoad(int slot) => pendingLoadSlot = slot;
+    public static void RequestLoad(int slot) { pendingLoadSlot = slot; isLoadingFromMenu = true; }
+
+    /// <summary>
+    /// True from the moment RequestLoad is called until Load() finishes.
+    /// Stays true across the entire first frame so Awake/Start checks all see it.
+    /// </summary>
+    public static bool HasPendingLoad => isLoadingFromMenu;
 
     [Header("Auto-Save")]
     public float autoSaveIntervalMinutes = 5f;
@@ -49,11 +56,25 @@ public class SaveManager : MonoBehaviour
     {
         pendingLoadSlot = -1;
         yield return null; // wait one frame for all Start() calls to finish
+        isLoadingFromMenu = false;
         Load(slot);
     }
 
     // Safe to call from any scene — does not require an instance.
     public static bool SaveFileExists(int slot) => File.Exists(GetSavePath(slot));
+
+    /// <summary>Reads slot info directly from disk — works on the welcome screen where no instance exists.</summary>
+    public static string GetSaveInfoStatic(int slot)
+    {
+        string path = GetSavePath(slot);
+        if (!File.Exists(path)) return "Empty";
+        string json = File.ReadAllText(path);
+        SaveData data = JsonUtility.FromJson<SaveData>(json);
+        return "Saved: " + data.saveDate;
+    }
+
+    /// <summary>Static check — works without an instance.</summary>
+    public static bool HasSaveStatic(int slot) => File.Exists(GetSavePath(slot));
 
     void OnDestroy()
     {
@@ -219,29 +240,10 @@ public class SaveManager : MonoBehaviour
             Debug.Log("Restored " + restored + "/" + data.inventoryItems.Count + " inventory items.");
         }
 
-        // Missions - restore progress
+        // Missions - restore progress via MissionManager so events fire correctly
         MissionManager mm = MissionManager.Instance;
         if (mm != null && mm.missions != null)
-        {
-            // Advance to the saved mission
-            for (int i = 0; i < data.currentMissionIndex && i < mm.missions.Length; i++)
-            {
-                mm.missions[i].isCompleted = true;
-                mm.missions[i].isActive = false;
-            }
-
-            mm.CurrentMissionIndex = data.currentMissionIndex;
-
-            if (data.currentMissionIndex < mm.missions.Length)
-            {
-                Mission current = mm.missions[data.currentMissionIndex];
-                current.isActive = true;
-                current.isCompleted = false;
-
-                for (int i = 0; i < current.objectives.Length && i < data.objectiveProgress.Count; i++)
-                    current.objectives[i].currentCount = data.objectiveProgress[i];
-            }
-        }
+            mm.RestoreFromSave(data.currentMissionIndex, data.objectiveProgress);
 
         // Journal - restore discovered entries (O(n) dictionary lookup instead of O(n²) nested loop)
         JournalManager journal = JournalManager.Instance;

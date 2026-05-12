@@ -290,7 +290,13 @@ public class SaveManager : MonoBehaviour
         if (dayNight != null)
             dayNight.TimeOfDay = data.timeOfDay;
 
-        // Resume play
+        // Explicitly unblock input — SetState is a no-op when state is already
+        // Playing (its default), so we must force these regardless.
+        PlayerMovement.inputBlocked    = false;
+        PlayerMovement.movementBlocked = false;
+        Time.timeScale   = 1f;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible   = false;
         if (GameManager.Instance != null)
             GameManager.Instance.SetState(GameState.Playing);
 

@@ -352,11 +352,11 @@ public class MissionManager : MonoBehaviour
 
         // Mission 4: Shadow Harvest
         list.Add(MakeMission("Shadow Harvest",
-            "Dark creatures stalk these woods at night. Hunt down two of them and collect their essence.",
+            "Dark creatures stalk these woods at night. Hunt down five of them and collect their essence.",
             new MissionObjective[]
             {
-                MakeObjective("Kill shadow creatures",        ObjectiveType.KillCreature, "",               "Shadow Creature", 2),
-                MakeObjective("Collect Shadow Essence",       ObjectiveType.CollectItem,  "Shadow Essence", "",                2),
+                MakeObjective("Kill shadow creatures",        ObjectiveType.KillCreature, "",               "Shadow Creature", 5),
+                MakeObjective("Collect Shadow Essence",       ObjectiveType.CollectItem,  "Shadow Essence", "",                5),
             }));
 
         // Mission 5: Into the Dark
@@ -366,7 +366,7 @@ public class MissionManager : MonoBehaviour
             {
                 MakeObjective("Craft a Shadow Ward",          ObjectiveType.CraftItem,    "Shadow Ward",   "",                1),
                 MakeObjective("Find the Dark Clearing",       ObjectiveType.ReachLocation, "dark_clearing", "",               1),
-                MakeObjective("Survive the shadow assault",   ObjectiveType.KillCreature,  "",             "Shadow Creature", 5),
+                MakeObjective("Survive the shadow assault",   ObjectiveType.KillCreature,  "",             "Shadow Creature", 8),
             }));
 
         // Mission 6: The Escape
